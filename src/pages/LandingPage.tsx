@@ -347,12 +347,12 @@ export default function LandingPage() {
     <div className="min-h-screen" style={{ background: 'linear-gradient(180deg,#f0fdf4 0%,#f7fdf9 100%)' }}>
 
       {/* ═══════════════════════════════════════════════════════════════════════
-          HERO + MISSION — merged, full viewport height
+          HERO + MISSION — exactly one viewport height, internal scroll if needed
       ══════════════════════════════════════════════════════════════════════ */}
       <section
-        className="relative overflow-hidden flex flex-col"
+        className="relative flex flex-col overflow-hidden"
         style={{
-          minHeight: '100vh',
+          height: '100vh',
           background: 'linear-gradient(160deg,#030d07 0%,#052e16 25%,#14532d 55%,#0d2e1e 80%,#020a05 100%)',
         }}
       >
@@ -378,98 +378,101 @@ export default function LandingPage() {
           ))}
         </div>
 
-        {/* ── HERO COPY + VISUAL ── */}
-        <div className="relative z-10 flex-1 max-w-7xl mx-auto w-full px-6 pt-14 pb-12 lg:pt-16">
-          <div className="grid lg:grid-cols-2 gap-12 items-center h-full">
+        {/* ── Inner scroll container fills the section exactly ── */}
+        <div className="relative z-10 flex-1 min-h-0 overflow-y-auto">
+          <div className="max-w-7xl mx-auto w-full px-6 flex flex-col" style={{ minHeight: '100%' }}>
 
-            {/* Left: copy */}
-            <div className="gu-hero-text space-y-5">
-              <div className="inline-flex items-center gap-2 border border-green-400/30 bg-green-400/10 rounded-full px-4 py-1.5 text-xs font-semibold text-green-300 uppercase tracking-widest">
-                <span className="w-2 h-2 bg-green-400 rounded-full animate-pulse" />
-                Live · Bihar Village Sustainability Region
-              </div>
+            {/* ── HERO COPY + VISUAL ── */}
+            <div className="flex-1 grid lg:grid-cols-2 gap-8 items-center py-8 lg:py-10">
 
-              <h1 className="text-4xl sm:text-5xl lg:text-[3.25rem] font-extrabold leading-[1.1] text-white">
-                Powering Villages<br />
-                with{' '}
-                <span className="text-amber-300">Waste</span>
-                <span className="text-white">,{' '}</span>
-                <span className="text-green-300">Water</span>
-                <span className="text-white">{' '}&amp;{' '}</span>
-                <span className="text-yellow-300">Sun</span>
-              </h1>
-
-              <p className="text-green-100/80 text-lg leading-relaxed max-w-xl">
-                Gram Urja transforms local village resources into clean energy,
-                efficient water systems and measurable community impact —
-                one village at a time.
-              </p>
-
-              <div>
-                <Link to="/login"
-                  className="group inline-flex items-center gap-2 bg-green-400 hover:bg-green-300 text-green-950 font-bold px-7 py-3.5 rounded-xl transition-all duration-200 shadow-lg shadow-green-900/40 hover:shadow-green-900/60 hover:-translate-y-0.5">
-                  <Zap className="w-4 h-4" />
-                  Get Started — Choose Your Role
-                  <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-1" />
-                </Link>
-              </div>
-            </div>
-
-            {/* Right: photo scene */}
-            <div className="gu-hero-visual lg:pl-4">
-              <VillageScene />
-              <div className="flex justify-center mt-4 gap-6 flex-wrap">
-                {[{ dot: 'bg-amber-400', label: 'Solar Energy' }, { dot: 'bg-emerald-400', label: 'Biogas' }, { dot: 'bg-cyan-400', label: 'Water' }].map(l => (
-                  <div key={l.label} className="flex items-center gap-1.5 text-xs text-green-300/80 font-medium">
-                    <span className={`w-2.5 h-2.5 rounded-full ${l.dot}`} />{l.label}
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* ── MISSION STRIP (merged into same section) ── */}
-        <div className="relative z-10 max-w-7xl mx-auto w-full px-6 pb-16">
-          <div className="border-t border-white/10 pt-10 grid lg:grid-cols-2 gap-10 items-start">
-            <div>
-              <div className="inline-flex items-center gap-2 bg-green-400/15 border border-green-400/25 text-green-300 rounded-full px-4 py-1.5 text-xs font-bold uppercase tracking-widest mb-5">
-                🌱 Our Mission
-              </div>
-              <h2 className="text-2xl sm:text-3xl font-extrabold text-white leading-snug mb-4">
-                Small steps create <span className="text-green-300">big change</span> for our villages.
-              </h2>
-              <p className="text-green-100/70 text-sm leading-relaxed mb-5">
-                Every Indian village already possesses the three ingredients for sustainable energy —
-                <strong className="text-amber-300"> sunlight</strong>,{' '}
-                <strong className="text-emerald-300"> organic waste</strong>, and{' '}
-                <strong className="text-cyan-300"> water</strong>.
-                Gram Urja turns this untapped potential into measurable environmental and community benefit.
-              </p>
-              <div className="flex flex-wrap gap-3">
-                {[{ n: '6', label: 'Areas tracked' }, { n: '100%', label: 'Formula transparency' }, { n: '3', label: 'Resource types' }, { n: '₹0', label: 'To get started' }].map(s => (
-                  <div key={s.label} className="bg-white/8 border border-white/12 rounded-xl px-4 py-2.5 text-center">
-                    <div className="text-xl font-extrabold text-white">{s.n}</div>
-                    <div className="text-xs text-green-300 font-medium">{s.label}</div>
-                  </div>
-                ))}
-              </div>
-            </div>
-            <div className="grid grid-cols-1 gap-3">
-              {[
-                { icon: <Sun className="w-5 h-5 text-amber-400" />, title: 'Solar — Untapped Potential', desc: 'Most village rooftops have enough area to offset 30–60% of electricity demand. Gram Urja shows exactly how many panels and at what cost.', accent: 'border-amber-400/30' },
-                { icon: <Leaf className="w-5 h-5 text-emerald-400" />, title: 'Waste — From Problem to Power', desc: 'Cow dung, food and agricultural residue generate biogas for cooking and electricity. Every kg treated prevents CO₂.', accent: 'border-emerald-400/30' },
-                { icon: <Droplets className="w-5 h-5 text-cyan-400" />, title: 'Water — Smarter Use', desc: 'Rainwater harvesting and demand management cut pump energy costs while building resilience against seasonal scarcity.', accent: 'border-cyan-400/30' },
-              ].map(card => (
-                <div key={card.title} className={`bg-white/6 border ${card.accent} backdrop-blur-sm rounded-2xl p-4 flex gap-4 hover:bg-white/10 transition-colors`}>
-                  <div className="flex-shrink-0 mt-0.5 p-2 bg-white/10 rounded-xl h-fit">{card.icon}</div>
-                  <div>
-                    <div className="font-bold text-white text-sm mb-1">{card.title}</div>
-                    <div className="text-green-200/70 text-xs leading-relaxed">{card.desc}</div>
-                  </div>
+              {/* Left: copy */}
+              <div className="gu-hero-text space-y-4">
+                <div className="inline-flex items-center gap-2 border border-green-400/30 bg-green-400/10 rounded-full px-3 py-1 text-xs font-semibold text-green-300 uppercase tracking-widest">
+                  <span className="w-2 h-2 bg-green-400 rounded-full animate-pulse" />
+                  Live · Bihar Village Sustainability Region
                 </div>
-              ))}
+
+                <h1 className="text-3xl sm:text-4xl lg:text-[2.75rem] font-extrabold leading-[1.1] text-white">
+                  Powering Villages<br />
+                  with{' '}
+                  <span className="text-amber-300">Waste</span>
+                  <span className="text-white">,{' '}</span>
+                  <span className="text-green-300">Water</span>
+                  <span className="text-white">{' '}&amp;{' '}</span>
+                  <span className="text-yellow-300">Sun</span>
+                </h1>
+
+                <p className="text-green-100/80 text-base leading-relaxed max-w-xl">
+                  Gram Urja transforms local village resources into clean energy,
+                  efficient water systems and measurable community impact —
+                  one village at a time.
+                </p>
+
+                <div>
+                  <Link to="/login"
+                    className="group inline-flex items-center gap-2 bg-green-400 hover:bg-green-300 text-green-950 font-bold px-6 py-3 rounded-xl transition-all duration-200 shadow-lg shadow-green-900/40 hover:shadow-green-900/60 hover:-translate-y-0.5 text-sm">
+                    <Zap className="w-4 h-4" />
+                    Get Started — Choose Your Role
+                    <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-1" />
+                  </Link>
+                </div>
+              </div>
+
+              {/* Right: photo scene */}
+              <div className="gu-hero-visual lg:pl-4">
+                <VillageScene />
+                <div className="flex justify-center mt-3 gap-5 flex-wrap">
+                  {[{ dot: 'bg-amber-400', label: 'Solar Energy' }, { dot: 'bg-emerald-400', label: 'Biogas' }, { dot: 'bg-cyan-400', label: 'Water' }].map(l => (
+                    <div key={l.label} className="flex items-center gap-1.5 text-xs text-green-300/80 font-medium">
+                      <span className={`w-2 h-2 rounded-full ${l.dot}`} />{l.label}
+                    </div>
+                  ))}
+                </div>
+              </div>
             </div>
+
+            {/* ── MISSION STRIP ── */}
+            <div className="border-t border-white/10 py-7 grid lg:grid-cols-2 gap-8 items-start">
+              <div>
+                <div className="inline-flex items-center gap-2 bg-green-400/15 border border-green-400/25 text-green-300 rounded-full px-3 py-1 text-xs font-bold uppercase tracking-widest mb-3">
+                  🌱 Our Mission
+                </div>
+                <h2 className="text-xl font-extrabold text-white leading-snug mb-2">
+                  Small steps create <span className="text-green-300">big change</span> for our villages.
+                </h2>
+                <p className="text-green-100/70 text-xs leading-relaxed mb-3">
+                  Every Indian village already possesses the three ingredients for sustainable energy —
+                  <strong className="text-amber-300"> sunlight</strong>,{' '}
+                  <strong className="text-emerald-300"> organic waste</strong>, and{' '}
+                  <strong className="text-cyan-300"> water</strong>.
+                  Gram Urja turns this untapped potential into measurable environmental and community benefit.
+                </p>
+                <div className="flex flex-wrap gap-2">
+                  {[{ n: '6', label: 'Areas tracked' }, { n: '100%', label: 'Formula transparency' }, { n: '3', label: 'Resource types' }, { n: '₹0', label: 'To get started' }].map(s => (
+                    <div key={s.label} className="bg-white/8 border border-white/12 rounded-xl px-3 py-2 text-center">
+                      <div className="text-base font-extrabold text-white">{s.n}</div>
+                      <div className="text-[10px] text-green-300 font-medium">{s.label}</div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+              <div className="grid grid-cols-1 gap-2">
+                {[
+                  { icon: <Sun className="w-4 h-4 text-amber-400" />, title: 'Solar — Untapped Potential', desc: 'Most village rooftops can offset 30–60% of electricity demand.', accent: 'border-amber-400/30' },
+                  { icon: <Leaf className="w-4 h-4 text-emerald-400" />, title: 'Waste — From Problem to Power', desc: 'Cow dung, food and agricultural residue generate biogas for cooking and electricity.', accent: 'border-emerald-400/30' },
+                  { icon: <Droplets className="w-4 h-4 text-cyan-400" />, title: 'Water — Smarter Use', desc: 'Rainwater harvesting and demand management cut pump energy costs.', accent: 'border-cyan-400/30' },
+                ].map(card => (
+                  <div key={card.title} className={`bg-white/6 border ${card.accent} backdrop-blur-sm rounded-xl p-3 flex gap-3 hover:bg-white/10 transition-colors`}>
+                    <div className="flex-shrink-0 p-1.5 bg-white/10 rounded-lg h-fit">{card.icon}</div>
+                    <div>
+                      <div className="font-bold text-white text-xs mb-0.5">{card.title}</div>
+                      <div className="text-green-200/70 text-[11px] leading-relaxed">{card.desc}</div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
           </div>
         </div>
 

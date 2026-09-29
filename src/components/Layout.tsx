@@ -8,7 +8,7 @@ import {
 import { useAuth } from '../context/AuthContext';
 
 const ALL_NAV_ITEMS = [
-  { to: '/', icon: <Home className="w-4 h-4" />, label: 'Overview', roles: ['official', 'citizen', 'guest'] },
+  { to: '/overview', icon: <Home className="w-4 h-4" />, label: 'Overview', roles: ['official', 'citizen', 'guest'] },
   { to: '/household', icon: <Activity className="w-4 h-4" />, label: 'My Dashboard', roles: ['citizen'] },
   { to: '/village', icon: <LayoutDashboard className="w-4 h-4" />, label: 'Village Dashboard', roles: ['official', 'guest'] },
   { to: '/solar', icon: <Sun className="w-4 h-4" />, label: 'Solar', roles: ['official', 'citizen', 'guest'] },
@@ -178,14 +178,14 @@ export default function Layout({ children }: { children: React.ReactNode }) {
             <NavLink
               key={item.to}
               to={item.to}
-              end={item.to === '/'}
+              end
               onClick={() => setMobileOpen(false)}
               title={collapsed ? item.label : undefined}
               className={({ isActive }) =>
                 isActive
-                  ? `flex items-center ${collapsed ? 'justify-center' : 'gap-3'} pl-${collapsed ? '0' : '3'} pr-${collapsed ? '0' : '3'} py-2.5 rounded-xl text-sm font-semibold transition-all duration-150 ` +
+                  ? `flex items-center ${collapsed ? 'justify-center' : 'gap-3'} px-3 py-2.5 rounded-xl text-sm font-semibold transition-all duration-150 ` +
                     'bg-emerald-100 text-emerald-800 border-l-4 border-emerald-500 shadow-sm'
-                  : `flex items-center ${collapsed ? 'justify-center' : 'gap-3'} pl-${collapsed ? '0' : '3'} pr-${collapsed ? '0' : '3'} py-2.5 rounded-xl text-sm font-medium transition-all duration-150 ` +
+                  : `flex items-center ${collapsed ? 'justify-center' : 'gap-3'} px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-150 ` +
                     'text-slate-600 hover:bg-[#E8F2EC] hover:text-emerald-900 border-l-4 border-transparent'
               }
             >
@@ -220,8 +220,8 @@ export default function Layout({ children }: { children: React.ReactNode }) {
       {/* ── Main content — takes remaining width, scrolls independently ── */}
       <div className="relative z-10 flex-1 flex flex-col min-w-0 h-screen overflow-hidden">
 
-        {/* Top bar */}
-        <header className="flex-shrink-0 z-20 flex items-center px-5 h-14 gap-4"
+        {/* Top bar — mobile menu toggle only, no status text */}
+        <header className="flex-shrink-0 z-20 flex items-center px-4 h-12 lg:hidden"
           style={{
             background: 'rgba(255,255,255,0.85)',
             backdropFilter: 'blur(12px)',
@@ -230,18 +230,9 @@ export default function Layout({ children }: { children: React.ReactNode }) {
             boxShadow: '0 1px 8px rgba(5,46,22,0.05)',
           }}>
           <button onClick={() => setMobileOpen(true)}
-            className="lg:hidden text-gray-500 hover:text-gray-700 flex-shrink-0 p-1 rounded-lg hover:bg-gray-100 transition-colors">
+            className="text-gray-500 hover:text-gray-700 flex-shrink-0 p-1 rounded-lg hover:bg-gray-100 transition-colors">
             <Menu className="w-5 h-5" />
           </button>
-          <div className="flex items-center gap-2 text-sm text-gray-500 min-w-0">
-            <span className="w-2 h-2 flex-shrink-0 bg-emerald-500 rounded-full animate-pulse" />
-            <span className="truncate font-medium text-gray-600">Live monitoring active</span>
-          </div>
-          <div className="ml-auto flex items-center gap-3 flex-shrink-0">
-            <span className="hidden sm:inline text-xs text-amber-600 bg-amber-50 border border-amber-200 rounded-full px-3 py-1 font-semibold">
-              
-            </span>
-          </div>
         </header>
 
         {/* Page content — this scrolls, sidebar stays fixed */}

@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import type { Session, User } from '@supabase/supabase-js';
-import { supabase } from '../lib/supabaseClient';
+import { supabase, SUPABASE_CONFIGURED } from '../lib/supabaseClient';
 
 export type UserRole = 'official' | 'citizen' | 'guest';
 
@@ -33,6 +33,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    if (!SUPABASE_CONFIGURED) {
+      // No credentials — skip all network calls, boot instantly
+      setLoading(false);
+      return;
+    }
+
     // Get existing session on mount
     supabase.auth.getSession().then(({ data }) => {
       setSession(data.session);
@@ -50,17 +56,23 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   async function signIn(email: string, password: string) {
+    if (!SUPABASE_CONFIGURED) {
+      return { error: 'Supabase is not configured. Add VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY to your .env file.' };
+    }
     const { error } = await supabase.auth.signInWithPassword({ email, password });
     return { error: error?.message ?? null };
   }
 
   async function signUp(email: string, password: string) {
+    if (!SUPABASE_CONFIGURED) {
+      return { error: 'Supabase is not configured. Add VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY to your .env file.' };
+    }
     const { error } = await supabase.auth.signUp({ email, password });
     return { error: error?.message ?? null };
   }
 
   async function signOut() {
-    await supabase.auth.signOut();
+    if (SUPABASE_CONFIGURED) await supabase.auth.signOut();
     setRole('guest');
   }
 
