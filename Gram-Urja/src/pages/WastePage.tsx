@@ -150,27 +150,7 @@ export default function WastePage() {
           source="Standard tariff" dataType="Estimated" />
       </div>
 
-      <div className="grid lg:grid-cols-2 gap-6 mb-6">
-        {/* Biogas source breakdown pie */}
-        <SectionCard title="Biogas by Source" subtitle="m³/day contribution" icon={<Leaf className="w-4 h-4" />}>
-          <DemoBadge className="mb-4" />
-          <ResponsiveContainer width="100%" height={180}>
-            <PieChart>
-              <Pie data={biogasBreakdown} cx="50%" cy="50%" outerRadius={70} dataKey="value" nameKey="name" label={({ name, value }) => `${name}: ${value.toFixed(3)}`}>
-                {biogasBreakdown.map((_, i) => <Cell key={i} fill={COLORS[i % COLORS.length]} />)}
-              </Pie>
-              <Tooltip formatter={(v: number) => [`${v.toFixed(4)} m³/day`, '']} />
-            </PieChart>
-          </ResponsiveContainer>
-          <AssumptionBox items={[
-            { label: 'Cow dung', value: '0.04 m³ biogas/kg' },
-            { label: 'Food waste', value: '0.06 m³ biogas/kg' },
-            { label: 'Agri waste', value: '0.02 m³ biogas/kg' },
-            { label: 'Biogas→thermal', value: '6 kWh/m³' },
-            { label: 'Biogas→electric', value: '2 kWh/m³' },
-          ]} />
-        </SectionCard>
-
+      <div className="mb-6">
         {/* Detailed breakdown */}
         <SectionCard title="Energy Recovery Summary" subtitle="Full chain from waste to energy" icon={<Zap className="w-4 h-4" />}>
           <DemoBadge className="mb-4" />
@@ -187,23 +167,7 @@ export default function WastePage() {
         </SectionCard>
       </div>
 
-      {/* Area comparison */}
-      <SectionCard title="Biogas Potential — All Areas" subtitle="Community-scale comparison">
-        <DemoBadge className="mb-4" />
-        <ResponsiveContainer width="100%" height={220}>
-          <BarChart data={areaWaste} margin={{ left: -10 }}>
-            <XAxis dataKey="name" tick={{ fontSize: 11 }} />
-            <YAxis tick={{ fontSize: 11 }} />
-            <Tooltip />
-            <Bar dataKey="Biogas m³/day" fill="#16a34a" radius={[3, 3, 0, 0]} />
-            <Bar dataKey="kWh/day" fill="#f59e0b" radius={[3, 3, 0, 0]} />
-          </BarChart>
-        </ResponsiveContainer>
-        <AssumptionBox items={[
-          { label: 'Biogas bar', value: 'm³ biogas per day' },
-          { label: 'kWh bar', value: 'Electricity equivalent (2 kWh/m³)' },
-        ]} />
-      </SectionCard>
+
       </div>
     </div>
   );
