@@ -127,7 +127,7 @@ What would you like to know? Try asking: *"What is Motipur's monthly energy cost
 • Rainwater offset: **${waterAnalysis.rainwaterOffsetPercent}%** of monthly demand
 
 *LPCD: 55 L/person/day (rural) · Runoff coefficient: 0.80*`;
-      navigationSuggestion = '/water';
+      navigationSuggestion = '/overview';
       relatedMetric = 'water';
     } else if (WASTE_KEYWORDS.some((k) => q.includes(k))) {
       content = `**${area.name} — Waste & Biogas** *(Demo Data)*

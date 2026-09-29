@@ -86,7 +86,7 @@ export default function LoginPage() {
             </div>
           </div>
           <p className="text-white/50 text-sm max-w-sm mx-auto">
-            Clean Energy · Smart Water · Zero Waste
+            Clean Energy · Biomass &amp; Solar · Zero Waste
           </p>
         </div>
 

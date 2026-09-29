@@ -19,8 +19,8 @@ function getLiveImpact() {
       s + a.area.cowDungKgPerDay + a.area.foodWasteKgPerDay + a.area.agriWasteKgPerDay, 0
     ) / 1000
   ).toFixed(1);
-  const waterSavedLDay = Math.round(
-    analyses.reduce((s, a) => s + a.waterAnalysis.rainwaterPotentialLitresPerYear, 0) / 365,
+  const co2DailyKg = Math.round(
+    analyses.reduce((s, a) => s + a.co2KgPerMonth, 0) / 30,
   );
   const biogasDailyKWh = Math.round(
     analyses.reduce((s, a) => s + a.wasteAnalysis.electricityKWhPerDay, 0),
@@ -29,7 +29,7 @@ function getLiveImpact() {
     analyses.reduce((s, a) => s + a.area.infrastructure.solar.installedCapacity * ASSUMPTIONS.solarKWhPerKWPerDay, 0),
   );
   const energyGenKWh = biogasDailyKWh + existingSolarDailyKWh;
-  return { solarDailyKWh, wasteTonsPerDay, waterSavedLDay, energyGenKWh };
+  return { solarDailyKWh, wasteTonsPerDay, co2DailyKg, energyGenKWh };
 }
 
 // ─── Animated counter hook ────────────────────────────────────────────────────
@@ -75,7 +75,7 @@ function useInView(threshold = 0.2): [React.RefObject<HTMLDivElement>, boolean] 
 const HERO_PHOTOS = [
   { url: 'https://images.unsplash.com/photo-1509391366360-2e959784a276?w=900&q=80&auto=format&fit=crop', label: '☀️ Solar Panels · Clean Energy' },
   { url: 'https://images.unsplash.com/photo-1501854140801-50d01698950b?w=900&q=80&auto=format&fit=crop', label: '🌿 Green Fields · Rural India' },
-  { url: 'https://images.unsplash.com/photo-1504711434969-e33886168f5c?w=900&q=80&auto=format&fit=crop', label: '💧 Water Resources · Sustainability' },
+  { url: 'https://images.unsplash.com/photo-1497435334941-8c899ee9e8e9?w=900&q=80&auto=format&fit=crop', label: '🔋 Clean Storage · Sustainable Grid' },
   { url: 'https://images.unsplash.com/photo-1508514177221-188b1cf16e9d?w=900&q=80&auto=format&fit=crop', label: '⚡ Renewable Energy · Villages' },
 ];
 
@@ -318,14 +318,14 @@ export default function LandingPage() {
       decimals: 1,
     },
     {
-      icon: <Droplets className="w-5 h-5 text-cyan-600" />,
-      iconBg: 'bg-cyan-100',
-      label: 'Water Saved',
-      sublabel: 'Rainwater harvesting potential per day',
-      value: impact.waterSavedLDay,
-      unit: 'L/day',
+      icon: <Wind className="w-5 h-5 text-teal-600" />,
+      iconBg: 'bg-teal-100',
+      label: 'CO₂ Mitigated',
+      sublabel: 'Clean energy carbon offset per day',
+      value: impact.co2DailyKg,
+      unit: 'kg/day',
       trendPct: 22,
-      accentBar: 'bg-cyan-400',
+      accentBar: 'bg-teal-400',
       inView: impactInView,
       duration: 1700,
     },
@@ -441,14 +441,14 @@ export default function LandingPage() {
                   Small steps create <span className="text-green-300">big change</span> for our villages.
                 </h2>
                 <p className="text-green-100/70 text-xs leading-relaxed mb-3">
-                  Every Indian village already possesses the three ingredients for sustainable energy —
-                  <strong className="text-amber-300"> sunlight</strong>,{' '}
-                  <strong className="text-emerald-300"> organic waste</strong>, and{' '}
-                  <strong className="text-cyan-300"> water</strong>.
+                  Every Indian village already possesses the natural ingredients for sustainable energy —
+                  <strong className="text-amber-300"> abundant sunlight</strong>,{' '}
+                  <strong className="text-emerald-300"> organic biomass &amp; agricultural residue</strong>, and{' '}
+                  <strong className="text-green-300"> local self-reliance</strong>.
                   Gram Urja turns this untapped potential into measurable environmental and community benefit.
                 </p>
                 <div className="flex flex-wrap gap-2">
-                  {[{ n: '6', label: 'Areas tracked' }, { n: '100%', label: 'Formula transparency' }, { n: '3', label: 'Resource types' }, { n: '₹0', label: 'To get started' }].map(s => (
+                  {[{ n: '6', label: 'Areas tracked' }, { n: '100%', label: 'Formula transparency' }, { n: '2', label: 'Clean Energy Pillars' }, { n: '₹0', label: 'To get started' }].map(s => (
                     <div key={s.label} className="bg-white/8 border border-white/12 rounded-xl px-3 py-2 text-center">
                       <div className="text-base font-extrabold text-white">{s.n}</div>
                       <div className="text-[10px] text-green-300 font-medium">{s.label}</div>
@@ -460,7 +460,7 @@ export default function LandingPage() {
                 {[
                   { icon: <Sun className="w-4 h-4 text-amber-400" />, title: 'Solar — Untapped Potential', desc: 'Most village rooftops can offset 30–60% of electricity demand.', accent: 'border-amber-400/30' },
                   { icon: <Leaf className="w-4 h-4 text-emerald-400" />, title: 'Waste — From Problem to Power', desc: 'Cow dung, food and agricultural residue generate biogas for cooking and electricity.', accent: 'border-emerald-400/30' },
-                  { icon: <Droplets className="w-4 h-4 text-cyan-400" />, title: 'Water — Smarter Use', desc: 'Rainwater harvesting and demand management cut pump energy costs.', accent: 'border-cyan-400/30' },
+                  { icon: <Zap className="w-4 h-4 text-green-400" />, title: 'Energy Efficiency — Smarter Grid', desc: 'Smart appliance monitoring and LED microgrids optimize village power balance.', accent: 'border-green-400/30' },
                 ].map(card => (
                   <div key={card.title} className={`bg-white/6 border ${card.accent} backdrop-blur-sm rounded-xl p-3 flex gap-3 hover:bg-white/10 transition-colors`}>
                     <div className="flex-shrink-0 p-1.5 bg-white/10 rounded-lg h-fit">{card.icon}</div>

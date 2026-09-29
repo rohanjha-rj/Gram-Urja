@@ -1,6 +1,6 @@
 import React, { useState, useMemo, useEffect, useRef } from 'react';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts';
-import { Sun, Zap, Leaf, TrendingDown, ArrowRight, ChevronDown, ChevronUp, Lightbulb } from 'lucide-react';
+import { Sun, Zap, Leaf, TrendingDown, ArrowRight, ChevronDown, ChevronUp, Lightbulb, Clock, BatteryCharging, TreePine, Sparkles, ShieldCheck } from 'lucide-react';
 import {
   calculateSolarCapacity, calculateSolarGeneration, calculateSolarOffset,
   calculateSolarCO2Avoided, calculateBeforeAfterScenario, calculateElectricityCost, ASSUMPTIONS
@@ -123,219 +123,237 @@ function RealisticPanel({
 function PanelSimulator({
   panelCount, availAreaSqFt, totalCapacity, monthlyGen, offsetPct, irradiation,
   showFooterStats = true,
+  customSunAngle,
 }: {
   panelCount: number; availAreaSqFt: number; totalCapacity: number;
   monthlyGen: number; offsetPct: number; irradiation: number;
   showFooterStats?: boolean;
+  customSunAngle?: number;
 }) {
   const PANEL_AREA_SQFT = 10;
   const usedArea      = Math.min(panelCount * PANEL_AREA_SQFT, availAreaSqFt);
   const remainingArea = Math.max(0, availAreaSqFt - usedArea);
   const maxDisplay    = Math.min(panelCount, 120);
 
-  const W = 800; const H = 420; const SKY_H = 120;
-  const ROOF_TL = { x: 80,  y: SKY_H };
-  const ROOF_TR = { x: 720, y: SKY_H };
-  const ROOF_BR = { x: 760, y: H - 40 };
-  const ROOF_BL = { x: 40,  y: H - 40 };
+  const W = 800; const H = 460; const SKY_H = 130;
+  const ROOF_TL = { x: 70,  y: SKY_H };
+  const ROOF_TR = { x: 730, y: SKY_H };
+  const ROOF_BR = { x: 770, y: H - 42 };
+  const ROOF_BL = { x: 30,  y: H - 42 };
 
   const COLS = 10;
   const ROWS = Math.ceil(120 / COLS);
-  const GRID_LEFT = 80;  const GRID_TOP = SKY_H + 18;
-  const GRID_W    = W - 160;
-  const GRID_H    = H - SKY_H - 60;
+  const GRID_LEFT = 70;  const GRID_TOP = SKY_H + 18;
+  const GRID_W    = W - 140;
+  const GRID_H    = H - SKY_H - 64;
   const PANEL_W   = (GRID_W - (COLS + 1) * 3) / COLS;
   const PANEL_H   = (GRID_H - (ROWS + 1) * 5) / ROWS;
   const GAP_X = 3; const GAP_Y = 5;
 
-  const [sunAngle, setSunAngle] = useState(45);
+  const [autoSunAngle, setAutoSunAngle] = useState(45);
   const rafRef = useRef<number>();
   const t0 = useRef(Date.now());
   useEffect(() => {
+    if (customSunAngle !== undefined) return;
     const tick = () => {
       const elapsed = (Date.now() - t0.current) / 1000;
-      setSunAngle(45 + Math.sin(elapsed * 0.08) * 25);
+      setAutoSunAngle(45 + Math.sin(elapsed * 0.08) * 25);
       rafRef.current = requestAnimationFrame(tick);
     };
     rafRef.current = requestAnimationFrame(tick);
     return () => { if (rafRef.current) cancelAnimationFrame(rafRef.current); };
-  }, []);
+  }, [customSunAngle]);
 
-  const SUN_R  = 110;
-  const SUN_CX = 400 + SUN_R * Math.cos((sunAngle - 90) * Math.PI / 180);
-  const SUN_CY = SKY_H / 2 + SUN_R * Math.sin((sunAngle - 90) * Math.PI / 180) + 20;
+  const activeSunAngle = customSunAngle !== undefined ? customSunAngle : autoSunAngle;
+
+  const SUN_R  = 115;
+  const SUN_CX = 400 + SUN_R * Math.cos((activeSunAngle - 90) * Math.PI / 180);
+  const SUN_CY = SKY_H / 2 + SUN_R * Math.sin((activeSunAngle - 90) * Math.PI / 180) + 15;
 
   const sparks = useMemo(() =>
-    Array.from({ length: Math.min(maxDisplay, 12) }, (_, i) => {
+    Array.from({ length: Math.min(maxDisplay, 14) }, (_, i) => {
       const col = (i * 7) % COLS;
       const row = Math.floor((i * 7) / COLS) % ROWS;
       const bx  = GRID_LEFT + col * (PANEL_W + GAP_X) + PANEL_W / 2;
       const by  = GRID_TOP  + row * (PANEL_H + GAP_Y) + PANEL_H / 2;
-      return { x: bx, y: by, delay: (i * 0.37) % 2.5 };
+      return { x: bx, y: by, delay: (i * 0.35) % 2.5 };
     }), [maxDisplay, PANEL_W, PANEL_H]);
 
   const fillPct = Math.min((usedArea / availAreaSqFt) * 100, 100);
 
   return (
-    <div className="rounded-3xl overflow-hidden shadow-2xl border border-slate-700/60"
+    <div className="rounded-3xl overflow-hidden shadow-2xl border border-slate-700/60 flex flex-col h-full"
       style={{ background: 'linear-gradient(180deg,#0f172a 0%,#1e293b 100%)' }}>
 
-      <div className="flex items-center justify-between px-5 py-3 border-b border-white/8"
-        style={{ background: 'rgba(15,23,42,0.8)' }}>
-        <div className="flex items-center gap-2">
+      <div className="flex flex-wrap items-center justify-between px-5 py-3.5 border-b border-white/8 gap-2"
+        style={{ background: 'rgba(15,23,42,0.85)' }}>
+        <div className="flex items-center gap-2.5">
           <div className="w-2.5 h-2.5 rounded-full bg-amber-400 animate-pulse"/>
-          <span className="text-xs font-bold text-slate-300 uppercase tracking-widest">
+          <span className="text-xs font-bold text-slate-200 uppercase tracking-widest">
             Live Roof Simulator · {availAreaSqFt.toLocaleString()} sq ft
           </span>
         </div>
-        <div className="flex items-center gap-3 text-xs">
-          <span className="text-amber-300 font-bold">{totalCapacity.toFixed(1)} kW</span>
+        <div className="flex items-center gap-3 text-xs flex-wrap">
+          <span className="text-amber-300 font-bold bg-amber-500/10 px-2 py-0.5 rounded border border-amber-500/20">{totalCapacity.toFixed(1)} kW System</span>
           <span className="text-slate-500">|</span>
-          <span className="text-green-300 font-bold">{monthlyGen.toFixed(0)} kWh/mo</span>
+          <span className="text-green-300 font-bold bg-green-500/10 px-2 py-0.5 rounded border border-green-500/20">{monthlyGen.toFixed(0)} kWh/mo</span>
           <span className="text-slate-500">|</span>
-          <span className="text-blue-300 font-bold">{offsetPct.toFixed(1)}% offset</span>
+          <span className="text-blue-300 font-bold bg-blue-500/10 px-2 py-0.5 rounded border border-blue-500/20">{offsetPct.toFixed(1)}% offset</span>
         </div>
       </div>
 
-      <svg viewBox={`0 0 ${W} ${H}`} className="w-full" style={{ display: 'block' }}>
-        <defs>
-          <linearGradient id="ps-sky" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%"   stopColor={irradiation > 4 ? '#0ea5e9' : '#1e3a5f'}/>
-            <stop offset="100%" stopColor={irradiation > 4 ? '#38bdf8' : '#1e40af'}/>
-          </linearGradient>
-          <linearGradient id="ps-roof" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%"   stopColor="#78350f"/>
-            <stop offset="50%"  stopColor="#92400e"/>
-            <stop offset="100%" stopColor="#7c2d12"/>
-          </linearGradient>
-          <radialGradient id="ps-sun-glow" cx="50%" cy="50%" r="50%">
-            <stop offset="0%"   stopColor="#fef08a" stopOpacity="0.9"/>
-            <stop offset="60%"  stopColor="#fbbf24" stopOpacity="0.4"/>
-            <stop offset="100%" stopColor="#f59e0b" stopOpacity="0"/>
-          </radialGradient>
-          <linearGradient id="ps-energy" x1="0" y1="0" x2="1" y2="0">
-            <stop offset="0%"   stopColor="#fbbf24" stopOpacity="0"/>
-            <stop offset="50%"  stopColor="#fbbf24" stopOpacity="0.8"/>
-            <stop offset="100%" stopColor="#4ade80"  stopOpacity="0.6"/>
-          </linearGradient>
-          <clipPath id="ps-roof-clip">
-            <polygon points={`${ROOF_TL.x},${ROOF_TL.y} ${ROOF_TR.x},${ROOF_TR.y} ${ROOF_BR.x},${ROOF_BR.y} ${ROOF_BL.x},${ROOF_BL.y}`}/>
-          </clipPath>
-          <filter id="ps-glow">
-            <feGaussianBlur stdDeviation="3" result="blur"/>
-            <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
-          </filter>
-        </defs>
+      <div className="relative flex-1 flex items-center justify-center p-2 bg-gradient-to-b from-slate-900 via-slate-900/90 to-slate-950">
+        <svg viewBox={`0 0 ${W} ${H}`} className="w-full h-auto max-h-[500px]" style={{ display: 'block' }}>
+          <defs>
+            <linearGradient id="ps-sky" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%"   stopColor={irradiation > 4 ? '#0ea5e9' : '#1e3a5f'}/>
+              <stop offset="100%" stopColor={irradiation > 4 ? '#38bdf8' : '#1e40af'}/>
+            </linearGradient>
+            <linearGradient id="ps-roof" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%"   stopColor="#78350f"/>
+              <stop offset="50%"  stopColor="#92400e"/>
+              <stop offset="100%" stopColor="#7c2d12"/>
+            </linearGradient>
+            <radialGradient id="ps-sun-glow" cx="50%" cy="50%" r="50%">
+              <stop offset="0%"   stopColor="#fef08a" stopOpacity="0.95"/>
+              <stop offset="50%"  stopColor="#fbbf24" stopOpacity="0.45"/>
+              <stop offset="100%" stopColor="#f59e0b" stopOpacity="0"/>
+            </radialGradient>
+            <linearGradient id="ps-energy" x1="0" y1="0" x2="1" y2="0">
+              <stop offset="0%"   stopColor="#fbbf24" stopOpacity="0"/>
+              <stop offset="50%"  stopColor="#fbbf24" stopOpacity="0.8"/>
+              <stop offset="100%" stopColor="#4ade80"  stopOpacity="0.6"/>
+            </linearGradient>
+            <clipPath id="ps-roof-clip">
+              <polygon points={`${ROOF_TL.x},${ROOF_TL.y} ${ROOF_TR.x},${ROOF_TR.y} ${ROOF_BR.x},${ROOF_BR.y} ${ROOF_BL.x},${ROOF_BL.y}`}/>
+            </clipPath>
+            <filter id="ps-glow">
+              <feGaussianBlur stdDeviation="3" result="blur"/>
+              <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+            </filter>
+          </defs>
 
-        <rect x="0" y="0" width={W} height={SKY_H} fill="url(#ps-sky)"/>
-        <rect x="0" y={SKY_H - 20} width={W} height="20" fill="url(#ps-sky)" opacity="0.5"/>
-        <circle cx={SUN_CX} cy={SUN_CY} r="55" fill="url(#ps-sun-glow)" opacity="0.7"/>
-        <g className="sun-spin" style={{ transformOrigin: `${SUN_CX}px ${SUN_CY}px` }}>
-          {[0,20,40,60,80,100,120,140,160,180,200,220,240,260,280,300,320,340].map((a, i) => (
-            <line key={i}
-              x1={SUN_CX + 24 * Math.cos(a * Math.PI / 180)}
-              y1={SUN_CY + 24 * Math.sin(a * Math.PI / 180)}
-              x2={SUN_CX + 36 * Math.cos(a * Math.PI / 180)}
-              y2={SUN_CY + 36 * Math.sin(a * Math.PI / 180)}
-              stroke="#fbbf24" strokeWidth="1.5" strokeLinecap="round" opacity="0.7"/>
-          ))}
-        </g>
-        <circle cx={SUN_CX} cy={SUN_CY} r="20" fill="#fef08a" className="solar-glow"/>
-        <circle cx={SUN_CX} cy={SUN_CY} r="14" fill="#fbbf24"/>
-        <circle cx={SUN_CX} cy={SUN_CY} r="8"  fill="#f59e0b"/>
-        <text x={SUN_CX + 28} y={SUN_CY - 8} fill="#fef08a" fontSize="9" fontWeight="700" opacity="0.85">
-          {irradiation} kWh/kW·day
-        </text>
+          {/* Sky background */}
+          <rect x="0" y="0" width={W} height={SKY_H} fill="url(#ps-sky)"/>
+          <rect x="0" y={SKY_H - 20} width={W} height="20" fill="url(#ps-sky)" opacity="0.5"/>
 
-        {irradiation < 4.5 && (
-          <g opacity={0.5 - (irradiation - 3) * 0.2} className="gu-cloud-1">
-            <ellipse cx="220" cy="55" rx="55" ry="20" fill="white"/>
-            <ellipse cx="195" cy="52" rx="32" ry="16" fill="white"/>
-            <ellipse cx="248" cy="50" rx="26" ry="13" fill="white"/>
+          {/* Sun & Light effect */}
+          <circle cx={SUN_CX} cy={SUN_CY} r="60" fill="url(#ps-sun-glow)" opacity="0.75"/>
+          <g className="sun-spin" style={{ transformOrigin: `${SUN_CX}px ${SUN_CY}px` }}>
+            {[0,20,40,60,80,100,120,140,160,180,200,220,240,260,280,300,320,340].map((a, i) => (
+              <line key={i}
+                x1={SUN_CX + 24 * Math.cos(a * Math.PI / 180)}
+                y1={SUN_CY + 24 * Math.sin(a * Math.PI / 180)}
+                x2={SUN_CX + 38 * Math.cos(a * Math.PI / 180)}
+                y2={SUN_CY + 38 * Math.sin(a * Math.PI / 180)}
+                stroke="#fbbf24" strokeWidth="1.75" strokeLinecap="round" opacity="0.75"/>
+            ))}
           </g>
-        )}
+          <circle cx={SUN_CX} cy={SUN_CY} r="22" fill="#fef08a" className="solar-glow"/>
+          <circle cx={SUN_CX} cy={SUN_CY} r="15" fill="#fbbf24"/>
+          <circle cx={SUN_CX} cy={SUN_CY} r="9"  fill="#f59e0b"/>
+          <text x={SUN_CX + 30} y={SUN_CY - 10} fill="#fef08a" fontSize="10" fontWeight="700" opacity="0.9">
+            {irradiation} kWh/kW·day
+          </text>
 
-        <polygon
-          points={`${ROOF_TL.x},${ROOF_TL.y} ${ROOF_TR.x},${ROOF_TR.y} ${ROOF_BR.x},${ROOF_BR.y} ${ROOF_BL.x},${ROOF_BL.y}`}
-          fill="url(#ps-roof)"/>
-        {Array.from({ length: 8 }, (_, i) => {
-          const ty     = ROOF_TL.y + (i + 1) * ((H - 40 - SKY_H) / 9);
-          const leftX  = ROOF_TL.x + (ROOF_BL.x - ROOF_TL.x) * ((i + 1) / 9);
-          const rightX = ROOF_TR.x + (ROOF_BR.x - ROOF_TR.x) * ((i + 1) / 9);
-          return <line key={i} x1={leftX} y1={ty} x2={rightX} y2={ty} stroke="#7c2d12" strokeWidth="1.5" opacity="0.4"/>;
-        })}
-
-        {Array.from({ length: ROWS }, (_, row) => {
-          const y1 = GRID_TOP + row * (PANEL_H + GAP_Y) + PANEL_H * 0.3;
-          const y2 = GRID_TOP + row * (PANEL_H + GAP_Y) + PANEL_H * 0.7;
-          return (
-            <g key={row}>
-              <line x1={GRID_LEFT - 10} y1={y1} x2={GRID_LEFT + GRID_W + 10} y2={y1} stroke="#64748b" strokeWidth="3" opacity="0.5"/>
-              <line x1={GRID_LEFT - 10} y1={y2} x2={GRID_LEFT + GRID_W + 10} y2={y2} stroke="#64748b" strokeWidth="3" opacity="0.5"/>
+          {irradiation < 4.5 && (
+            <g opacity={0.5 - (irradiation - 3) * 0.2} className="gu-cloud-1">
+              <ellipse cx="220" cy="55" rx="55" ry="20" fill="white"/>
+              <ellipse cx="195" cy="52" rx="32" ry="16" fill="white"/>
+              <ellipse cx="248" cy="50" rx="26" ry="13" fill="white"/>
             </g>
-          );
-        })}
-
-        {Array.from({ length: Math.min(ROWS * COLS, 120) }, (_, i) => {
-          const col    = i % COLS;
-          const row    = Math.floor(i / COLS);
-          const px     = GRID_LEFT + col * (PANEL_W + GAP_X);
-          const py     = GRID_TOP  + row * (PANEL_H + GAP_Y);
-          const active = i < maxDisplay;
-          return <RealisticPanel key={i} x={px} y={py} w={PANEL_W} h={PANEL_H} active={active} delay={i * 40}/>;
-        })}
-
-        {maxDisplay > 0 && sparks.map((sp, i) => (
-          <circle key={i} cx={sp.x} cy={sp.y} r="3" fill="#fbbf24" filter="url(#ps-glow)"
-            style={{ animation: `guSparkTravel 2.2s ease-in-out ${sp.delay}s infinite`, transformOrigin: `${sp.x}px ${sp.y}px` }}/>
-        ))}
-
-        <g transform={`translate(${W - 110}, ${H - 80})`}>
-          <rect width="80" height="44" fill="#1e293b" stroke="#334155" strokeWidth="1.5" rx="6"/>
-          <rect x="6" y="6" width="68" height="32" fill="#0f172a" rx="3"/>
-          <text x="40" y="19" textAnchor="middle" fill="#4ade80" fontSize="7" fontWeight="700">INVERTER</text>
-          <circle cx="40" cy="29" r="3" fill="#4ade80" className="solar-glow"/>
-          <text x="40" y="38" textAnchor="middle" fill="#94a3b8" fontSize="6">{totalCapacity.toFixed(1)} kW AC</text>
-          <line x1="-30" y1="22" x2="0" y2="22" stroke="#fbbf24" strokeWidth="2" strokeDasharray="6 3" className="energy-flow" opacity="0.7"/>
-        </g>
-
-        <g transform={`translate(${W - 200}, ${H - 95})`}>
-          <rect x="0" y="30" width="50" height="40" fill="#fefce8" stroke="#d1d5db" strokeWidth="1.5" rx="2"/>
-          <polygon points="-5,30 55,30 25,4" fill="#16a34a"/>
-          {maxDisplay > 0 && (
-            <rect x="3" y="33" width="44" height="34" fill="#fbbf24" rx="1" opacity="0.06"
-              style={{ animation: 'glow 2s ease-in-out infinite' }}/>
           )}
-          <rect x="18" y="46" width="14" height="22" fill="#bfdbfe" stroke="#93c5fd" strokeWidth="1" rx="1"/>
-          <rect x="4"  y="37" width="11" height="9"  fill="#bfdbfe" stroke="#93c5fd" strokeWidth="1"/>
-          <rect x="35" y="37" width="11" height="9"  fill="#bfdbfe" stroke="#93c5fd" strokeWidth="1"/>
-          <text x="25" y="72" textAnchor="middle" fill="#166534" fontSize="6" fontWeight="700">✓ POWERED</text>
-        </g>
 
-        {maxDisplay > 0 && (
-          <line x1={SUN_CX} y1={SUN_CY} x2={GRID_LEFT + GRID_W / 2} y2={GRID_TOP + PANEL_H}
-            stroke="#fbbf24" strokeWidth="1.5" strokeDasharray="10 6" className="energy-flow" opacity="0.35"/>
-        )}
+          {/* Roof 3D Plane */}
+          <polygon
+            points={`${ROOF_TL.x},${ROOF_TL.y} ${ROOF_TR.x},${ROOF_TR.y} ${ROOF_BR.x},${ROOF_BR.y} ${ROOF_BL.x},${ROOF_BL.y}`}
+            fill="url(#ps-roof)"/>
+          {Array.from({ length: 8 }, (_, i) => {
+            const ty     = ROOF_TL.y + (i + 1) * ((H - 42 - SKY_H) / 9);
+            const leftX  = ROOF_TL.x + (ROOF_BL.x - ROOF_TL.x) * ((i + 1) / 9);
+            const rightX = ROOF_TR.x + (ROOF_BR.x - ROOF_TR.x) * ((i + 1) / 9);
+            return <line key={i} x1={leftX} y1={ty} x2={rightX} y2={ty} stroke="#7c2d12" strokeWidth="1.5" opacity="0.4"/>;
+          })}
 
-        <rect x="0" y={H - 40} width={W} height="40" fill="#166534" opacity="0.7"/>
-        <rect x="0" y={H - 40} width={W} height="6"  fill="#15803d"/>
-        <rect x="40" y={H - 28} width={W - 80} height="8" fill="#0f172a" rx="4"/>
-        <rect x="40" y={H - 28}
-          width={Math.max(8, ((fillPct / 100) * (W - 80)))} height="8"
-          fill={fillPct < 50 ? '#16a34a' : fillPct < 80 ? '#f59e0b' : '#ef4444'} rx="4"
-          style={{ transition: 'width 0.5s ease' }}/>
-        <text x="44"     y={H - 32} fill="#94a3b8" fontSize="8">Roof coverage</text>
-        <text x={W - 44} y={H - 32} textAnchor="end" fill="#94a3b8" fontSize="8">
-          {fillPct.toFixed(0)}% of {availAreaSqFt.toLocaleString()} sq ft
-        </text>
-        <text x={W / 2} y={GRID_TOP - 4} textAnchor="middle" fill="#cbd5e1" fontSize="9" fontWeight="600">
-          {maxDisplay} / {Math.min(ROWS * COLS, 120)} panels shown  ·  {panelCount} total configured
-        </text>
-      </svg>
+          {/* Mounting rails */}
+          {Array.from({ length: ROWS }, (_, row) => {
+            const y1 = GRID_TOP + row * (PANEL_H + GAP_Y) + PANEL_H * 0.3;
+            const y2 = GRID_TOP + row * (PANEL_H + GAP_Y) + PANEL_H * 0.7;
+            return (
+              <g key={row}>
+                <line x1={GRID_LEFT - 10} y1={y1} x2={GRID_LEFT + GRID_W + 10} y2={y1} stroke="#64748b" strokeWidth="3" opacity="0.5"/>
+                <line x1={GRID_LEFT - 10} y1={y2} x2={GRID_LEFT + GRID_W + 10} y2={y2} stroke="#64748b" strokeWidth="3" opacity="0.5"/>
+              </g>
+            );
+          })}
 
-      {/* Footer stats — shown only for village official view */}
+          {/* Realistic Panels Grid */}
+          {Array.from({ length: Math.min(ROWS * COLS, 120) }, (_, i) => {
+            const col    = i % COLS;
+            const row    = Math.floor(i / COLS);
+            const px     = GRID_LEFT + col * (PANEL_W + GAP_X);
+            const py     = GRID_TOP  + row * (PANEL_H + GAP_Y);
+            const active = i < maxDisplay;
+            return <RealisticPanel key={i} x={px} y={py} w={PANEL_W} h={PANEL_H} active={active} delay={i * 35}/>;
+          })}
+
+          {/* Sparks */}
+          {maxDisplay > 0 && sparks.map((sp, i) => (
+            <circle key={i} cx={sp.x} cy={sp.y} r="3.5" fill="#fbbf24" filter="url(#ps-glow)"
+              style={{ animation: `guSparkTravel 2.2s ease-in-out ${sp.delay}s infinite`, transformOrigin: `${sp.x}px ${sp.y}px` }}/>
+          ))}
+
+          {/* Inverter Unit */}
+          <g transform={`translate(${W - 115}, ${H - 84})`}>
+            <rect width="84" height="46" fill="#1e293b" stroke="#334155" strokeWidth="1.5" rx="6"/>
+            <rect x="6" y="6" width="72" height="34" fill="#0f172a" rx="3"/>
+            <text x="42" y="19" textAnchor="middle" fill="#4ade80" fontSize="7.5" fontWeight="700">INVERTER</text>
+            <circle cx="42" cy="29" r="3" fill="#4ade80" className="solar-glow"/>
+            <text x="42" y="38" textAnchor="middle" fill="#94a3b8" fontSize="6.5">{totalCapacity.toFixed(1)} kW AC</text>
+            <line x1="-32" y1="23" x2="0" y2="23" stroke="#fbbf24" strokeWidth="2" strokeDasharray="6 3" className="energy-flow" opacity="0.7"/>
+          </g>
+
+          {/* Powered House */}
+          <g transform={`translate(${W - 215}, ${H - 100})`}>
+            <rect x="0" y="30" width="54" height="44" fill="#fefce8" stroke="#d1d5db" strokeWidth="1.5" rx="2"/>
+            <polygon points="-5,30 59,30 27,4" fill="#16a34a"/>
+            {maxDisplay > 0 && (
+              <rect x="3" y="33" width="48" height="38" fill="#fbbf24" rx="1" opacity="0.08"
+                style={{ animation: 'glow 2s ease-in-out infinite' }}/>
+            )}
+            <rect x="20" y="48" width="14" height="26" fill="#bfdbfe" stroke="#93c5fd" strokeWidth="1" rx="1"/>
+            <rect x="5"  y="38" width="12" height="10" fill="#bfdbfe" stroke="#93c5fd" strokeWidth="1"/>
+            <rect x="37" y="38" width="12" height="10" fill="#bfdbfe" stroke="#93c5fd" strokeWidth="1"/>
+            <text x="27" y="76" textAnchor="middle" fill="#166534" fontSize="6.5" fontWeight="700">✓ POWERED</text>
+          </g>
+
+          {/* Energy Beams from Sun */}
+          {maxDisplay > 0 && (
+            <line x1={SUN_CX} y1={SUN_CY} x2={GRID_LEFT + GRID_W / 2} y2={GRID_TOP + PANEL_H}
+              stroke="#fbbf24" strokeWidth="2" strokeDasharray="10 6" className="energy-flow" opacity="0.4"/>
+          )}
+
+          {/* Roof Baseline & Coverage Bar */}
+          <rect x="0" y={H - 42} width={W} height="42" fill="#166534" opacity="0.75"/>
+          <rect x="0" y={H - 42} width={W} height="6"  fill="#15803d"/>
+          <rect x="40" y={H - 28} width={W - 80} height="9" fill="#0f172a" rx="4.5"/>
+          <rect x="40" y={H - 28}
+            width={Math.max(8, ((fillPct / 100) * (W - 80)))} height="9"
+            fill={fillPct < 50 ? '#16a34a' : fillPct < 80 ? '#f59e0b' : '#ef4444'} rx="4.5"
+            style={{ transition: 'width 0.5s ease' }}/>
+          <text x="44"     y={H - 33} fill="#94a3b8" fontSize="8.5">Roof coverage</text>
+          <text x={W - 44} y={H - 33} textAnchor="end" fill="#94a3b8" fontSize="8.5">
+            {fillPct.toFixed(0)}% of {availAreaSqFt.toLocaleString()} sq ft ({usedArea} sq ft used)
+          </text>
+          <text x={W / 2} y={GRID_TOP - 4} textAnchor="middle" fill="#cbd5e1" fontSize="9.5" fontWeight="600">
+            {maxDisplay} / {Math.min(ROWS * COLS, 120)} panels rendered  ·  {panelCount} total configured ({totalCapacity.toFixed(1)} kW)
+          </text>
+        </svg>
+      </div>
+
+      {/* Footer stats */}
       {showFooterStats && (
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 px-5 py-4 border-t border-white/8">
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 px-5 py-4 border-t border-white/8 bg-slate-900/60">
           {[
             { label: 'Panels Installed', value: panelCount.toString(),         unit: 'panels', color: 'text-amber-300' },
             { label: 'Area Used',        value: usedArea.toLocaleString(),      unit: 'sq ft',  color: 'text-blue-300'  },
@@ -769,6 +787,7 @@ function HouseholdSolarView() {
 
   const [availAreaSqFt, setAvailAreaSqFt] = useState(1200);
   const [panelCount, setPanelCount]       = useState(10);
+  const [sunPreset, setSunPreset]         = useState<'auto' | 'morning' | 'noon' | 'afternoon' | 'evening'>('auto');
 
   const consumption   = totalKWh;
   const totalCapacity = panelCount * PANEL_KW;
@@ -788,130 +807,260 @@ function HouseholdSolarView() {
 
   const maxPanelsByArea = Math.floor(availAreaSqFt / PANEL_AREA_SQFT);
 
+  // Sun angle calculation based on preset
+  const customSunAngle = useMemo(() => {
+    switch (sunPreset) {
+      case 'morning':   return 25;
+      case 'noon':      return 90;
+      case 'afternoon': return 135;
+      case 'evening':   return 165;
+      default:          return undefined; // auto tick
+    }
+  }, [sunPreset]);
+
+  // Derived environmental & lifetime calculations
+  const dailyGenKWh     = (monthlyGenKWh / 30);
+  const co2AvoidedKg    = Math.round(annualGenKWh * 0.82);
+  const treesPlanted    = Math.max(1, Math.round(co2AvoidedKg / 21));
+  const lifetimeSavings = Math.max(0, (annualSavings * 25) - investment);
+  const directSelfUse   = Math.min(monthlyGenKWh, consumption);
+  const gridExportUnits = Math.max(0, monthlyGenKWh - consumption);
+
   return (
     <SolarBackground>
-      <div className="relative z-10 max-w-6xl mx-auto px-6 py-8 space-y-6">
+      <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 py-8 space-y-6">
 
         {/* ── Merged Configuration + Live Roof Simulator — side by side ── */}
-        <div className="glass-card rounded-2xl p-5 fade-up">
-          <div className="flex items-center justify-between mb-5">
-            <h2 className="font-bold text-gray-900 flex items-center gap-2 text-sm uppercase tracking-wide">
-              <Sun className="w-4 h-4 text-amber-500"/> Solar Configuration &amp; Live Roof Simulator
+        <div className="glass-card rounded-2xl p-5 sm:p-6 fade-up shadow-xl border border-gray-200/80">
+          <div className="flex flex-wrap items-center justify-between gap-2 mb-6 pb-4 border-b border-gray-100">
+            <h2 className="font-bold text-gray-900 flex items-center gap-2.5 text-base sm:text-lg tracking-wide">
+              <span className="p-2 rounded-xl bg-amber-100 text-amber-600 shadow-sm">
+                <Sun className="w-5 h-5"/>
+              </span>
+              Solar Configuration &amp; Live Interactive Roof Simulator
             </h2>
             <DemoBadge/>
           </div>
 
-          {/* Side-by-side: config left, simulator right */}
-          <div className="flex flex-col xl:flex-row gap-6">
+          {/* Side-by-side Grid: config left (5 cols), simulator + live telemetry right (7 cols) */}
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-stretch">
 
-            {/* ── Left column: all inputs + metrics ── */}
-            <div className="xl:w-[380px] shrink-0 flex flex-col gap-4 text-sm">
+            {/* ── Left column: inputs & configuration ── */}
+            <div className="lg:col-span-5 flex flex-col gap-4 text-sm">
 
-              {/* Energy consumption — read-only, linked from My Dashboard */}
-              <div className="rounded-xl border border-blue-200 bg-blue-50/60 p-4">
-                <div className="flex items-center justify-between mb-1">
-                  <span className="font-semibold text-blue-800 flex items-center gap-1.5">
-                    <Zap className="w-4 h-4"/> Household Energy Consumption
+              {/* Energy consumption — linked from My Dashboard */}
+              <div className="rounded-xl border border-blue-200 bg-blue-50/70 p-4 shadow-sm">
+                <div className="flex items-center justify-between mb-1.5">
+                  <span className="font-semibold text-blue-900 flex items-center gap-1.5 text-xs sm:text-sm">
+                    <Zap className="w-4 h-4 text-blue-600"/> Household Energy Consumption
                   </span>
-                  <span className="text-lg font-extrabold text-blue-700">{consumption.toFixed(0)} kWh/mo</span>
+                  <span className="text-base sm:text-lg font-extrabold text-blue-700 bg-blue-100/80 px-2.5 py-0.5 rounded-lg">
+                    {consumption.toFixed(0)} kWh/mo
+                  </span>
                 </div>
-                <p className="text-xs text-blue-600">
-                  Linked from your appliances in <strong>My Dashboard</strong>. Update them there to reflect here.
+                <p className="text-xs text-blue-700/80 leading-relaxed">
+                  Linked from appliances in <strong>My Dashboard</strong>. Auto-calculates your solar offset requirements.
                 </p>
               </div>
 
               {/* Available Roof Area */}
-              <div>
-                <div className="flex items-center justify-between mb-1">
-                  <label className="font-medium text-gray-700">Available Roof Area</label>
-                  <span className="text-sm text-gray-500">{availAreaSqFt.toLocaleString()} sq ft</span>
+              <div className="bg-white/60 border border-gray-200/80 rounded-xl p-4 shadow-sm">
+                <div className="flex items-center justify-between mb-2">
+                  <label className="font-semibold text-gray-800 flex items-center gap-1.5">
+                    Available Roof Area
+                  </label>
+                  <span className="text-sm font-bold text-green-700 bg-green-50 px-2 py-0.5 rounded-md border border-green-200">
+                    {availAreaSqFt.toLocaleString()} sq ft
+                  </span>
                 </div>
                 <input type="range" min="100" max="10000" step="100" value={availAreaSqFt}
-                  onChange={e => setAvailAreaSqFt(+e.target.value)} className="w-full accent-green-600"/>
-                <div className="text-xs text-gray-400 mt-0.5">
-                  Can fit up to <strong>{maxPanelsByArea}</strong> panels ({availAreaSqFt.toLocaleString()} sq ft ÷ 10 sq ft/panel)
+                  onChange={e => setAvailAreaSqFt(+e.target.value)} className="w-full accent-green-600 h-2 bg-gray-200 rounded-lg cursor-pointer"/>
+                <div className="flex justify-between text-xs text-gray-500 mt-2 font-medium">
+                  <span>Capacity: fits up to <strong>{maxPanelsByArea}</strong> panels</span>
+                  <span className="text-gray-400">10 sq ft/panel</span>
                 </div>
               </div>
 
               {/* Number of Panels */}
-              <div>
-                <div className="flex items-center justify-between mb-1">
-                  <label className="font-medium text-gray-700">Number of Panels</label>
-                  <span className="text-lg font-bold text-amber-600">{panelCount}</span>
+              <div className="bg-white/60 border border-gray-200/80 rounded-xl p-4 shadow-sm">
+                <div className="flex items-center justify-between mb-2">
+                  <label className="font-semibold text-gray-800">Number of Solar Panels</label>
+                  <span className="text-base font-extrabold text-amber-600 bg-amber-50 px-2.5 py-0.5 rounded-md border border-amber-200">
+                    {panelCount} panels
+                  </span>
                 </div>
                 <input type="range" min="1" max={Math.max(maxPanelsByArea, 1)} step="1" value={panelCount}
-                  onChange={e => setPanelCount(+e.target.value)} className="w-full accent-amber-500 mb-2"/>
-                <div className="flex gap-1.5 flex-wrap">
+                  onChange={e => setPanelCount(+e.target.value)} className="w-full accent-amber-500 h-2 bg-gray-200 rounded-lg cursor-pointer mb-3"/>
+                <div className="flex gap-2">
                   {[5, 10, 20, 50].map(n => (
                     <button key={n} onClick={() => setPanelCount(Math.min(n, maxPanelsByArea))}
-                      className={`flex-1 min-w-[44px] py-1 text-xs font-semibold rounded-lg transition-colors ${
-                        panelCount === n ? 'bg-amber-500 text-white' : 'bg-amber-50 text-amber-700 border border-amber-200 hover:bg-amber-100'
-                      }`}>{n}</button>
+                      className={`flex-1 py-1.5 text-xs font-bold rounded-lg transition-all shadow-xs ${
+                        panelCount === n
+                          ? 'bg-amber-500 text-white shadow-amber-200 ring-2 ring-amber-400'
+                          : 'bg-amber-50 text-amber-800 border border-amber-200/80 hover:bg-amber-100/80'
+                      }`}>{n} Panels</button>
                   ))}
                 </div>
               </div>
 
               {/* Suggested panels */}
-              <div className="rounded-xl border border-amber-300 bg-amber-50 p-4">
-                <div className="flex items-start gap-2">
-                  <Lightbulb className="w-4 h-4 text-amber-500 mt-0.5 shrink-0"/>
+              <div className="rounded-xl border border-amber-300/80 bg-gradient-to-br from-amber-50 to-orange-50/40 p-4 shadow-sm">
+                <div className="flex items-start gap-3">
+                  <div className="p-1.5 rounded-lg bg-amber-100 text-amber-700 shrink-0">
+                    <Lightbulb className="w-4 h-4"/>
+                  </div>
                   <div className="flex-1">
-                    <div className="font-semibold text-amber-800 text-sm mb-1">Suggested Panel Count</div>
-                    <div className="text-2xl font-extrabold text-amber-700 mb-1">{suggestedPanels} panels</div>
-                    <p className="text-xs text-amber-700">
-                      To fully offset your <strong>{consumption.toFixed(0)} kWh/month</strong> at{' '}
-                      <strong>{IRRADIATION} kWh/kW/day</strong> irradiation you need ~{suggestedPanels} × 400W panels
-                      ({(suggestedPanels * PANEL_AREA_SQFT).toLocaleString()} sq ft).
+                    <div className="flex items-center justify-between">
+                      <span className="font-semibold text-amber-900 text-xs uppercase tracking-wider">Recommended Sizing</span>
+                      <span className="text-xl font-extrabold text-amber-700">{suggestedPanels} panels</span>
+                    </div>
+                    <p className="text-xs text-amber-800 mt-1 leading-relaxed">
+                      Matches your <strong>{consumption.toFixed(0)} kWh/mo</strong> demand at <strong>{IRRADIATION} kWh/kW/day</strong> irradiation (~{(suggestedPanels * PANEL_AREA_SQFT).toLocaleString()} sq ft).
                       {suggestedPanels > maxPanelsByArea && (
-                        <span className="ml-1 text-red-600 font-semibold">
-                          ⚠ Your area fits only {maxPanelsByArea} panels — covering{' '}
-                          {((maxPanelsByArea / suggestedPanels) * 100).toFixed(0)}% of demand.
+                        <span className="block mt-1 text-red-600 font-semibold">
+                          ⚠ Fits {maxPanelsByArea} panels maximum ({((maxPanelsByArea / suggestedPanels) * 100).toFixed(0)}% coverage).
                         </span>
                       )}
                     </p>
                     <button onClick={() => setPanelCount(Math.min(suggestedPanels, maxPanelsByArea))}
-                      className="mt-2 text-xs font-semibold text-amber-700 border border-amber-400 px-3 py-1 rounded-lg hover:bg-amber-100 transition-colors">
-                      Apply suggestion
+                      className="mt-2.5 text-xs font-bold text-amber-800 bg-amber-200/70 hover:bg-amber-300/80 border border-amber-400/60 px-3.5 py-1.5 rounded-lg transition-all">
+                      Apply Suggestion
                     </button>
                   </div>
                 </div>
               </div>
 
               {/* Installed capacity banner */}
-              <div className="rounded-2xl p-4 text-white" style={{ background: 'linear-gradient(135deg, #b45309, #f59e0b)' }}>
-                <div className="flex items-center gap-2 mb-1">
-                  <Sun className="w-4 h-4"/>
-                  <span className="font-semibold text-xs">Installed Capacity</span>
+              <div className="rounded-2xl p-4 text-white shadow-lg relative overflow-hidden" style={{ background: 'linear-gradient(135deg, #b45309 0%, #d97706 50%, #f59e0b 100%)' }}>
+                <div className="relative z-10">
+                  <div className="flex items-center justify-between mb-1">
+                    <span className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-amber-100">
+                      <Sun className="w-4 h-4"/> Installed Solar Capacity
+                    </span>
+                    <span className="text-xs bg-white/20 px-2 py-0.5 rounded text-white font-medium">400W High Efficiency</span>
+                  </div>
+                  <div className="text-3xl sm:text-4xl font-black mb-1">
+                    <AnimatedNum value={totalCapacity} decimals={1}/> kW
+                  </div>
+                  <div className="text-xs text-amber-100 flex items-center justify-between font-medium">
+                    <span>{panelCount} panels · {usedAreaSqFt} sq ft</span>
+                    <span>{((usedAreaSqFt / availAreaSqFt) * 100).toFixed(0)}% roof occupied</span>
+                  </div>
                 </div>
-                <div className="text-4xl font-extrabold mb-0.5">
-                  <AnimatedNum value={totalCapacity} decimals={1}/> kW
-                </div>
-                <div className="text-xs opacity-80">{panelCount} panels × 400W each</div>
-                <div className="text-xs opacity-80">Uses {usedAreaSqFt} sq ft of {availAreaSqFt.toLocaleString()} sq ft</div>
               </div>
 
-              {/* Key metric rows */}
-              <div className="glass-card border border-gray-200 rounded-xl p-3 space-y-2 text-sm">
-                <StatRow label="Monthly Gen"       value={`${monthlyGenKWh.toFixed(0)} kWh`}/>
-                <StatRow label="Annual Savings"    value={`₹${(annualSavings / 1000).toFixed(1)}k`}/>
-                <StatRow label="Investment"        value={`₹${(investment / 100000).toFixed(1)}L`}/>
-                <StatRow label="Payback Period"    value={payback} unit="years" highlight/>
-                <StatRow label="Annual Generation" value={`${(annualGenKWh / 1000).toFixed(1)}k kWh`}/>
-                <StatRow label="Demand Offset"     value={`${offsetPct.toFixed(1)}%`}/>
+              {/* Key metric summary rows */}
+              <div className="bg-white/80 border border-gray-200/80 rounded-xl p-3.5 space-y-2 text-sm shadow-sm">
+                <StatRow label="Monthly Generation" value={`${monthlyGenKWh.toFixed(0)} kWh`}/>
+                <StatRow label="Annual Electricity Savings" value={`₹${(annualSavings / 1000).toFixed(1)}k`}/>
+                <StatRow label="Estimated System Investment" value={`₹${(investment / 100000).toFixed(1)} Lakhs`}/>
+                <StatRow label="Estimated Payback Period" value={payback} unit="years" highlight/>
+                <StatRow label="Annual Solar Output" value={`${(annualGenKWh / 1000).toFixed(1)}k kWh`}/>
+                <StatRow label="Grid Demand Offset" value={`${offsetPct.toFixed(1)}%`}/>
               </div>
+
             </div>
 
-            {/* ── Right column: Live Roof Simulator ── */}
-            <div className="flex-1 min-w-0">
-              <PanelSimulator
-                panelCount={panelCount}
-                availAreaSqFt={availAreaSqFt}
-                totalCapacity={totalCapacity}
-                monthlyGen={monthlyGenKWh}
-                offsetPct={offsetPct}
-                irradiation={IRRADIATION}
-                showFooterStats={false}
-              />
+            {/* ── Right column: Enlarged Simulator & Live Telemetry ── */}
+            <div className="lg:col-span-7 flex flex-col gap-4">
+
+              {/* Enlarged Panel Simulator */}
+              <div className="flex-1 min-h-[420px]">
+                <PanelSimulator
+                  panelCount={panelCount}
+                  availAreaSqFt={availAreaSqFt}
+                  totalCapacity={totalCapacity}
+                  monthlyGen={monthlyGenKWh}
+                  offsetPct={offsetPct}
+                  irradiation={IRRADIATION}
+                  showFooterStats={true}
+                  customSunAngle={customSunAngle}
+                />
+              </div>
+
+              {/* Live Solar Control & Diagnostics Bar */}
+              <div className="glass-card rounded-2xl p-4.5 border border-gray-200/80 bg-white/90 shadow-md space-y-4">
+                
+                {/* Sun Position / Time of Day Selector */}
+                <div className="flex flex-wrap items-center justify-between gap-2 pb-3 border-b border-gray-100">
+                  <div className="flex items-center gap-2">
+                    <Clock className="w-4 h-4 text-amber-500"/>
+                    <span className="text-xs font-bold text-gray-700 uppercase tracking-wider">
+                      Interactive Sun Simulator
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-1.5 bg-gray-100/80 p-1 rounded-xl">
+                    {(['auto', 'morning', 'noon', 'afternoon', 'evening'] as const).map(mode => (
+                      <button
+                        key={mode}
+                        onClick={() => setSunPreset(mode)}
+                        className={`px-2.5 py-1 text-xs font-bold rounded-lg transition-all capitalize ${
+                          sunPreset === mode
+                            ? 'bg-amber-500 text-white shadow-sm'
+                            : 'text-gray-600 hover:text-gray-900 hover:bg-gray-200/60'
+                        }`}
+                      >
+                        {mode === 'auto' ? '🔄 Live Orbit' : mode}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Real-time Telemetry & Performance Breakdown */}
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                  <div className="rounded-xl p-3 bg-gradient-to-br from-amber-50 to-amber-100/60 border border-amber-200/60 text-center">
+                    <div className="text-xs font-semibold text-amber-700 uppercase">Daily Yield</div>
+                    <div className="text-xl font-extrabold text-amber-900 mt-0.5">
+                      {dailyGenKWh.toFixed(1)} <span className="text-xs font-bold text-amber-700">kWh/day</span>
+                    </div>
+                    <div className="text-[11px] text-amber-700/80 mt-0.5">Avg production</div>
+                  </div>
+
+                  <div className="rounded-xl p-3 bg-gradient-to-br from-blue-50 to-blue-100/60 border border-blue-200/60 text-center">
+                    <div className="text-xs font-semibold text-blue-700 uppercase">Direct Usage</div>
+                    <div className="text-xl font-extrabold text-blue-900 mt-0.5">
+                      {directSelfUse.toFixed(0)} <span className="text-xs font-bold text-blue-700">kWh/mo</span>
+                    </div>
+                    <div className="text-[11px] text-blue-700/80 mt-0.5">Self-consumed</div>
+                  </div>
+
+                  <div className="rounded-xl p-3 bg-gradient-to-br from-green-50 to-green-100/60 border border-green-200/60 text-center">
+                    <div className="text-xs font-semibold text-green-700 uppercase">Grid Export</div>
+                    <div className="text-xl font-extrabold text-green-900 mt-0.5">
+                      {gridExportUnits > 0 ? gridExportUnits.toFixed(0) : '0'} <span className="text-xs font-bold text-green-700">kWh/mo</span>
+                    </div>
+                    <div className="text-[11px] text-green-700/80 mt-0.5">Net-meter credit</div>
+                  </div>
+
+                  <div className="rounded-xl p-3 bg-gradient-to-br from-emerald-50 to-emerald-100/60 border border-emerald-200/60 text-center">
+                    <div className="text-xs font-semibold text-emerald-700 uppercase">25-Yr Savings</div>
+                    <div className="text-xl font-extrabold text-emerald-900 mt-0.5">
+                      ₹{(lifetimeSavings / 100000).toFixed(1)} <span className="text-xs font-bold text-emerald-700">L</span>
+                    </div>
+                    <div className="text-[11px] text-emerald-700/80 mt-0.5">Net lifetime ROI</div>
+                  </div>
+                </div>
+
+                {/* Eco & Environmental Badges */}
+                <div className="flex flex-wrap items-center justify-between gap-3 bg-slate-900 text-white px-4 py-3 rounded-xl">
+                  <div className="flex items-center gap-2 text-xs">
+                    <Leaf className="w-4 h-4 text-emerald-400"/>
+                    <span className="text-slate-300">Clean Energy Impact:</span>
+                    <strong className="text-emerald-300 font-bold">{co2AvoidedKg.toLocaleString()} kg CO₂ avoided/yr</strong>
+                  </div>
+                  <div className="flex items-center gap-2 text-xs">
+                    <TreePine className="w-4 h-4 text-green-400"/>
+                    <span className="text-slate-300">Equivalent to:</span>
+                    <strong className="text-green-300 font-bold">~{treesPlanted} Trees planted/yr</strong>
+                  </div>
+                  <div className="flex items-center gap-1.5 text-xs text-amber-300 font-semibold bg-amber-500/20 px-2.5 py-1 rounded-lg border border-amber-500/30">
+                    <ShieldCheck className="w-3.5 h-3.5 text-amber-400"/>
+                    25-Year Panel Warranty
+                  </div>
+                </div>
+
+              </div>
+
             </div>
 
           </div>

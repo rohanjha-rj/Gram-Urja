@@ -8,7 +8,6 @@ import LandingPage from './pages/LandingPage';
 import VillageDashboard from './pages/VillageDashboard';
 import HouseholdDashboard from './pages/HouseholdDashboard';
 import SolarPage from './pages/SolarPage';
-import WaterPage from './pages/WaterPage';
 import WastePage from './pages/WastePage';
 import RecommendationsPage from './pages/RecommendationsPage';
 import AlertsPage from './pages/AlertsPage';
@@ -50,7 +49,6 @@ function AppRoutes() {
           : <Layout><HouseholdDashboard /></Layout>
       } />
       <Route path="/solar" element={<Layout><SolarPage /></Layout>} />
-      <Route path="/water" element={<Layout><WaterPage /></Layout>} />
       <Route path="/waste" element={<Layout><WastePage /></Layout>} />
       <Route path="/recommendations" element={<Layout><RecommendationsPage /></Layout>} />
       <Route path="/alerts" element={<Layout><AlertsPage /></Layout>} />
