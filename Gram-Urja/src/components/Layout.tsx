@@ -39,15 +39,11 @@ export default function Layout({ children }: { children: React.ReactNode }) {
   }
 
   return (
-    <div className="flex min-h-screen bg-gray-50 relative">
+    // ── Root: flex row, page bg, full viewport ───────────────────────────────
+    <div className="flex h-screen overflow-hidden bg-[#f3f7f4]">
 
-      {/* ── Global energy conservation ambient layer ────────────────────────
-          Fixed, pointer-events-none particles float across the full viewport.
-          Each particle type represents a real conservation resource.
-      ──────────────────────────────────────────────────────────────────── */}
+      {/* ── Global ambient particle layer (fixed, z-0) ─────────────────────── */}
       <div className="fixed inset-0 z-0 pointer-events-none overflow-hidden" aria-hidden="true">
-
-        {/* Solar photons — amber dots drifting diagonally top-right → bottom */}
         {[
           { left: '8%',  top: '-2%',  delay: '0s',   dur: '14s', size: 5 },
           { left: '22%', top: '-5%',  delay: '3.2s', dur: '17s', size: 4 },
@@ -56,103 +52,97 @@ export default function Layout({ children }: { children: React.ReactNode }) {
           { left: '78%', top: '-2%',  delay: '2.7s', dur: '13s', size: 5 },
           { left: '90%', top: '-4%',  delay: '7.3s', dur: '18s', size: 3 },
         ].map((p, i) => (
-          <div key={`photon-${i}`}
-            className="gu-ambient-photon absolute rounded-full"
-            style={{
-              left: p.left, top: p.top,
-              width: p.size, height: p.size,
-              background: 'radial-gradient(circle, #fbbf24 0%, #f59e0b 100%)',
-              animationDuration: p.dur,
-              animationDelay: p.delay,
-              boxShadow: `0 0 ${p.size * 2}px ${p.size}px rgba(251,191,36,0.4)`,
-            }}/>
+          <div key={`photon-${i}`} className="gu-ambient-photon absolute rounded-full"
+            style={{ left: p.left, top: p.top, width: p.size, height: p.size,
+              background: 'radial-gradient(circle,#fbbf24 0%,#f59e0b 100%)',
+              animationDuration: p.dur, animationDelay: p.delay,
+              boxShadow: `0 0 ${p.size * 2}px ${p.size}px rgba(251,191,36,0.4)` }} />
         ))}
-
-        {/* Leaf particles — green, gentle tumbling fall */}
         {[
-          { left: '5%',  delay: '0s',   dur: '20s', opacity: 0.18 },
-          { left: '35%', delay: '6s',   dur: '24s', opacity: 0.12 },
-          { left: '55%', delay: '11s',  dur: '19s', opacity: 0.15 },
-          { left: '80%', delay: '4s',   dur: '22s', opacity: 0.13 },
+          { left: '5%',  delay: '0s',  dur: '20s', opacity: 0.18 },
+          { left: '35%', delay: '6s',  dur: '24s', opacity: 0.12 },
+          { left: '55%', delay: '11s', dur: '19s', opacity: 0.15 },
+          { left: '80%', delay: '4s',  dur: '22s', opacity: 0.13 },
         ].map((p, i) => (
-          <div key={`leaf-${i}`}
-            className="gu-ambient-leaf absolute text-green-500 select-none"
-            style={{
-              left: p.left, top: '-30px',
-              fontSize: '16px',
-              opacity: p.opacity,
-              animationDuration: p.dur,
-              animationDelay: p.delay,
-            }}>🍃</div>
+          <div key={`leaf-${i}`} className="gu-ambient-leaf absolute text-green-500 select-none"
+            style={{ left: p.left, top: '-30px', fontSize: '16px', opacity: p.opacity,
+              animationDuration: p.dur, animationDelay: p.delay }}>🍃</div>
         ))}
-
-        {/* Water droplets — blue, rising from bottom */}
         {[
-          { left: '15%', delay: '0s',  dur: '8s',  size: 4 },
-          { left: '48%', delay: '3s',  dur: '10s', size: 3 },
-          { left: '72%', delay: '6s',  dur: '9s',  size: 5 },
+          { left: '15%', delay: '0s', dur: '8s',  size: 4 },
+          { left: '48%', delay: '3s', dur: '10s', size: 3 },
+          { left: '72%', delay: '6s', dur: '9s',  size: 5 },
         ].map((p, i) => (
-          <div key={`drop-${i}`}
-            className="gu-ambient-drop absolute rounded-full"
-            style={{
-              left: p.left, bottom: '-10px',
-              width: p.size, height: p.size * 1.3,
-              background: 'radial-gradient(ellipse, #38bdf8 0%, #0284c7 100%)',
-              animationDuration: p.dur,
-              animationDelay: p.delay,
-              opacity: 0.25,
-            }}/>
+          <div key={`drop-${i}`} className="gu-ambient-drop absolute rounded-full"
+            style={{ left: p.left, bottom: '-10px', width: p.size, height: p.size * 1.3,
+              background: 'radial-gradient(ellipse,#38bdf8 0%,#0284c7 100%)',
+              animationDuration: p.dur, animationDelay: p.delay, opacity: 0.25 }} />
         ))}
-
-        {/* Energy pulse rings — green, emanating from corners */}
         {[
           { left: '2%',  top: '30%', delay: '0s',   dur: '5s' },
           { right: '3%', top: '60%', delay: '2.5s', dur: '5s' },
           { left: '50%', top: '80%', delay: '1.2s', dur: '6s' },
         ].map((p, i) => (
-          <div key={`ring-${i}`}
-            className="gu-ambient-ring absolute rounded-full border border-green-400/20"
-            style={{
-              ...p,
-              width: 60, height: 60,
-              marginLeft: -30, marginTop: -30,
-              animationDuration: p.dur,
-              animationDelay: p.delay,
-            }}/>
+          <div key={`ring-${i}`} className="gu-ambient-ring absolute rounded-full border border-green-400/20"
+            style={{ ...p, width: 60, height: 60, marginLeft: -30, marginTop: -30,
+              animationDuration: p.dur, animationDelay: p.delay }} />
         ))}
       </div>
 
-      {/* Sidebar */}
-      <aside className={`relative z-10 fixed inset-y-0 left-0 z-40 w-64 bg-white border-r border-gray-200 shadow-sm flex flex-col transition-transform duration-300 ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'} lg:translate-x-0 lg:static lg:inset-auto`}>
-        {/* Logo */}
-        <div className="flex items-center gap-3 px-6 py-5 border-b border-gray-100">
-          <div className="p-2 bg-green-600 rounded-xl">
+      {/* ══════════════════════════════════════════════════════════════════════
+          SIDEBAR — fixed, full viewport height, independent scroll
+          Glassmorphism: soft sage tint + backdrop blur
+      ══════════════════════════════════════════════════════════════════════ */}
+      <aside
+        className={`
+          fixed top-0 left-0 h-screen w-64 z-40 flex flex-col
+          transition-transform duration-300 ease-in-out
+          ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'}
+          lg:translate-x-0 lg:relative lg:flex-shrink-0
+        `}
+        style={{
+          background: 'rgba(243,247,244,0.88)',
+          backdropFilter: 'blur(14px)',
+          WebkitBackdropFilter: 'blur(14px)',
+          borderRight: '1px solid rgba(16,185,129,0.12)',
+          boxShadow: '4px 0 24px rgba(5,46,22,0.06)',
+        }}
+      >
+        {/* ── Logo ── */}
+        <div className="flex-shrink-0 flex items-center gap-3 px-5 py-5"
+          style={{ borderBottom: '1px solid rgba(16,185,129,0.10)' }}>
+          <div className="p-2 bg-emerald-600 rounded-xl shadow-sm">
             <Zap className="w-5 h-5 text-white" />
           </div>
           <div>
-            <div className="font-bold text-gray-900 text-lg leading-tight">GreenGrid AI</div>
-            <div className="text-xs text-gray-400">Sustainability Intelligence</div>
+            <div className="font-bold text-gray-900 text-base leading-tight">GreenGrid AI</div>
+            <div className="text-[11px] text-emerald-600 font-medium">Sustainability Intelligence</div>
           </div>
-          <button onClick={() => setSidebarOpen(false)} className="ml-auto lg:hidden text-gray-400">
+          <button onClick={() => setSidebarOpen(false)} className="ml-auto lg:hidden text-gray-400 hover:text-gray-600 transition-colors">
             <X className="w-5 h-5" />
           </button>
         </div>
 
-        {/* Role badge */}
-        <div className="px-4 py-3 border-b border-gray-100 space-y-2">
+        {/* ── Role badge ── */}
+        <div className="flex-shrink-0 px-4 py-3 space-y-1.5"
+          style={{ borderBottom: '1px solid rgba(16,185,129,0.10)' }}>
           <div className="flex items-center justify-between">
             <span className={`text-xs font-semibold px-2.5 py-1 rounded-full ${roleInfo.color}`}>
               {roleInfo.label}
             </span>
-            <button onClick={handleLogout} className="text-gray-400 hover:text-red-500 transition-colors" title="Switch Role">
-              <LogOut className="w-4 h-4" />
+            <button onClick={handleLogout}
+              className="text-gray-400 hover:text-red-500 transition-colors p-1 rounded-lg hover:bg-red-50"
+              title="Switch Role">
+              <LogOut className="w-3.5 h-3.5" />
             </button>
           </div>
-          <div className="text-xs text-green-700 font-medium">Suryapur Sustainability Region</div>
+          <div className="text-[11px] text-emerald-700 font-semibold tracking-wide">
+            Suryapur Sustainability Region
+          </div>
         </div>
 
-        {/* Nav items */}
-        <nav className="flex-1 overflow-y-auto py-3 px-3">
+        {/* ── Nav items — independent scroll ── */}
+        <nav className="flex-1 overflow-y-auto py-3 px-3 space-y-0.5">
           {visibleNav.map((item) => (
             <NavLink
               key={item.to}
@@ -160,17 +150,19 @@ export default function Layout({ children }: { children: React.ReactNode }) {
               end={item.to === '/'}
               onClick={() => setSidebarOpen(false)}
               className={({ isActive }) =>
-                `flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium mb-0.5 transition-colors ${
-                  isActive
-                    ? 'bg-green-50 text-green-700 border border-green-200'
-                    : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
-                }`
+                isActive
+                  /* ── ACTIVE state ── */
+                  ? 'flex items-center gap-3 pl-3 pr-3 py-2.5 rounded-xl text-sm font-semibold transition-all duration-150 ' +
+                    'bg-emerald-100 text-emerald-800 border-l-4 border-emerald-500 shadow-sm'
+                  /* ── HOVER / idle state ── */
+                  : 'flex items-center gap-3 pl-3 pr-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-150 ' +
+                    'text-slate-600 hover:bg-[#E8F2EC] hover:text-emerald-900 border-l-4 border-transparent'
               }
             >
               <span className="flex-shrink-0">{item.icon}</span>
-              <span className="flex-1">{item.label}</span>
+              <span className="flex-1 min-w-0 truncate">{item.label}</span>
               {item.badge && (
-                <span className="bg-red-500 text-white text-xs font-bold px-1.5 py-0.5 rounded-full leading-none">
+                <span className="flex-shrink-0 ml-auto bg-red-500 text-white text-[10px] font-bold min-w-[1.25rem] px-1.5 py-0.5 rounded-full leading-none text-center mr-1">
                   {item.badge}
                 </span>
               )}
@@ -178,39 +170,50 @@ export default function Layout({ children }: { children: React.ReactNode }) {
           ))}
         </nav>
 
-        {/* Footer */}
-        <div className="p-4 border-t border-gray-100">
-          <div className="text-xs text-gray-400 text-center">
+        {/* ── Footer ── */}
+        <div className="flex-shrink-0 px-4 py-3"
+          style={{ borderTop: '1px solid rgba(16,185,129,0.10)' }}>
+          <div className="text-[11px] text-gray-400 text-center">
             GreenGrid AI v0.1 · Demo Mode
           </div>
         </div>
       </aside>
 
-      {/* Overlay */}
+      {/* Mobile overlay */}
       {sidebarOpen && (
-        <div className="fixed inset-0 z-30 bg-black/30 lg:hidden" onClick={() => setSidebarOpen(false)} />
+        <div className="fixed inset-0 z-30 bg-black/30 backdrop-blur-sm lg:hidden"
+          onClick={() => setSidebarOpen(false)} />
       )}
 
-      {/* Main content */}
-      <div className="relative z-10 flex-1 flex flex-col min-w-0">
+      {/* ── Main content — takes remaining width, scrolls independently ── */}
+      <div className="relative z-10 flex-1 flex flex-col min-w-0 h-screen overflow-hidden">
+
         {/* Top bar */}
-        <header className="sticky top-0 z-20 bg-white border-b border-gray-200 flex items-center px-4 h-14 gap-3">
-          <button onClick={() => setSidebarOpen(true)} className="lg:hidden text-gray-500 hover:text-gray-700">
+        <header className="flex-shrink-0 z-20 flex items-center px-5 h-14 gap-4"
+          style={{
+            background: 'rgba(255,255,255,0.85)',
+            backdropFilter: 'blur(12px)',
+            WebkitBackdropFilter: 'blur(12px)',
+            borderBottom: '1px solid rgba(16,185,129,0.10)',
+            boxShadow: '0 1px 8px rgba(5,46,22,0.05)',
+          }}>
+          <button onClick={() => setSidebarOpen(true)}
+            className="lg:hidden text-gray-500 hover:text-gray-700 flex-shrink-0 p-1 rounded-lg hover:bg-gray-100 transition-colors">
             <Menu className="w-5 h-5" />
           </button>
-          <div className="flex items-center gap-2 text-sm text-gray-500">
-            <span className="w-2 h-2 bg-green-500 rounded-full animate-pulse" />
-            Live monitoring active
+          <div className="flex items-center gap-2 text-sm text-gray-500 min-w-0">
+            <span className="w-2 h-2 flex-shrink-0 bg-emerald-500 rounded-full animate-pulse" />
+            <span className="truncate font-medium text-gray-600">Live monitoring active</span>
           </div>
-          <div className="ml-auto flex items-center gap-3">
-            <span className="hidden sm:inline text-xs text-amber-600 bg-amber-50 border border-amber-200 rounded-full px-3 py-1 font-medium">
+          <div className="ml-auto flex items-center gap-3 flex-shrink-0">
+            <span className="hidden sm:inline text-xs text-amber-600 bg-amber-50 border border-amber-200 rounded-full px-3 py-1 font-semibold">
               ⚡ Demo Mode
             </span>
           </div>
         </header>
 
-        {/* Page content */}
-        <main className="flex-1 overflow-auto">
+        {/* Page content — this scrolls, sidebar stays fixed */}
+        <main className="flex-1 overflow-y-auto">
           {children}
         </main>
       </div>
