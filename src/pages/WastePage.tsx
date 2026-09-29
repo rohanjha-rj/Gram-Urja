@@ -138,7 +138,7 @@ function VillageWasteView() {
         <WasteJourneyAnimation
           biogas={totalBiogasM3PerDay}
           thermal={thermalPerDay}
-          electricity={electricityPerDay}
+          electricity={electricityPerMonth}
           savings={monthlySavings}
           isHindi={isHindi}
         />
@@ -540,44 +540,57 @@ function WasteJourneyAnimation({ biogas, thermal, electricity, savings, isHindi 
 
   const runCycle = React.useCallback(() => {
     clearAll();
-    // ── Phase 1: loading at pile — truck faces right toward plant, parked at start ──
+    // ── Phase 1: loading at pile (1.2s) — truck faces right toward plant, parked at start ──
     setPhase('loading');
     setTruckX(TRUCK_START_X);
     setFlipped(false);
-    setBubbles([false,false,false,false]);
+    setBubbles([false, false, false, false]);
 
-    // ── Phase 2: drive right to plant ──
+    // ── Phase 2: drive right to plant (3.2s) ──
     after(1200, () => {
       setPhase('driving');
       setTruckX(TRUCK_END_X);
     });
 
-    // ── Phase 3: arrived — bubbles pop ──
-    after(1200 + 3400, () => {
+    // ── Phase 3: arrived at plant (t = 4400ms) ──
+    after(4400, () => {
       setPhase('arrived');
-      [0,1,2,3].forEach(i => {
-        after(1200 + 3400 + i * 700, () => {
-          setBubbles(prev => { const n=[...prev]; n[i]=true; return n; });
-        });
-      });
     });
 
-    // ── Phase 4: switch to left-facing truck at TRUCK_END_X instantly,
-    //             then slide it back to TRUCK_START_X ──
-    after(1200 + 3400 + 3500, () => {
-      setBubbles([false,false,false,false]);
-      // Snap the left-facing truck to the plant end, no transition yet
+    // Sequential bubble releases on every trip:
+    // Bubble 0: Biogas (t = 4600ms)
+    after(4600, () => {
+      setBubbles([true, false, false, false]);
+    });
+    // Bubble 1: Thermal Energy (t = 5150ms)
+    after(5150, () => {
+      setBubbles([true, true, false, false]);
+    });
+    // Bubble 2: Electricity Potential (t = 5700ms)
+    after(5700, () => {
+      setBubbles([true, true, true, false]);
+    });
+    // Bubble 3: Savings (t = 6250ms)
+    after(6250, () => {
+      setBubbles([true, true, true, true]);
+    });
+
+    // All 4 bubbles stay fully active and visible together from 6250ms to 9250ms (3.0s display)
+
+    // ── Phase 4: switch to left-facing truck at TRUCK_END_X & return (t = 9250ms) ──
+    after(9250, () => {
+      setBubbles([false, false, false, false]);
       setFlipped(true);
       setTruckX(TRUCK_END_X);
     });
-    // tiny delay so React applies the snap before we start the transition
-    after(1200 + 3400 + 3500 + 50, () => {
+    // Tiny delay so React applies the snap before starting the transition
+    after(9300, () => {
       setPhase('returning');
       setTruckX(TRUCK_START_X);
     });
 
-    // ── Loop ──
-    after(1200 + 3400 + 3500 + 50 + 2700, () => runCycle());
+    // ── Loop back to Phase 1 for the next trip (t = 12000ms) ──
+    after(12000, () => runCycle());
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -588,22 +601,48 @@ function WasteJourneyAnimation({ biogas, thermal, electricity, savings, isHindi 
   }, []);
 
   const isMoving   = phase === 'driving' || phase === 'returning';
-  const moveDur    = phase === 'driving' ? '3.4s' : phase === 'returning' ? '2.6s' : '0.001s';
+  const moveDur    = phase === 'driving' ? '3.2s' : phase === 'returning' ? '2.6s' : '0.001s';
   const wheelSpeed = isMoving ? '0.9s' : '0s';
 
+  // Real-time formatted metrics synced with calculated data
+  const fmtBiogas   = biogas >= 10 ? biogas.toFixed(1) : biogas.toFixed(2);
+  const fmtThermal  = thermal >= 10 ? thermal.toFixed(1) : thermal.toFixed(2);
+  const fmtElectric = electricity >= 100 ? Math.round(electricity).toLocaleString() : electricity.toFixed(1);
+  const fmtSavings  = `₹${Math.round(savings).toLocaleString()}`;
+
   const bubbleData = [
-    { label: isHindi ? 'बायोगैस'  : 'Biogas',    value: `${biogas.toFixed(2)} m³/d`,       color: '#16a34a' },
-    { label: isHindi ? 'तापीय'    : 'Thermal',   value: `${thermal.toFixed(2)} kWh/d`,      color: '#f59e0b' },
-    { label: isHindi ? 'बिजली'    : 'Electric',  value: `${electricity.toFixed(2)} kWh/d`,  color: '#3b82f6' },
-    { label: isHindi ? 'बचत/माह' : 'Saving/mo', value: `₹${savings.toLocaleString()}`,      color: '#8b5cf6' },
+    {
+      label: isHindi ? 'बायोगैस' : 'Biogas',
+      value: `${fmtBiogas} m³/d`,
+      sub: isHindi ? 'दैनिक उत्पादन' : 'Daily Yield',
+      color: '#16a34a',
+    },
+    {
+      label: isHindi ? 'तापीय ऊर्जा' : 'Thermal Energy',
+      value: `${fmtThermal} kWh/d`,
+      sub: isHindi ? 'दैनिक ऊष्मा' : 'Daily Heat',
+      color: '#f59e0b',
+    },
+    {
+      label: isHindi ? 'बिजली क्षमता' : 'Electricity Potential',
+      value: `${fmtElectric} kWh/mo`,
+      sub: isHindi ? 'मासिक क्षमता' : 'Monthly Pot.',
+      color: '#2563eb',
+    },
+    {
+      label: isHindi ? 'मासिक बचत' : 'Savings',
+      value: `${fmtSavings}/mo`,
+      sub: isHindi ? 'अनुमानित बचत' : 'Monthly Est.',
+      color: '#7c3aed',
+    },
   ];
 
-  // Bubble positions: spread above the chimney area (plant centered ~555)
+  // Bubble positions: fan arched cleanly above the chimney (x=554, y=58)
   const bPos = [
-    { x: 468, y: 82, r: 36 },
-    { x: 520, y: 52, r: 34 },
-    { x: 572, y: 76, r: 38 },
-    { x: 626, y: 48, r: 34 },
+    { x: 450, y: 72, r: 38 },
+    { x: 516, y: 44, r: 38 },
+    { x: 586, y: 44, r: 38 },
+    { x: 650, y: 72, r: 38 },
   ];
 
   return (
@@ -933,28 +972,41 @@ function WasteJourneyAnimation({ biogas, thermal, electricity, savings, isHindi 
             {isHindi ? 'प्रसंस्करण संयंत्र' : 'Processing Plant'}
           </text>
 
-          {/* ══════ BUBBLES (pop from chimney after arrival) ══════ */}
+          {/* ══════ BUBBLES (pop sequentially from chimney after arrival) ══════ */}
           {bPos.map((bp, i) => {
             if (!bubbles[i]) return null;
             const b = bubbleData[i];
             return (
               <g key={i}
                 style={{
-                  animation: 'wj-bubblepop 0.6s cubic-bezier(.34,1.56,.64,1) forwards',
+                  animation: 'wj-bubblepop 0.55s cubic-bezier(.34,1.56,.64,1) forwards',
                   transformOrigin: `${bp.x}px ${bp.y}px`,
                 }}>
-                <circle cx={bp.x} cy={bp.y} r={bp.r} fill={b.color} opacity="0.93"/>
-                {/* gloss */}
-                <ellipse cx={bp.x - bp.r*0.28} cy={bp.y - bp.r*0.32}
-                  rx={bp.r*0.3} ry={bp.r*0.18} fill="#fff" opacity="0.35"/>
-                {/* bubble stem line to chimney */}
+                {/* Glow ring */}
+                <circle cx={bp.x} cy={bp.y} r={bp.r + 3} fill={b.color} opacity="0.2"/>
+                {/* Main bubble */}
+                <circle cx={bp.x} cy={bp.y} r={bp.r} fill={b.color} opacity="0.94"/>
+                {/* Gloss highlight */}
+                <ellipse cx={bp.x - bp.r * 0.28} cy={bp.y - bp.r * 0.32}
+                  rx={bp.r * 0.3} ry={bp.r * 0.18} fill="#fff" opacity="0.4"/>
+                {/* Bubble stem line to chimney */}
                 <line x1={bp.x} y1={bp.y + bp.r} x2="554" y2="58"
-                  stroke={b.color} strokeWidth="1.2" strokeDasharray="3 3" opacity="0.5"/>
-                {/* text */}
-                <text x={bp.x} y={bp.y - 8} textAnchor="middle"
-                  fontSize="10" fill="#fff" fontWeight="700">{b.label}</text>
-                <text x={bp.x} y={bp.y + 6} textAnchor="middle"
-                  fontSize="11" fill="#fff" fontWeight="800">{b.value}</text>
+                  stroke={b.color} strokeWidth="1.5" strokeDasharray="3 3" opacity="0.55"/>
+                {/* Label */}
+                <text x={bp.x} y={bp.y - 10} textAnchor="middle"
+                  fontSize="8.5" fill="#fff" fontWeight="700" letterSpacing="0.2px">
+                  {b.label}
+                </text>
+                {/* Calculated real-time value */}
+                <text x={bp.x} y={bp.y + 4} textAnchor="middle"
+                  fontSize="11" fill="#fff" fontWeight="800">
+                  {b.value}
+                </text>
+                {/* Subtitle / Unit descriptor */}
+                <text x={bp.x} y={bp.y + 16} textAnchor="middle"
+                  fontSize="7.5" fill="#fff" opacity="0.9" fontWeight="600">
+                  {b.sub}
+                </text>
               </g>
             );
           })}
@@ -1108,7 +1160,7 @@ function HouseholdWasteView() {
         <WasteJourneyAnimation
           biogas={totalBiogasM3PerDay}
           thermal={thermalPerDay}
-          electricity={electricityPerDay}
+          electricity={electricityPerMonth}
           savings={monthlySavings}
           isHindi={isHindi}
         />
