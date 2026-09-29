@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect, useRef } from 'react';
 import {
   RadarChart, Radar, PolarGrid, PolarAngleAxis,
   BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell, Legend,
@@ -133,6 +133,16 @@ function VillageWasteView() {
             />
           </div>
         </div>
+
+        {/* ── Waste-to-Energy Journey Animation ── */}
+        <WasteJourneyAnimation
+          biogas={totalBiogasM3PerDay}
+          thermal={thermalPerDay}
+          electricity={electricityPerDay}
+          savings={monthlySavings}
+          isHindi={isHindi}
+        />
+
         {/* KPIs */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
           <KpiCard title={isHindi ? 'दैनिक बायोगैस' : 'Daily Biogas'} value={totalBiogasM3PerDay.toFixed(2)} unit="m³/day"
@@ -496,6 +506,472 @@ function BiogasSchemeCard({ scheme }: { scheme: typeof BIOGAS_SCHEMES[0] }) {
   );
 }
 
+// ─── Waste Journey Animation ──────────────────────────────────────────────────
+// Shared by both VillageWasteView and HouseholdWasteView
+//
+// Cycle (auto-loops forever):
+//   PHASE 1 "loading"  (1.2s) — truck at waste pile, loading
+//   PHASE 2 "driving"  (3.4s) — truck slides left→right toward plant
+//   PHASE 3 "arrived"  (3.5s) — truck at plant, bubbles pop one-by-one from chimney
+//   PHASE 4 "returning"(2.6s) — truck slides right→left (mirrored) back to pile
+//   → loop back to PHASE 1
+
+interface WasteJourneyProps {
+  biogas: number; thermal: number; electricity: number; savings: number; isHindi: boolean;
+}
+
+// SVG coordinate constants — truck base X positions
+const TRUCK_START_X = 140;   // parked at waste pile
+const TRUCK_END_X   = 302;   // parked at plant inlet
+const TRUCK_WIDTH   = 156;
+
+function WasteJourneyAnimation({ biogas, thermal, electricity, savings, isHindi }: WasteJourneyProps) {
+  type Phase = 'loading' | 'driving' | 'arrived' | 'returning';
+  const [phase, setPhase]   = useState<Phase>('loading');
+  const [truckX, setTruckX] = useState(TRUCK_START_X);
+  const [flipped, setFlipped] = useState(false);          // false = facing right (to plant), true = facing left (to waste)
+  const [bubbles, setBubbles] = useState([false,false,false,false]);
+  const timers = useRef<ReturnType<typeof setTimeout>[]>([]);
+
+  const clearAll = () => { timers.current.forEach(clearTimeout); timers.current = []; };
+  const after = (ms: number, fn: () => void) => {
+    const t = setTimeout(fn, ms); timers.current.push(t); return t;
+  };
+
+  const runCycle = React.useCallback(() => {
+    clearAll();
+    // ── Phase 1: loading at pile — truck faces right toward plant, parked at start ──
+    setPhase('loading');
+    setTruckX(TRUCK_START_X);
+    setFlipped(false);
+    setBubbles([false,false,false,false]);
+
+    // ── Phase 2: drive right to plant ──
+    after(1200, () => {
+      setPhase('driving');
+      setTruckX(TRUCK_END_X);
+    });
+
+    // ── Phase 3: arrived — bubbles pop ──
+    after(1200 + 3400, () => {
+      setPhase('arrived');
+      [0,1,2,3].forEach(i => {
+        after(1200 + 3400 + i * 700, () => {
+          setBubbles(prev => { const n=[...prev]; n[i]=true; return n; });
+        });
+      });
+    });
+
+    // ── Phase 4: switch to left-facing truck at TRUCK_END_X instantly,
+    //             then slide it back to TRUCK_START_X ──
+    after(1200 + 3400 + 3500, () => {
+      setBubbles([false,false,false,false]);
+      // Snap the left-facing truck to the plant end, no transition yet
+      setFlipped(true);
+      setTruckX(TRUCK_END_X);
+    });
+    // tiny delay so React applies the snap before we start the transition
+    after(1200 + 3400 + 3500 + 50, () => {
+      setPhase('returning');
+      setTruckX(TRUCK_START_X);
+    });
+
+    // ── Loop ──
+    after(1200 + 3400 + 3500 + 50 + 2700, () => runCycle());
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  useEffect(() => {
+    const t = setTimeout(runCycle, 400);
+    return () => { clearTimeout(t); clearAll(); };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const isMoving   = phase === 'driving' || phase === 'returning';
+  const moveDur    = phase === 'driving' ? '3.4s' : phase === 'returning' ? '2.6s' : '0.001s';
+  const wheelSpeed = isMoving ? '0.9s' : '0s';
+
+  const bubbleData = [
+    { label: isHindi ? 'बायोगैस'  : 'Biogas',    value: `${biogas.toFixed(2)} m³/d`,       color: '#16a34a' },
+    { label: isHindi ? 'तापीय'    : 'Thermal',   value: `${thermal.toFixed(2)} kWh/d`,      color: '#f59e0b' },
+    { label: isHindi ? 'बिजली'    : 'Electric',  value: `${electricity.toFixed(2)} kWh/d`,  color: '#3b82f6' },
+    { label: isHindi ? 'बचत/माह' : 'Saving/mo', value: `₹${savings.toLocaleString()}`,      color: '#8b5cf6' },
+  ];
+
+  // Bubble positions: spread above the chimney area (plant centered ~555)
+  const bPos = [
+    { x: 468, y: 82, r: 36 },
+    { x: 520, y: 52, r: 34 },
+    { x: 572, y: 76, r: 38 },
+    { x: 626, y: 48, r: 34 },
+  ];
+
+  return (
+    <div className="glass-card rounded-2xl p-5 mb-6 fade-up overflow-hidden">
+      <div className="flex items-center gap-2 mb-3">
+        <span className="text-lg">♻️</span>
+        <h2 className="font-bold text-gray-900 text-sm">
+          {isHindi ? 'कचरे से ऊर्जा — यात्रा' : 'Waste-to-Energy Journey'}
+        </h2>
+        <span className="text-xs text-gray-500 ml-auto italic">
+          {phase === 'loading'   && (isHindi ? '📦 लोड हो रहा है…'   : '📦 Loading waste…')}
+          {phase === 'driving'   && (isHindi ? '🚛 संयंत्र की ओर…'   : '🚛 Heading to plant…')}
+          {phase === 'arrived'   && (isHindi ? '⚡ ऊर्जा उत्पन्न!'    : '⚡ Energy generated!')}
+          {phase === 'returning' && (isHindi ? '🔄 वापस आ रहा है…'   : '🔄 Returning for more…')}
+        </span>
+      </div>
+
+      {/* ── SVG Scene — viewBox 700×230 ── */}
+      <div className="relative w-full" style={{ height: 230 }}>
+        <svg viewBox="0 0 700 230" width="100%" height="230"
+          xmlns="http://www.w3.org/2000/svg" style={{ display:'block', overflow:'visible' }}>
+
+          <defs>
+            <linearGradient id="wj-gnd" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stopColor="#bbf7d0"/>
+              <stop offset="100%" stopColor="#86efac"/>
+            </linearGradient>
+            <linearGradient id="wj-cab" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stopColor="#3b82f6"/>
+              <stop offset="100%" stopColor="#1d4ed8"/>
+            </linearGradient>
+            <linearGradient id="wj-cargo" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stopColor="#60a5fa"/>
+              <stop offset="100%" stopColor="#2563eb"/>
+            </linearGradient>
+            <linearGradient id="wj-plant" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stopColor="#4ade80"/>
+              <stop offset="100%" stopColor="#15803d"/>
+            </linearGradient>
+          </defs>
+
+          {/* Global keyframes */}
+          <style>{`
+            @keyframes wj-wobble  { 0%,100%{transform:rotate(-3deg)} 50%{transform:rotate(3deg)} }
+            @keyframes wj-bob     { 0%,100%{transform:translateY(0px)} 50%{transform:translateY(-4px)} }
+            @keyframes wj-wheel   { from{transform:rotate(0deg)} to{transform:rotate(360deg)} }
+            @keyframes wj-wheel-rev { from{transform:rotate(360deg)} to{transform:rotate(0deg)} }
+            @keyframes wj-chimsmk {
+              0%  { transform:translate(0,0)       scale(0.45); opacity:0.9; }
+              100%{ transform:translate(-6px,-34px) scale(1.8);  opacity:0; }
+            }
+            @keyframes wj-bubblepop {
+              0%  { transform:scale(0);    opacity:0;    }
+              40% { transform:scale(1.18); opacity:1;    }
+              70% { transform:scale(0.96); opacity:1;    }
+              100%{ transform:scale(1);    opacity:0.95; }
+            }
+            @keyframes wj-loadpulse {
+              0%,100%{ opacity:0.5; transform:scaleY(0.9); }
+              50%    { opacity:1;   transform:scaleY(1.1); }
+            }
+            .wj-waste1 { animation: wj-wobble 1.9s ease-in-out infinite; transform-origin: 78px 130px; }
+            .wj-waste2 { animation: wj-bob    2.3s ease-in-out infinite; }
+            .wj-waste3 { animation: wj-wobble 2.7s ease-in-out infinite 0.5s; transform-origin: 118px 131px; }
+            .wj-cs1 { animation: wj-chimsmk 1.7s ease-out infinite 0s;    }
+            .wj-cs2 { animation: wj-chimsmk 1.7s ease-out infinite 0.55s; }
+            .wj-cs3 { animation: wj-chimsmk 1.7s ease-out infinite 1.1s;  }
+            .wj-loadbar { animation: wj-loadpulse 0.7s ease-in-out infinite; }
+            /* Wheel spin: transform-box:fill-box makes transform-origin relative to
+               the element's own bounding box, so "center" = the wheel's own centre. */
+            .wj-spin {
+              transform-box: fill-box;
+              transform-origin: center;
+              animation: wj-wheel ${wheelSpeed} linear infinite;
+            }
+            .wj-spin-rev {
+              transform-box: fill-box;
+              transform-origin: center;
+              animation: wj-wheel-rev ${wheelSpeed} linear infinite;
+            }
+          `}</style>
+
+          {/* ── Ground + road ── */}
+          <rect x="0" y="185" width="700" height="45" fill="url(#wj-gnd)" rx="0" opacity="0.55"/>
+          {[50,115,180,245,310,375,440,505,570,635].map(x => (
+            <rect key={x} x={x} y="192" width="42" height="6" rx="3" fill="#fff" opacity="0.4"/>
+          ))}
+          {/* kerb lines */}
+          <line x1="0" y1="186" x2="700" y2="186" stroke="#86efac" strokeWidth="1.5" opacity="0.6"/>
+
+          {/* ══════ LEFT — WASTE PILE ══════ */}
+          <ellipse cx="95" cy="188" rx="62" ry="9" fill="#15803d" opacity="0.2"/>
+
+          {/* Wheelie bin */}
+          <rect x="48" y="148" width="42" height="40" rx="5" fill="#475569"/>
+          <rect x="44" y="143" width="50" height="9"  rx="4" fill="#334155"/>
+          <rect x="46" y="137" width="46" height="8"  rx="3" fill="#1e293b"/>
+          {/* bin wheels */}
+          <circle cx="56"  cy="190" r="5" fill="#1e293b" stroke="#475569" strokeWidth="1.5"/>
+          <circle cx="82"  cy="190" r="5" fill="#1e293b" stroke="#475569" strokeWidth="1.5"/>
+          {/* bin label */}
+          <text x="69" y="173" textAnchor="middle" fontSize="10" fill="#94a3b8" fontWeight="700">♻</text>
+
+          {/* waste item 1 – green organic bag */}
+          <g className="wj-waste1">
+            <ellipse cx="78" cy="137" rx="16" ry="12" fill="#4ade80"/>
+            <line x1="78" y1="125" x2="78" y2="119" stroke="#16a34a" strokeWidth="2.5"/>
+            <circle cx="78" cy="118" r="3" fill="#16a34a"/>
+            <ellipse cx="72" cy="138" rx="5" ry="3" fill="#22c55e" opacity="0.5"/>
+          </g>
+          {/* waste item 2 – orange food container */}
+          <g className="wj-waste2" style={{ transform: 'translateX(0)' }}>
+            <rect x="98" y="142" width="26" height="18" rx="5" fill="#fb923c"/>
+            <rect x="98" y="142" width="26" height="7"  rx="3" fill="#f97316"/>
+            <circle cx="111" cy="140" r="4" fill="#ea580c"/>
+          </g>
+          {/* waste item 3 – yellow crop stalks */}
+          <g className="wj-waste3">
+            <rect x="102" y="143" width="9" height="22" rx="2" fill="#ca8a04" transform="rotate(-12,106,154)"/>
+            <rect x="112" y="140" width="9" height="24" rx="2" fill="#a16207" transform="rotate(6,116,152)"/>
+            <rect x="122" y="144" width="8" height="20" rx="2" fill="#ca8a04" transform="rotate(-6,126,154)"/>
+          </g>
+
+          {/* Loading indicator (shown when phase==='loading') */}
+          {phase === 'loading' && (
+            <g>
+              <rect x="58" y="130" width="22" height="6" rx="3" fill="#fbbf24" className="wj-loadbar"/>
+              <text x="60" y="126" fontSize="9" fill="#92400e">{isHindi ? 'लोड…' : 'Load…'}</text>
+            </g>
+          )}
+
+          {/* label */}
+          <text x="80" y="218" textAnchor="middle" fontSize="12" fill="#166534" fontWeight="700">
+            {isHindi ? 'कचरा स्थल' : 'Waste Site'}
+          </text>
+
+          {/* ══════ TRUCK ══════
+            • Going to plant (!flipped):   Front faces RIGHT (cab on right, cargo on left).
+            • Returning to waste (flipped): Front faces LEFT (cab on left, cargo on right).
+            Text on the cargo container remains properly aligned, centered, and readable.
+          */}
+          {(() => {
+            const offset = truckX - TRUCK_START_X;
+
+            // ── Shared wheel renderer ──
+            const Wheel = ({ cx, cy, reverse = false }: { cx: number; cy: number; reverse?: boolean }) => (
+              <g className={isMoving ? (reverse ? 'wj-spin-rev' : 'wj-spin') : ''}>
+                <circle cx={cx} cy={cy} r="14" fill="#1f2937" stroke="#4b5563" strokeWidth="2.5"/>
+                <circle cx={cx} cy={cy} r="5"  fill="#6b7280"/>
+                {/* 4-spoke cross */}
+                <line x1={cx} y1={cy-14} x2={cx} y2={cy+14} stroke="#374151" strokeWidth="2"/>
+                <line x1={cx-14} y1={cy} x2={cx+14} y2={cy} stroke="#374151" strokeWidth="2"/>
+                <line x1={cx-10} y1={cy-10} x2={cx+10} y2={cy+10} stroke="#374151" strokeWidth="1.5" opacity="0.55"/>
+                <line x1={cx+10} y1={cy-10} x2={cx-10} y2={cy+10} stroke="#374151" strokeWidth="1.5" opacity="0.55"/>
+              </g>
+            );
+
+            if (!flipped) {
+              // ── RIGHT-FACING TRUCK (cab right, cargo left) ──
+              // Drives forward toward the processing plant
+              return (
+                <g style={{
+                  transform: `translateX(${TRUCK_START_X + offset}px)`,
+                  transition: `transform ${moveDur} cubic-bezier(0.45,0,0.55,1)`,
+                }}>
+                  {/* ── CARGO (left / rear) ── */}
+                  <rect x="0"  y="143" width="84" height="44" rx="5" fill="url(#wj-cargo)"/>
+                  {/* Vertical decorative panel ribs */}
+                  <line x1="14" y1="145" x2="14" y2="185" stroke="#1d4ed8" strokeWidth="1.5" opacity="0.35"/>
+                  <line x1="70" y1="145" x2="70" y2="185" stroke="#1d4ed8" strokeWidth="1.5" opacity="0.35"/>
+
+                  {/* Centered cargo badge container */}
+                  <rect x="12" y="153" width="60" height="22" rx="4" fill="#1e3a8a" opacity="0.65"/>
+                  {/* Cargo text — centered alignment horizontally & vertically */}
+                  <text
+                    x="42"
+                    y="164"
+                    textAnchor="middle"
+                    dominantBaseline="central"
+                    fontSize="10"
+                    fill="#e0f2fe"
+                    fontWeight="700"
+                    letterSpacing="0.05em"
+                  >
+                    {isHindi ? 'बायोगैस' : 'BIOGAS'}
+                  </text>
+
+                  {/* Exhaust pipe on rear (left edge) */}
+                  <rect x="0" y="132" width="7"  height="16" rx="3" fill="#374151"/>
+                  <rect x="0" y="129" width="11" height="5"  rx="2" fill="#1f2937"/>
+                  {/* Connector ridge between cargo and cab */}
+                  <rect x="84" y="143" width="6" height="44" rx="2" fill="#1d4ed8"/>
+
+                  {/* ── CAB (right / front facing plant) ── */}
+                  <rect x="90" y="145" width="66" height="42" rx="6" fill="url(#wj-cab)"/>
+                  {/* Windshield on RIGHT side (front) */}
+                  <rect x="130" y="149" width="24" height="20" rx="3" fill="#bfdbfe" opacity="0.9"/>
+                  <rect x="138" y="151" width="8"  height="5"  rx="2" fill="#fff"    opacity="0.5"/>
+                  {/* Door window */}
+                  <rect x="100" y="151" width="18" height="14" rx="3" fill="#93c5fd" opacity="0.7"/>
+                  <rect x="98"  y="162" width="8"  height="2"  rx="1" fill="#1e40af"/>
+                  {/* Front bumper and headlight facing right */}
+                  <rect x="154" y="177" width="10" height="8"  rx="2" fill="#1e3a8a"/>
+                  <rect x="152" y="166" width="6"  height="5"  rx="1" fill="#fef9c3"/>
+                  {isMoving && (
+                    <polygon points="158,165 190,158 190,178 158,172" fill="#fef08a" opacity="0.25"/>
+                  )}
+
+                  {/* ── WHEELS (spinning clockwise forward) ── */}
+                  <Wheel cx={42}  cy={189} />
+                  <Wheel cx={133} cy={189} />
+                </g>
+              );
+            } else {
+              // ── LEFT-FACING TRUCK (cab left, cargo right) ──
+              // Drives forward returning toward the waste site
+              return (
+                <g style={{
+                  transform: `translateX(${TRUCK_START_X + offset}px)`,
+                  transition: `transform ${moveDur} cubic-bezier(0.45,0,0.55,1)`,
+                }}>
+                  {/* ── CAB (left / front facing waste site) ── */}
+                  <rect x="0"  y="145" width="66" height="42" rx="6" fill="url(#wj-cab)"/>
+                  {/* Windshield on LEFT side (front) */}
+                  <rect x="2"  y="149" width="24" height="20" rx="3" fill="#bfdbfe" opacity="0.9"/>
+                  <rect x="5"  y="151" width="8"  height="5"  rx="2" fill="#fff"    opacity="0.5"/>
+                  {/* Door window */}
+                  <rect x="38" y="151" width="18" height="14" rx="3" fill="#93c5fd" opacity="0.7"/>
+                  <rect x="50" y="162" width="8"  height="2"  rx="1" fill="#1e40af"/>
+                  {/* Front bumper and headlight facing left */}
+                  <rect x="-8" y="177" width="10" height="8"  rx="2" fill="#1e3a8a"/>
+                  <rect x="-2" y="166" width="6"  height="5"  rx="1" fill="#fef9c3"/>
+                  {isMoving && (
+                    <polygon points="-8,165 -40,158 -40,178 -8,172" fill="#fef08a" opacity="0.25"/>
+                  )}
+                  {/* Connector ridge between cab and cargo */}
+                  <rect x="66" y="143" width="6"  height="44" rx="2" fill="#1d4ed8"/>
+
+                  {/* ── CARGO (right / rear) ── */}
+                  <rect x="72" y="143" width="84" height="44" rx="5" fill="url(#wj-cargo)"/>
+                  {/* Vertical decorative panel ribs */}
+                  <line x1="86"  y1="145" x2="86"  y2="185" stroke="#1d4ed8" strokeWidth="1.5" opacity="0.35"/>
+                  <line x1="142" y1="145" x2="142" y2="185" stroke="#1d4ed8" strokeWidth="1.5" opacity="0.35"/>
+
+                  {/* Centered cargo badge container */}
+                  <rect x="84" y="153" width="60" height="22" rx="4" fill="#1e3a8a" opacity="0.65"/>
+                  {/* Cargo text — centered alignment horizontally & vertically */}
+                  <text
+                    x="114"
+                    y="164"
+                    textAnchor="middle"
+                    dominantBaseline="central"
+                    fontSize="10"
+                    fill="#e0f2fe"
+                    fontWeight="700"
+                    letterSpacing="0.05em"
+                  >
+                    {isHindi ? 'बायोगैस' : 'BIOGAS'}
+                  </text>
+
+                  {/* Exhaust pipe on rear (right edge) */}
+                  <rect x="149" y="132" width="7"  height="16" rx="3" fill="#374151"/>
+                  <rect x="145" y="129" width="11" height="5"  rx="2" fill="#1f2937"/>
+
+                  {/* ── WHEELS (spinning counter-clockwise forward) ── */}
+                  <Wheel cx={23}  cy={189} reverse={true} />
+                  <Wheel cx={114} cy={189} reverse={true} />
+                </g>
+              );
+            }
+          })()}
+
+          {/* ══════ RIGHT — BIOGAS PLANT ══════ */}
+          {/*
+            Plant centered around x=555.
+            Building: 130px wide, 80px tall.  Chimney rises ~60px above.
+          */}
+          <ellipse cx="557" cy="188" rx="88" ry="11" fill="#15803d" opacity="0.22"/>
+
+          {/* building base */}
+          <rect x="492" y="128" width="130" height="60" rx="8" fill="url(#wj-plant)"/>
+          {/* roof arch */}
+          <ellipse cx="557" cy="128" rx="65" ry="18" fill="#4ade80"/>
+          {/* roof highlight */}
+          <ellipse cx="540" cy="122" rx="28" ry="7" fill="#a7f3d0" opacity="0.4"/>
+
+          {/* left side pipe inlet */}
+          <rect x="474" y="148" width="22" height="14" rx="4" fill="#166534"/>
+          <rect x="464" y="153" width="14" height="8"  rx="3" fill="#14532d"/>
+          {/* inlet arrow */}
+          <polygon points="486,152 486,164 492,158" fill="#4ade80" opacity="0.8"/>
+
+          {/* right side output pipe */}
+          <rect x="622" y="152" width="22" height="10" rx="4" fill="#166534"/>
+          <rect x="642" y="150" width="18" height="14" rx="3" fill="#14532d"/>
+
+          {/* chimney stack */}
+          <rect x="543" y="68" width="22" height="62" rx="5" fill="#166534"/>
+          {/* chimney cap */}
+          <rect x="537" y="62" width="34" height="12" rx="4" fill="#14532d"/>
+          {/* chimney band stripes */}
+          <rect x="543" y="80" width="22" height="5" rx="0" fill="#14532d" opacity="0.5"/>
+          <rect x="543" y="95" width="22" height="5" rx="0" fill="#14532d" opacity="0.5"/>
+          <rect x="543" y="110" width="22" height="5" rx="0" fill="#14532d" opacity="0.5"/>
+
+          {/* meter gauges on building */}
+          <circle cx="520" cy="158" r="9"  fill="#14532d" stroke="#4ade80" strokeWidth="2"/>
+          <line x1="516" y1="158" x2="522" y2="154" stroke="#a3e635" strokeWidth="2" strokeLinecap="round"/>
+          <circle cx="548" cy="158" r="9"  fill="#14532d" stroke="#4ade80" strokeWidth="2"/>
+          <line x1="544" y1="158" x2="550" y2="154" stroke="#a3e635" strokeWidth="2" strokeLinecap="round"/>
+          <circle cx="576" cy="158" r="9"  fill="#14532d" stroke="#fbbf24" strokeWidth="2"/>
+          <line x1="572" y1="158" x2="578" y2="154" stroke="#fbbf24" strokeWidth="2" strokeLinecap="round"/>
+
+          {/* building name plate */}
+          <rect x="500" y="135" width="114" height="18" rx="4" fill="#14532d" opacity="0.75"/>
+          <text x="557" y="147" textAnchor="middle" fontSize="11" fill="#86efac" fontWeight="700">
+            {isHindi ? 'बायोगैस संयंत्र' : 'Biogas Plant'}
+          </text>
+
+          {/* chimney smoke — always on */}
+          <circle className="wj-cs1" cx="554" cy="60" r="7"  fill="#a3e635" opacity="0.85"/>
+          <circle className="wj-cs2" cx="554" cy="60" r="6"  fill="#86efac" opacity="0.80"/>
+          <circle className="wj-cs3" cx="554" cy="60" r="8"  fill="#4ade80" opacity="0.70"/>
+
+          {/* plant label below */}
+          <text x="557" y="218" textAnchor="middle" fontSize="12" fill="#166534" fontWeight="700">
+            {isHindi ? 'प्रसंस्करण संयंत्र' : 'Processing Plant'}
+          </text>
+
+          {/* ══════ BUBBLES (pop from chimney after arrival) ══════ */}
+          {bPos.map((bp, i) => {
+            if (!bubbles[i]) return null;
+            const b = bubbleData[i];
+            return (
+              <g key={i}
+                style={{
+                  animation: 'wj-bubblepop 0.6s cubic-bezier(.34,1.56,.64,1) forwards',
+                  transformOrigin: `${bp.x}px ${bp.y}px`,
+                }}>
+                <circle cx={bp.x} cy={bp.y} r={bp.r} fill={b.color} opacity="0.93"/>
+                {/* gloss */}
+                <ellipse cx={bp.x - bp.r*0.28} cy={bp.y - bp.r*0.32}
+                  rx={bp.r*0.3} ry={bp.r*0.18} fill="#fff" opacity="0.35"/>
+                {/* bubble stem line to chimney */}
+                <line x1={bp.x} y1={bp.y + bp.r} x2="554" y2="58"
+                  stroke={b.color} strokeWidth="1.2" strokeDasharray="3 3" opacity="0.5"/>
+                {/* text */}
+                <text x={bp.x} y={bp.y - 8} textAnchor="middle"
+                  fontSize="10" fill="#fff" fontWeight="700">{b.label}</text>
+                <text x={bp.x} y={bp.y + 6} textAnchor="middle"
+                  fontSize="11" fill="#fff" fontWeight="800">{b.value}</text>
+              </g>
+            );
+          })}
+
+          {/* ══════ DASHED GUIDE PATH ══════ */}
+          <path d="M 152 183 C 280 175, 360 175, 488 183"
+            fill="none" stroke="#16a34a" strokeWidth="1.8"
+            strokeDasharray="7 5" opacity="0.35"/>
+
+        </svg>
+      </div>
+    </div>
+  );
+}
+
+
+
 // ─── Household Waste View ─────────────────────────────────────────────────────
 
 function HouseholdWasteView() {
@@ -627,6 +1103,15 @@ function HouseholdWasteView() {
             />
           </div>
         </div>
+
+        {/* ── Waste-to-Energy Journey Animation ── */}
+        <WasteJourneyAnimation
+          biogas={totalBiogasM3PerDay}
+          thermal={thermalPerDay}
+          electricity={electricityPerDay}
+          savings={monthlySavings}
+          isHindi={isHindi}
+        />
 
         {/* KPIs */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">

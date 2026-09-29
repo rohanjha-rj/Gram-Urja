@@ -386,12 +386,96 @@ function BeforeAfterSection({ before, after, savedPct, savedKWh, savedINR, saved
 
   return (
     <div className="grid sm:grid-cols-3 gap-4 items-center">
+      {/* ── BEFORE card ── */}
       <div className="bg-red-50 border-2 border-red-200 rounded-2xl p-5 text-center">
-        <div className="text-xs font-bold text-red-500 uppercase tracking-widest mb-2">{isHi ? 'सोलर से पहले' : 'BEFORE Solar'}</div>
+        <div className="text-xs font-bold text-red-500 uppercase tracking-widest mb-3">{isHi ? 'सोलर से पहले' : 'BEFORE Solar'}</div>
+
+        {/* Plain house SVG – no background, animated */}
+        <div className="flex justify-center mb-3">
+          <svg viewBox="0 0 120 110" width="120" height="104" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+            <style>{`
+              @keyframes hb-float {
+                0%,100% { transform: translateY(0px); }
+                50%      { transform: translateY(-4px); }
+              }
+              @keyframes hb-smoke1 {
+                0%   { transform: translate(0,0)    scale(0.4); opacity:0.7; }
+                100% { transform: translate(-6px,-22px) scale(1.2); opacity:0; }
+              }
+              @keyframes hb-smoke2 {
+                0%   { transform: translate(0,0)    scale(0.3); opacity:0.6; }
+                100% { transform: translate(4px,-20px)  scale(1.1); opacity:0; }
+              }
+              @keyframes hb-smoke3 {
+                0%   { transform: translate(0,0)    scale(0.35); opacity:0.65; }
+                100% { transform: translate(-2px,-18px) scale(1.0); opacity:0; }
+              }
+              @keyframes hb-cloud {
+                0%   { transform: translateX(0px); }
+                100% { transform: translateX(30px); }
+              }
+              @keyframes hb-wink {
+                0%,90%,100% { opacity:1; }
+                95%          { opacity:0.2; }
+              }
+              .hb-house  { animation: hb-float 3.2s ease-in-out infinite; }
+              .hb-s1     { animation: hb-smoke1 2.2s ease-out infinite; }
+              .hb-s2     { animation: hb-smoke2 2.2s ease-out infinite 0.7s; }
+              .hb-s3     { animation: hb-smoke3 2.2s ease-out infinite 1.4s; }
+              .hb-cloud1 { animation: hb-cloud 9s linear infinite; }
+              .hb-cloud2 { animation: hb-cloud 13s linear infinite 3s; }
+              .hb-win    { animation: hb-wink 4s ease-in-out infinite; }
+            `}</style>
+
+            {/* drifting clouds */}
+            <g className="hb-cloud1" opacity="0.55">
+              <ellipse cx="10" cy="18" rx="12" ry="7" fill="#cbd5e1"/>
+              <ellipse cx="20" cy="15" rx="9"  ry="6" fill="#cbd5e1"/>
+            </g>
+            <g className="hb-cloud2" opacity="0.4">
+              <ellipse cx="-8" cy="10" rx="10" ry="6" fill="#94a3b8"/>
+              <ellipse cx="0"  cy="8"  rx="7"  ry="5" fill="#94a3b8"/>
+            </g>
+
+            {/* smoke puffs from chimney */}
+            <circle className="hb-s1" cx="80" cy="28" r="4" fill="#94a3b8" opacity="0.7"/>
+            <circle className="hb-s2" cx="80" cy="28" r="3" fill="#94a3b8" opacity="0.6"/>
+            <circle className="hb-s3" cx="80" cy="28" r="3.5" fill="#cbd5e1" opacity="0.65"/>
+
+            {/* house body – floats */}
+            <g className="hb-house">
+              {/* walls */}
+              <rect x="25" y="58" width="70" height="42" rx="3" fill="#fca5a5"/>
+              {/* roof */}
+              <polygon points="60,22 8,60 112,60" fill="#ef4444"/>
+              {/* roof outline */}
+              <polygon points="60,22 8,60 112,60" fill="none" stroke="#dc2626" strokeWidth="1.2"/>
+              {/* chimney */}
+              <rect x="75" y="28" width="10" height="22" rx="1" fill="#dc2626"/>
+              {/* door */}
+              <rect x="51" y="75" width="18" height="25" rx="3" fill="#7f1d1d"/>
+              {/* door knob */}
+              <circle cx="65" cy="88" r="1.5" fill="#fca5a5"/>
+              {/* windows – blinking */}
+              <rect x="30" y="65" width="15" height="12" rx="2" fill="#fef9c3" className="hb-win"/>
+              <rect x="75" y="65" width="15" height="12" rx="2" fill="#fef9c3" className="hb-win"/>
+              {/* window cross bars */}
+              <line x1="37.5" y1="65" x2="37.5" y2="77" stroke="#fde68a" strokeWidth="0.8"/>
+              <line x1="30"   y1="71" x2="45"   y2="71" stroke="#fde68a" strokeWidth="0.8"/>
+              <line x1="82.5" y1="65" x2="82.5" y2="77" stroke="#fde68a" strokeWidth="0.8"/>
+              <line x1="75"   y1="71" x2="90"   y2="71" stroke="#fde68a" strokeWidth="0.8"/>
+              {/* ground */}
+              <line x1="5" y1="101" x2="115" y2="101" stroke="#fca5a5" strokeWidth="1.5" strokeDasharray="4 3"/>
+            </g>
+          </svg>
+        </div>
+
         <div className="text-4xl font-extrabold text-red-700 mb-1">{animBefore.toFixed(1)}k</div>
         <div className="text-sm text-red-500">kWh/{isHi ? 'माह' : 'month'}</div>
         <div className="text-xs text-red-400 mt-1">₹{(calculateElectricityCost(before) / 1000).toFixed(1)}k/{isHi ? 'माह' : 'month'}</div>
       </div>
+
+      {/* ── Arrow / savings summary ── */}
       <div className="text-center">
         <div className="inline-flex flex-col items-center gap-2">
           <div className="text-4xl font-extrabold text-green-600">–{savedPct}%</div>
@@ -404,8 +488,136 @@ function BeforeAfterSection({ before, after, savedPct, savedKWh, savedINR, saved
           <div className="text-xs text-gray-500">{animCO2.toFixed(2)} t CO₂ {isHi ? 'निवारण' : 'avoided'}</div>
         </div>
       </div>
+
+      {/* ── AFTER card ── */}
       <div className="bg-green-50 border-2 border-green-200 rounded-2xl p-5 text-center">
-        <div className="text-xs font-bold text-green-600 uppercase tracking-widest mb-2">{isHi ? 'सोलर के बाद' : 'AFTER Solar'}</div>
+        <div className="text-xs font-bold text-green-600 uppercase tracking-widest mb-3">{isHi ? 'सोलर के बाद' : 'AFTER Solar'}</div>
+
+        {/* House with solar panels – no background, animated */}
+        <div className="flex justify-center mb-3">
+          <svg viewBox="0 0 120 110" width="120" height="104" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+            <defs>
+              <linearGradient id="panelGrad2" x1="0" y1="0" x2="1" y2="1">
+                <stop offset="0%" stopColor="#ffffff" stopOpacity="0.9"/>
+                <stop offset="100%" stopColor="#ffffff" stopOpacity="0"/>
+              </linearGradient>
+              <radialGradient id="sunGlow" cx="50%" cy="50%" r="50%">
+                <stop offset="0%"   stopColor="#fef08a" stopOpacity="1"/>
+                <stop offset="100%" stopColor="#fbbf24" stopOpacity="0"/>
+              </radialGradient>
+            </defs>
+            <style>{`
+              @keyframes ha-float {
+                0%,100% { transform: translateY(0px); }
+                50%      { transform: translateY(-5px); }
+              }
+              @keyframes ha-spin {
+                from { transform: rotate(0deg); }
+                to   { transform: rotate(360deg); }
+              }
+              @keyframes ha-pulse {
+                0%,100% { r: 9;  opacity: 0.95; }
+                50%      { r: 11; opacity: 1;    }
+              }
+              @keyframes ha-glow {
+                0%,100% { opacity: 0.2; transform: scale(1);   }
+                50%      { opacity: 0.5; transform: scale(1.35); }
+              }
+              @keyframes ha-beam {
+                0%   { stroke-dashoffset: 36; opacity: 0;   }
+                35%  { opacity: 1; }
+                100% { stroke-dashoffset: 0;  opacity: 0;   }
+              }
+              @keyframes ha-shimmer {
+                0%   { transform: translateX(-30px); opacity: 0;   }
+                40%  { opacity: 0.7; }
+                100% { transform: translateX(44px);  opacity: 0;   }
+              }
+              @keyframes ha-spark {
+                0%,100% { opacity: 0; transform: scale(0.5); }
+                50%      { opacity: 1; transform: scale(1.2); }
+              }
+              .ha-house   { animation: ha-float 3s ease-in-out infinite; }
+              .ha-sunring { animation: ha-spin  10s linear infinite; transform-origin: 22px 15px; }
+              .ha-sundisc { animation: ha-pulse 2s ease-in-out infinite; transform-origin: 22px 15px; }
+              .ha-glow    { animation: ha-glow  2s ease-in-out infinite; transform-origin: 22px 15px; }
+              .ha-b1 { stroke-dasharray:36; animation: ha-beam 1.8s ease-in-out infinite 0s;    }
+              .ha-b2 { stroke-dasharray:36; animation: ha-beam 1.8s ease-in-out infinite 0.45s; }
+              .ha-b3 { stroke-dasharray:36; animation: ha-beam 1.8s ease-in-out infinite 0.9s;  }
+              .ha-b4 { stroke-dasharray:36; animation: ha-beam 1.8s ease-in-out infinite 1.35s; }
+              .ha-b5 { stroke-dasharray:36; animation: ha-beam 1.8s ease-in-out infinite 1.6s;  }
+              .ha-shimmer { animation: ha-shimmer 2.4s ease-in-out infinite; }
+              .ha-sp1 { animation: ha-spark 2s ease-in-out infinite 0s;    }
+              .ha-sp2 { animation: ha-spark 2s ease-in-out infinite 0.6s;  }
+              .ha-sp3 { animation: ha-spark 2s ease-in-out infinite 1.2s;  }
+            `}</style>
+
+            {/* ── Sun glow halo ── */}
+            <circle cx="22" cy="15" r="20" fill="url(#sunGlow)" className="ha-glow"/>
+
+            {/* ── Spinning rays ── */}
+            <g className="ha-sunring">
+              {[0,40,80,120,160,200,240,280,320].map((deg, i) => {
+                const rad = (deg * Math.PI) / 180;
+                const x1 = 22 + 13 * Math.cos(rad), y1 = 15 + 13 * Math.sin(rad);
+                const x2 = 22 + 21 * Math.cos(rad), y2 = 15 + 21 * Math.sin(rad);
+                return <line key={i} x1={x1} y1={y1} x2={x2} y2={y2} stroke="#facc15" strokeWidth="2.2" strokeLinecap="round" opacity="0.9"/>;
+              })}
+            </g>
+
+            {/* ── Sun disc ── */}
+            <circle cx="22" cy="15" r="9" fill="#fde047" stroke="#f59e0b" strokeWidth="1.5" className="ha-sundisc"/>
+            <circle cx="19" cy="13" r="2.5" fill="#fef9c3" opacity="0.6"/>
+
+            {/* ── Energy beams: sun → panels ── */}
+            <line className="ha-b1" x1="30" y1="20" x2="52" y2="46" stroke="#fbbf24" strokeWidth="2"   strokeLinecap="round"/>
+            <line className="ha-b2" x1="29" y1="22" x2="58" y2="47" stroke="#f59e0b" strokeWidth="1.8" strokeLinecap="round"/>
+            <line className="ha-b3" x1="31" y1="21" x2="64" y2="46" stroke="#fbbf24" strokeWidth="2"   strokeLinecap="round"/>
+            <line className="ha-b4" x1="28" y1="23" x2="68" y2="47" stroke="#f59e0b" strokeWidth="1.6" strokeLinecap="round"/>
+            <line className="ha-b5" x1="32" y1="20" x2="72" y2="46" stroke="#fde68a" strokeWidth="1.5" strokeLinecap="round"/>
+
+            {/* ── House (floats) ── */}
+            <g className="ha-house">
+              {/* walls */}
+              <rect x="25" y="58" width="70" height="42" rx="3" fill="#86efac"/>
+              {/* roof */}
+              <polygon points="60,22 8,60 112,60" fill="#16a34a"/>
+              <polygon points="60,22 8,60 112,60" fill="none" stroke="#15803d" strokeWidth="1.2"/>
+              {/* door */}
+              <rect x="51" y="75" width="18" height="25" rx="3" fill="#14532d"/>
+              <circle cx="65" cy="88" r="1.5" fill="#86efac"/>
+              {/* windows */}
+              <rect x="30" y="65" width="15" height="12" rx="2" fill="#fef9c3"/>
+              <rect x="75" y="65" width="15" height="12" rx="2" fill="#fef9c3"/>
+              <line x1="37.5" y1="65" x2="37.5" y2="77" stroke="#fde68a" strokeWidth="0.8"/>
+              <line x1="30"   y1="71" x2="45"   y2="71" stroke="#fde68a" strokeWidth="0.8"/>
+              <line x1="82.5" y1="65" x2="82.5" y2="77" stroke="#fde68a" strokeWidth="0.8"/>
+              <line x1="75"   y1="71" x2="90"   y2="71" stroke="#fde68a" strokeWidth="0.8"/>
+              {/* ground */}
+              <line x1="5" y1="101" x2="115" y2="101" stroke="#86efac" strokeWidth="1.5" strokeDasharray="4 3"/>
+
+              {/* ── Solar panels on roof ── */}
+              <polygon points="42,45 78,45 83,54 37,54" fill="#1d4ed8"/>
+              {/* panel grid */}
+              <line x1="52" y1="45" x2="48" y2="54" stroke="#93c5fd" strokeWidth="0.9"/>
+              <line x1="62" y1="45" x2="58" y2="54" stroke="#93c5fd" strokeWidth="0.9"/>
+              <line x1="72" y1="45" x2="68" y2="54" stroke="#93c5fd" strokeWidth="0.9"/>
+              <line x1="37" y1="48.5" x2="83" y2="48.5" stroke="#93c5fd" strokeWidth="0.9"/>
+              <line x1="37" y1="52"   x2="83" y2="52"   stroke="#93c5fd" strokeWidth="0.9"/>
+              {/* moving shimmer streak across panel */}
+              <clipPath id="panelClip">
+                <polygon points="42,45 78,45 83,54 37,54"/>
+              </clipPath>
+              <rect x="37" y="45" width="12" height="9" fill="url(#panelGrad2)" opacity="0.55" clipPath="url(#panelClip)" className="ha-shimmer"/>
+
+              {/* energy spark dots at panel edges */}
+              <circle cx="42" cy="48" r="2.2" fill="#fde047" className="ha-sp1"/>
+              <circle cx="60" cy="45" r="2"   fill="#fde047" className="ha-sp2"/>
+              <circle cx="78" cy="48" r="2.2" fill="#fde047" className="ha-sp3"/>
+            </g>
+          </svg>
+        </div>
+
         <div className="text-4xl font-extrabold text-green-700 mb-1">{animAfter.toFixed(1)}k</div>
         <div className="text-sm text-green-500">kWh/{isHi ? 'माह' : 'month'}</div>
         <div className="text-xs text-green-400 mt-1">₹{(calculateElectricityCost(after) / 1000).toFixed(1)}k/{isHi ? 'माह' : 'month'}</div>
