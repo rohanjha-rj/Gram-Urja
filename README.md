@@ -48,13 +48,16 @@
 
 ```
 Gram-Urja/
-└── Gram-Urja/               ← The actual project (run from here)
-    ├── index.html
-    ├── package.json
-    ├── vite.config.ts
-    ├── tailwind.config.js
-    ├── tsconfig.json
-    └── src/
+├── index.html
+├── package.json
+├── package-lock.json
+├── vite.config.ts
+├── tailwind.config.js
+├── tsconfig.json
+├── tsconfig.node.json
+├── postcss.config.js
+├── README.md
+└── src/
         ├── main.tsx             ← App entry point
         ├── App.tsx              ← Routes & AuthProvider
         ├── index.css            ← Global styles + animation classes
@@ -105,7 +108,7 @@ Gram-Urja/
 ```bash
 # 1. Clone the repository
 git clone https://github.com/sakshikri255/Gram-Urja.git
-cd Gram-Urja/Gram-Urja
+cd Gram-Urja
 
 # 2. Install dependencies
 npm install
@@ -120,7 +123,7 @@ The app will open automatically at **http://localhost:5173**
 
 ## Available Scripts
 
-Run these from inside the `Gram-Urja/Gram-Urja/` directory:
+Run these from the project root directory:
 
 | Command | Description |
 |---|---|
@@ -206,7 +209,7 @@ Natural language Q&A about village data in English and Hindi. Keyword-based engi
 
 ## Data & Calculations
 
-All formulas are in [`src/calculations/engine.ts`](Gram-Urja/src/calculations/engine.ts).
+All formulas are in [`src/calculations/engine.ts`](src/calculations/engine.ts).
 
 Key constants (editable in `ASSUMPTIONS`):
 
@@ -251,7 +254,7 @@ Edit `src/data/demoData.ts` → add a new `AreaProfile` object to the `DEMO_AREA
 Replace functions in `src/services/energyService.ts` with real API calls. The `AreaProfile` type in `src/types/index.ts` defines the required data shape.
 
 ### Environment Variables
-Create a `.env` file in `Gram-Urja/` for any future API keys:
+Create a `.env` file in the project root for any future API keys:
 ```
 VITE_NASA_POWER_API_KEY=your_key_here
 VITE_CEA_API_KEY=your_key_here
