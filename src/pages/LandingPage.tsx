@@ -364,16 +364,13 @@ export default function LandingPage() {
     <div className="min-h-screen" style={{ background: 'linear-gradient(180deg,#f0fdf4 0%,#f7fdf9 100%)' }}>
 
       {/* ═══════════════════════════════════════════════════════════════════════
-          HERO + MISSION WITH GENERATED BACKGROUND
+          HERO + MISSION
       ══════════════════════════════════════════════════════════════════════ */}
       <section
         className="relative flex flex-col overflow-hidden"
         style={{
           minHeight: '100vh',
-          backgroundImage: 'linear-gradient(160deg, rgba(3,13,7,0.85) 0%, rgba(5,46,22,0.80) 25%, rgba(20,83,45,0.76) 55%, rgba(13,46,30,0.86) 80%, rgba(2,10,5,0.94) 100%), url("/images/landing_hero_bg.jpg")',
-          backgroundSize: 'cover',
-          backgroundPosition: 'center',
-          backgroundAttachment: 'fixed',
+          background: 'linear-gradient(160deg,#030d07 0%,#052e16 25%,#14532d 55%,#0d2e1e 80%,#020a05 100%)',
         }}
       >
         {/* Grain overlay */}

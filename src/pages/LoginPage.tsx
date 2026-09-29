@@ -54,9 +54,12 @@ export default function LoginPage() {
 
   return (
     <div
-      className="min-h-screen flex flex-col items-center justify-center relative overflow-hidden"
+      className="min-h-screen flex flex-col items-center justify-center relative overflow-hidden py-10"
       style={{
-        background: 'linear-gradient(160deg, #0a0f1e 0%, #0d2137 30%, #0a2e1c 65%, #030d07 100%)',
+        backgroundImage: 'linear-gradient(160deg, rgba(10,15,30,0.85) 0%, rgba(5,46,22,0.80) 30%, rgba(10,46,28,0.84) 65%, rgba(3,13,7,0.92) 100%), url("/images/landing_hero_bg.jpg")',
+        backgroundSize: 'cover',
+        backgroundPosition: 'center',
+        backgroundAttachment: 'fixed',
       }}
     >
       {/* Subtle grid overlay */}
