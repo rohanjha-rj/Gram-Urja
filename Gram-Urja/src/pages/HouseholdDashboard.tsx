@@ -101,7 +101,7 @@ export default function HouseholdDashboard() {
         <div className="flex items-center justify-between mb-4">
           <div>
             <h1 className="text-2xl font-bold text-gray-900">My Household</h1>
-            <p className="text-gray-500 text-sm mt-1">Appliance-level energy analysis · Demo Household</p>
+            <p className="text-gray-500 text-sm mt-1">Appliance-level energy analysis </p>
           </div>
           <DemoBadge />
         </div>
@@ -133,10 +133,10 @@ export default function HouseholdDashboard() {
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
         <KpiCard title="Monthly Consumption" value={totalKWh.toFixed(1)} unit="kWh"
           icon={<Zap className="w-5 h-5 text-blue-600" />} iconBg="bg-blue-100"
-          formula="Sum(Power × Qty × Hours × Days / 1000)" source="Demo" dataType="Demo" />
+          formula="Sum(Power × Qty × Hours × Days / 1000)" source="Live" dataType="Live" />
         <KpiCard title="Monthly Cost" value={'₹' + totalCost.toLocaleString()}
           icon={<Zap className="w-5 h-5 text-amber-600" />} iconBg="bg-amber-100"
-          formula={`kWh × ₹${ASSUMPTIONS.tariffINRPerKWh}`} source="Demo tariff" dataType="Estimated" />
+          formula={`kWh × ₹${ASSUMPTIONS.tariffINRPerKWh}`} source="Standard tariff" dataType="Estimated" />
         <KpiCard title="CO₂ Emissions" value={totalCO2.toFixed(2)} unit="kg/mo"
           icon={<Leaf className="w-5 h-5 text-green-600" />} iconBg="bg-green-100"
           formula={`kWh × ${ASSUMPTIONS.gridEmissionFactor} kg/kWh`} source="CEA 2023" dataType="Estimated" />

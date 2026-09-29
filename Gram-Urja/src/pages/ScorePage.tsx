@@ -158,7 +158,7 @@ export default function ScorePage() {
       </div>
 
       {/* Trend over time */}
-      <SectionCard title="Score Trend (Last 6 Months)" subtitle="Demo trajectory" className="mb-6">
+      <SectionCard title="Score Trend (Last 6 Months)" subtitle="Projected trajectory" className="mb-6">
         <DemoBadge className="mb-4" />
         <ResponsiveContainer width="100%" height={180}>
           <LineChart data={breakdown.trend} margin={{ left: -10 }}>

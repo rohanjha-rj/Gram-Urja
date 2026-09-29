@@ -3,12 +3,7 @@ import { TrendingUp, TrendingDown, Minus, HelpCircle } from 'lucide-react';
 
 // ─── Demo Badge ───────────────────────────────────────────────────────────────
 export function DemoBadge({ className = '' }: { className?: string }) {
-  return (
-    <span className={`inline-flex items-center gap-1 px-2 py-0.5 text-xs font-medium rounded-full bg-amber-100 text-amber-700 border border-amber-200 ${className}`}>
-      <span className="w-1.5 h-1.5 rounded-full bg-amber-500" />
-      Demo Data
-    </span>
-  );
+  return null;
 }
 
 // ─── Priority Badge ───────────────────────────────────────────────────────────

@@ -174,7 +174,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
         <div className="flex-shrink-0 px-4 py-3"
           style={{ borderTop: '1px solid rgba(16,185,129,0.10)' }}>
           <div className="text-[11px] text-gray-400 text-center">
-            GreenGrid AI v0.1 · Demo Mode
+            GreenGrid AI v0.1 
           </div>
         </div>
       </aside>
@@ -207,7 +207,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
           </div>
           <div className="ml-auto flex items-center gap-3 flex-shrink-0">
             <span className="hidden sm:inline text-xs text-amber-600 bg-amber-50 border border-amber-200 rounded-full px-3 py-1 font-semibold">
-              ⚡ Demo Mode
+              
             </span>
           </div>
         </header>

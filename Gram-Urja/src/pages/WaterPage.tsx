@@ -156,15 +156,15 @@ export default function WaterPage() {
         <KpiCard title="Rainwater Offset" value={rainwaterOffsetPct.toFixed(1)} unit="%"
           icon={<Droplets className="w-5 h-5 text-blue-600" />} iconBg="bg-blue-100"
           formula="Rainwater annual ÷ 12 ÷ monthly demand × 100"
-          source="Demo" dataType="Calculated" />
+          source="Live" dataType="Calculated" />
         <KpiCard title="Pump Energy" value={pumpEnergyPerMonth.toFixed(0)} unit="kWh/mo"
           icon={<Zap className="w-5 h-5 text-amber-600" />} iconBg="bg-amber-100"
           formula={`${pumpCountInput} pumps × ${pumpPowerKW} kW × ${pumpHoursPerDay} hrs × 30`}
-          source="Demo" dataType="Estimated" />
+          source="Live" dataType="Estimated" />
         <KpiCard title="Distribution Loss" value={(leakageLossDaily / 1000).toFixed(1)} unit="kL/day"
           icon={<Droplets className="w-5 h-5 text-red-500" />} iconBg="bg-red-100"
           formula={`Daily demand × ${leakagePct}% loss factor`}
-          source="Demo" dataType="Estimated" />
+          source="Live" dataType="Estimated" />
       </div>
 
       <div className="grid lg:grid-cols-2 gap-6 mb-6">

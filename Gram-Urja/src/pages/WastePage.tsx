@@ -147,7 +147,7 @@ export default function WastePage() {
         <KpiCard title="Monthly Cost Saving" value={'₹' + monthlySavings.toLocaleString()}
           icon={<Leaf className="w-5 h-5 text-emerald-600" />} iconBg="bg-emerald-100"
           formula={`Electricity potential × ₹${ASSUMPTIONS.tariffINRPerKWh}/kWh`}
-          source="Demo tariff" dataType="Estimated" />
+          source="Standard tariff" dataType="Estimated" />
       </div>
 
       <div className="grid lg:grid-cols-2 gap-6 mb-6">

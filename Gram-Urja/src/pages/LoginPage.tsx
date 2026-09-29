@@ -122,7 +122,7 @@ export default function LoginPage() {
         <div className="text-center mt-8">
           <div className="inline-flex items-center gap-2 text-xs text-green-400/60">
             <Leaf className="w-3 h-3" />
-            Demo Mode · Bihar Village Sustainability Region
+             Bihar Village Sustainability Region
           </div>
         </div>
       </div>

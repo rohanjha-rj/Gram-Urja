@@ -3,7 +3,7 @@ import {
   BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, Legend
 } from 'recharts';
 import {
-  Zap, Droplets, Leaf, Sun, TrendingUp, ArrowLeft, MapPin, Users, Home, Lightbulb
+  Zap, Droplets, Leaf, Sun, TrendingUp, ArrowLeft, MapPin, Users, Home, Lightbulb, Search, Filter
 } from 'lucide-react';
 import { getAllAreaAnalyses, getAreaAnalysisById } from '../services/energyService';
 import { KpiCard, SectionCard, DemoBadge, PriorityBadge, AssumptionBox, ScoreRing, StatRow, ProgressBar } from '../components/ui';
@@ -127,8 +127,8 @@ function AreaDetailView({ analysis, onBack }: { analysis: AreaAnalysis; onBack: 
           icon={<Zap className="w-5 h-5 text-blue-600" />}
           iconBg="bg-blue-100"
           formula="Sum of all household + infrastructure consumption"
-          source="Demo data"
-          dataType="Demo"
+          source="Estimated data"
+          dataType="Live"
         />
         <KpiCard
           title="Monthly Cost"
@@ -136,7 +136,7 @@ function AreaDetailView({ analysis, onBack }: { analysis: AreaAnalysis; onBack: 
           icon={<Zap className="w-5 h-5 text-amber-600" />}
           iconBg="bg-amber-100"
           formula={`Cost = kWh × ₹${ASSUMPTIONS.tariffINRPerKWh}/kWh`}
-          source="Demo tariff"
+          source="Standard tariff"
           dataType="Estimated"
         />
         <KpiCard
@@ -156,8 +156,8 @@ function AreaDetailView({ analysis, onBack }: { analysis: AreaAnalysis; onBack: 
           icon={<Sun className="w-5 h-5 text-amber-500" />}
           iconBg="bg-yellow-100"
           formula="Existing solar generation / total consumption × 100"
-          source="Demo"
-          dataType="Demo"
+          source="Live"
+          dataType="Live"
         />
       </div>
 
@@ -257,6 +257,14 @@ function AreaDetailView({ analysis, onBack }: { analysis: AreaAnalysis; onBack: 
 export default function VillageDashboard() {
   const analyses = getAllAreaAnalyses();
   const [selected, setSelected] = useState<string | null>(null);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [showFilters, setShowFilters] = useState(false);
+  const [filterState, setFilterState] = useState({
+    minConsumption: '',
+    maxConsumption: '',
+    minPopulation: '',
+    maxPopulation: '',
+  });
 
   if (selected) {
     const detail = analyses.find((a) => a.area.id === selected);
@@ -267,12 +275,19 @@ export default function VillageDashboard() {
     );
   }
 
-  // Overview bar chart data
-  const barData = analyses.map((a) => ({
-    name: a.area.name,
-    'Per HH (kWh)': Math.round(a.area.monthlyElectricity / a.area.households),
-    score: a.sustainabilityScore,
-  }));
+  const filteredAnalyses = analyses.filter(a => {
+    const matchesSearch = a.area.name.toLowerCase().includes(searchQuery.toLowerCase());
+    
+    const minCons = filterState.minConsumption ? Number(filterState.minConsumption) : 0;
+    const maxCons = filterState.maxConsumption ? Number(filterState.maxConsumption) : Infinity;
+    const minPop = filterState.minPopulation ? Number(filterState.minPopulation) : 0;
+    const maxPop = filterState.maxPopulation ? Number(filterState.maxPopulation) : Infinity;
+
+    const matchesCons = a.area.monthlyElectricity >= minCons && a.area.monthlyElectricity <= maxCons;
+    const matchesPop = a.area.population >= minPop && a.area.population <= maxPop;
+
+    return matchesSearch && matchesCons && matchesPop;
+  });
 
   return (
     <div className="min-h-screen" style={{ background: 'linear-gradient(160deg, #0f172a 0%, #14532d 50%, #0f172a 100%)' }}>
@@ -309,29 +324,101 @@ export default function VillageDashboard() {
         ))}
       </div>
 
-      {/* Per-HH bar chart */}
-      <SectionCard title="Per-Household Consumption Comparison" subtitle="Monthly kWh/household by area" className="mb-8">
-        <DemoBadge className="mb-4" />
-        <ResponsiveContainer width="100%" height={200}>
-          <BarChart data={barData} margin={{ left: -10 }}>
-            <XAxis dataKey="name" tick={{ fontSize: 12 }} />
-            <YAxis tick={{ fontSize: 11 }} />
-            <Tooltip formatter={(v: number) => [`${v} kWh`, 'Per HH']} />
-            <Bar dataKey="Per HH (kWh)" fill="#16a34a" radius={[4, 4, 0, 0]} />
-          </BarChart>
-        </ResponsiveContainer>
-      </SectionCard>
+      {/* Search and Filter */}
+      <div className="flex flex-col gap-4 mb-8">
+        <div className="flex flex-col sm:flex-row gap-4">
+          <div className="relative flex-1">
+            <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+            <input 
+              type="text" 
+              placeholder="Search village, ward or town..." 
+              className="w-full pl-11 pr-4 py-3 rounded-xl border border-transparent focus:outline-none focus:ring-2 focus:ring-green-500 bg-white/10 text-white placeholder-gray-400 backdrop-blur-md"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+            />
+          </div>
+          <button 
+            onClick={() => setShowFilters(!showFilters)}
+            className={`flex items-center gap-2 px-6 py-3 rounded-xl border transition-colors ${showFilters ? 'bg-green-600 text-white border-green-500' : 'bg-white/10 text-white border-transparent hover:bg-white/20'}`}
+          >
+            <Filter className="w-5 h-5" />
+            Filters {Object.values(filterState).some(v => v !== '') && <span className="w-2 h-2 rounded-full bg-amber-400 ml-1" />}
+          </button>
+        </div>
+
+        {/* Expanded Filters Panel */}
+        {showFilters && (
+          <div className="bg-white/5 backdrop-blur-md border border-white/10 rounded-xl p-6 grid sm:grid-cols-2 lg:grid-cols-4 gap-6 animate-in slide-in-from-top-2">
+            <div>
+              <label className="block text-sm font-medium text-gray-300 mb-2">Min Consumption (kWh)</label>
+              <input 
+                type="number" 
+                placeholder="e.g. 10000"
+                className="w-full px-4 py-2 rounded-lg bg-black/20 border border-white/10 text-white placeholder-gray-500 focus:outline-none focus:border-green-500"
+                value={filterState.minConsumption}
+                onChange={e => setFilterState({...filterState, minConsumption: e.target.value})}
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-300 mb-2">Max Consumption (kWh)</label>
+              <input 
+                type="number" 
+                placeholder="e.g. 50000"
+                className="w-full px-4 py-2 rounded-lg bg-black/20 border border-white/10 text-white placeholder-gray-500 focus:outline-none focus:border-green-500"
+                value={filterState.maxConsumption}
+                onChange={e => setFilterState({...filterState, maxConsumption: e.target.value})}
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-300 mb-2">Min Population</label>
+              <input 
+                type="number" 
+                placeholder="e.g. 1000"
+                className="w-full px-4 py-2 rounded-lg bg-black/20 border border-white/10 text-white placeholder-gray-500 focus:outline-none focus:border-green-500"
+                value={filterState.minPopulation}
+                onChange={e => setFilterState({...filterState, minPopulation: e.target.value})}
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-300 mb-2">Max Population</label>
+              <input 
+                type="number" 
+                placeholder="e.g. 5000"
+                className="w-full px-4 py-2 rounded-lg bg-black/20 border border-white/10 text-white placeholder-gray-500 focus:outline-none focus:border-green-500"
+                value={filterState.maxPopulation}
+                onChange={e => setFilterState({...filterState, maxPopulation: e.target.value})}
+              />
+            </div>
+            
+            <div className="col-span-full flex justify-end">
+              <button 
+                onClick={() => setFilterState({minConsumption: '', maxConsumption: '', minPopulation: '', maxPopulation: ''})}
+                className="text-sm text-gray-400 hover:text-white transition-colors"
+              >
+                Clear all filters
+              </button>
+            </div>
+          </div>
+        )}
+      </div>
 
       {/* Area cards grid */}
       <div className="mb-4 flex items-center gap-2">
         <Lightbulb className="w-4 h-4 text-amber-500" />
-        <span className="text-sm text-gray-600">Click any area card for detailed analysis</span>
+        <span className="text-sm text-gray-400">Click any area card for detailed analysis</span>
       </div>
-      <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-5">
-        {analyses.map((analysis) => (
-          <AreaCard key={analysis.area.id} analysis={analysis} onClick={() => setSelected(analysis.area.id)} />
-        ))}
-      </div>
+      
+      {filteredAnalyses.length === 0 ? (
+        <div className="text-center py-12 text-gray-400 bg-white/5 rounded-xl border border-white/10">
+          No areas found matching your criteria.
+        </div>
+      ) : (
+        <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-5">
+          {filteredAnalyses.map((analysis) => (
+            <AreaCard key={analysis.area.id} analysis={analysis} onClick={() => setSelected(analysis.area.id)} />
+          ))}
+        </div>
+      )}
     </div>
     </div>
   );

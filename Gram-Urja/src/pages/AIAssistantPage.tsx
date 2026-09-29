@@ -234,7 +234,7 @@ export default function AIAssistantPage() {
         </button>
       </div>
       <div className="text-xs text-center text-gray-400 mt-2">
-        Rule-based AI · Demo data only · Not connected to live APIs
+        Rule-based AI · Estimated data only · Not connected to live APIs
       </div>
     </div>
     </div>
