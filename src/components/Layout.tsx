@@ -16,7 +16,6 @@ const ALL_NAV_ITEMS = [
   { to: '/recommendations', icon: <Lightbulb className="w-4 h-4" />, label: 'Recommendations', roles: ['official', 'citizen', 'guest'] },
   { to: '/alerts', icon: <Bell className="w-4 h-4" />, label: 'Alerts', badge: '6', roles: ['official', 'guest'] },
   { to: '/score', icon: <Award className="w-4 h-4" />, label: 'Sustainability Score', roles: ['official', 'citizen', 'guest'] },
-  { to: '/ai', icon: <Bot className="w-4 h-4" />, label: 'AI Assistant', roles: ['official', 'citizen', 'guest'] },
 ];
 
 const ROLE_LABELS: Record<string, { label: string; color: string }> = {
@@ -239,6 +238,17 @@ export default function Layout({ children }: { children: React.ReactNode }) {
           {children}
         </main>
       </div>
+
+      {/* ── Floating Kiran button (bottom-right, always visible) ── */}
+      <button
+        onClick={() => navigate('/ai')}
+        title="Chat with Kiran"
+        className="fixed bottom-6 right-6 z-50 flex items-center gap-2 bg-green-600 hover:bg-green-700 active:scale-95 text-white rounded-full shadow-lg transition-all duration-200 pl-4 pr-5 py-3"
+        style={{ boxShadow: '0 4px 20px rgba(22,163,74,0.45)' }}
+      >
+        <Bot className="w-5 h-5 flex-shrink-0" />
+        <span className="text-sm font-semibold leading-none">Kiran</span>
+      </button>
     </div>
   );
 }

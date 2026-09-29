@@ -53,7 +53,7 @@ function AppRoutes() {
       <Route path="/recommendations" element={<Layout><RecommendationsPage /></Layout>} />
       <Route path="/alerts" element={<Layout><AlertsPage /></Layout>} />
       <Route path="/score" element={<Layout><ScorePage /></Layout>} />
-      <Route path="/ai" element={<Layout><AIAssistantPage /></Layout>} />
+      <Route path="/ai" element={<AIAssistantPage />} />
       {/* Default redirect */}
       <Route path="*" element={<Navigate to="/login" replace />} />
     </Routes>
