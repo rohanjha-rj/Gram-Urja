@@ -60,8 +60,8 @@ const FRIENDLY: Record<string, FriendlyContent> = {
   },
   'alert-005': {
     emoji: '🔋',
-    titleEN: 'Solar Adoption Very Low — Barouni (Part)',
-    titleHI: 'सोलर अपनाना बहुत कम है — बरौनी (भाग)',
+    titleEN: 'Solar Adoption Very Low — Barouni',
+    titleHI: 'सोलर अपनाना बहुत कम है — बरौनी',
     bodyEN: 'Barouni has 15 kW solar installed but 300 kW potential available — only 5% adoption. Large open land is available for expansion.',
     bodyHI: 'बरौनी में 15 kW सोलर है लेकिन 300 kW क्षमता उपलब्ध है — केवल 5% अपनाया गया। विस्तार के लिए बड़ी खुली ज़मीन उपलब्ध है।',
     todoEN: 'Apply for MNRE subsidy to expand solar from 15 kW to 300 kW in Barouni.',
@@ -92,8 +92,8 @@ const FRIENDLY: Record<string, FriendlyContent> = {
     emoji: '🌟',
     titleEN: 'Good News! Barouni Biogas Plant in Progress',
     titleHI: 'खुशखबरी! बरौनी बायोगैस संयंत्र की प्रक्रिया जारी है',
-    bodyEN: 'Barouni (Part) has a community biogas plant of 80 m³/day planned. ₹15,00,000 budget is available. Implementation is in progress.',
-    bodyHI: 'बरौनी (भाग) में 80 m³/दिन का सामुदायिक बायोगैस संयंत्र योजनाबद्ध है। ₹15,00,000 का बजट उपलब्ध है। कार्यान्वयन जारी है।',
+    bodyEN: 'Barouni has a community biogas plant of 80 m³/day planned. ₹15,00,000 budget is available. Implementation is in progress.',
+    bodyHI: 'बरौनी में 80 m³/दिन का सामुदायिक बायोगैस संयंत्र योजनाबद्ध है। ₹15,00,000 का बजट उपलब्ध है। कार्यान्वयन जारी है।',
     todoEN: 'Continue monitoring biogas plant setup. Ensure budget is deployed on schedule.',
     todoHI: 'बायोगैस संयंत्र की स्थापना की निगरानी जारी रखें। सुनिश्चित करें कि बजट समय पर लगाया जाए।',
     whoToTell: 'Gram Pradhan (for appreciation)',
@@ -233,15 +233,11 @@ export default function AlertsPage() {
   const [alerts, setAlerts] = useState(DEMO_ALERTS);
   const [hindi, setHindi] = useState(false);
   const [selectedAreaId, setSelectedAreaId] = useState('motipur');
-  const [showAll, setShowAll] = useState(false);
+  const filtered = alerts.filter((a) => a.areaId === selectedAreaId);
 
-  const filtered = showAll
-    ? alerts
-    : alerts.filter((a) => a.areaId === selectedAreaId || a.status === 'active');
-
-  const urgentCount = alerts.filter((a) => (a.severity === 'critical' || a.severity === 'high') && a.status === 'active').length;
-  const attentionCount = alerts.filter((a) => a.severity === 'medium' && a.status === 'active').length;
-  const allClearCount = alerts.filter((a) => a.status === 'resolved').length;
+  const urgentCount = filtered.filter((a) => (a.severity === 'critical' || a.severity === 'high') && a.status === 'active').length;
+  const attentionCount = filtered.filter((a) => a.severity === 'medium' && a.status === 'active').length;
+  const allClearCount = filtered.filter((a) => a.status === 'resolved').length;
 
   function handleStatusChange(id: string, status: AlertStatus) {
     setAlerts((prev) => prev.map((a) => a.id === id ? { ...a, status } : a));
@@ -264,7 +260,7 @@ export default function AlertsPage() {
         </svg>
       </div>
 
-      <div className="relative z-10 max-w-4xl mx-auto px-4 py-8">
+      <div className="relative z-10 max-w-6xl mx-auto px-6 py-8">
         {/* Header */}
         <div className="glass-card rounded-2xl p-5 mb-6 fade-up">
           <div className="flex flex-wrap items-start justify-between gap-4">
@@ -326,13 +322,6 @@ export default function AlertsPage() {
             onSelect={setSelectedAreaId}
             label={hindi ? 'इस गांव के अलर्ट:' : 'Alerts for:'}
           />
-          <div className="mt-3 flex items-center gap-3">
-            <label className="flex items-center gap-2 text-sm text-gray-600 cursor-pointer">
-              <input type="checkbox" checked={showAll} onChange={(e) => setShowAll(e.target.checked)}
-                className="w-4 h-4 accent-green-600" />
-              {hindi ? 'सभी गांवों के अलर्ट दिखाएं' : 'Show all areas'}
-            </label>
-          </div>
         </div>
 
         {/* Alert cards */}
@@ -359,27 +348,7 @@ export default function AlertsPage() {
           )}
         </div>
 
-        {/* How to report */}
-        <div className="glass-card rounded-2xl p-6 fade-up">
-          <h2 className="text-base font-bold text-gray-900 mb-4 flex items-center gap-2">
-            <Info className="w-5 h-5 text-blue-500" />
-            {hindi ? 'समस्या कैसे रिपोर्ट करें?' : 'How to Report a Problem'}
-          </h2>
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-            {[
-              { num: '1', icon: '👀', textEN: 'Notice a problem', textHI: 'समस्या देखें' },
-              { num: '2', icon: '📲', textEN: 'Tap the alert card', textHI: 'अलर्ट कार्ड दबाएं' },
-              { num: '3', icon: '✓', textEN: 'Mark as Checked', textHI: '"जांच हो गई" दबाएं' },
-              { num: '4', icon: '📞', textEN: 'Tell your Gram Sevak', textHI: 'ग्राम सेवक को बताएं' },
-            ].map((step) => (
-              <div key={step.num} className="bg-green-50 border border-green-200 rounded-xl p-3 text-center">
-                <div className="w-6 h-6 bg-green-600 text-white text-xs font-bold rounded-full flex items-center justify-center mx-auto mb-2">{step.num}</div>
-                <div className="text-xl mb-1">{step.icon}</div>
-                <div className="text-xs font-medium text-gray-700">{hindi ? step.textHI : step.textEN}</div>
-              </div>
-            ))}
-          </div>
-        </div>
+
       </div>
     </div>
   );

@@ -101,7 +101,7 @@ export const DEMO_RECOMMENDATIONS: Recommendation[] = [
     areaId: 'barouni',
     category: 'solar',
     priority: 'high',
-    title: 'Expand Solar from 15 kW to 300 kW in Barouni (Part)',
+    title: 'Expand Solar from 15 kW to 300 kW in Barouni',
     problem: 'Barouni has 15 kW solar (5% adoption) vs 300 kW potential — vast open land available.',
     rootCause: 'Initial installation much smaller than available potential. Budget of ₹15,00,000 partially available.',
     intervention: 'Add 285 kW more solar on open land (20,000 sq ft). Intervention cost ₹1,71,00,000.',
