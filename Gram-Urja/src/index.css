@@ -1,0 +1,510 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  body {
+    font-family: 'Inter', system-ui, sans-serif;
+    background-color: #f8fafc;
+    color: #0f172a;
+  }
+}
+
+@layer utilities {
+  .scrollbar-thin {
+    scrollbar-width: thin;
+  }
+  .animate-pulse-slow {
+    animation: pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+  }
+  .glass-card {
+    background: rgba(255,255,255,0.92);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+  }
+  .glass-card-dark {
+    background: rgba(15,23,42,0.75);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+  }
+}
+
+/* ─── Base animations ─────────────────────────────────────────────────────── */
+@keyframes flow {
+  0% { stroke-dashoffset: 100; }
+  100% { stroke-dashoffset: 0; }
+}
+@keyframes glow {
+  0%, 100% { opacity: 0.4; }
+  50% { opacity: 1; }
+}
+@keyframes rise {
+  0% { transform: translateY(4px); opacity: 0; }
+  100% { transform: translateY(0); opacity: 1; }
+}
+
+/* ─── Page entrance animations ───────────────────────────────────────────── */
+@keyframes fadeInUp {
+  from { opacity: 0; transform: translateY(24px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+@keyframes fadeInLeft {
+  from { opacity: 0; transform: translateX(-24px); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+@keyframes scaleIn {
+  from { opacity: 0; transform: scale(0.93); }
+  to   { opacity: 1; transform: scale(1); }
+}
+@keyframes pulseGlow {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(22,163,74,0.4); }
+  50%       { box-shadow: 0 0 0 10px rgba(22,163,74,0); }
+}
+@keyframes shimmer {
+  0%   { background-position: -200% center; }
+  100% { background-position: 200% center; }
+}
+@keyframes panelAppear {
+  from { opacity: 0; transform: scale(0.5) rotate(-5deg); }
+  to   { opacity: 1; transform: scale(1) rotate(0deg); }
+}
+@keyframes energyFlow {
+  0%   { stroke-dashoffset: 40; }
+  100% { stroke-dashoffset: 0; }
+}
+@keyframes sunSpin {
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(360deg); }
+}
+@keyframes sunPulse {
+  0%, 100% { r: 18; opacity: 0.7; }
+  50%       { r: 22; opacity: 1; }
+}
+@keyframes waveDrift {
+  0%   { transform: translateX(0); }
+  100% { transform: translateX(-50%); }
+}
+@keyframes dropletFloat {
+  0%   { transform: translateY(0) scale(1);   opacity: 0.8; }
+  80%  { transform: translateY(-60px) scale(0.7); opacity: 0.4; }
+  100% { transform: translateY(-80px) scale(0.5); opacity: 0; }
+}
+@keyframes leafSpin {
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(360deg); }
+}
+@keyframes countUp {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+@keyframes pulseRing {
+  0%   { transform: scale(1);   opacity: 0.6; }
+  100% { transform: scale(2.5); opacity: 0; }
+}
+@keyframes scoreStroke {
+  from { stroke-dashoffset: 283; }
+  to   { stroke-dashoffset: var(--target-offset, 0); }
+}
+@keyframes neuralPulse {
+  0%, 100% { opacity: 0.15; }
+  50%       { opacity: 0.4; }
+}
+
+/* ─── Utility classes for animations ─────────────────────────────────────── */
+.energy-flow {
+  stroke-dasharray: 8 4;
+  animation: flow 2s linear infinite;
+}
+.solar-glow {
+  animation: glow 2.5s ease-in-out infinite;
+}
+.rise-in {
+  animation: rise 0.6s ease-out forwards;
+}
+.fade-up {
+  animation: fadeInUp 0.55s ease-out forwards;
+}
+.fade-left {
+  animation: fadeInLeft 0.55s ease-out forwards;
+}
+.scale-in {
+  animation: scaleIn 0.45s ease-out forwards;
+}
+.pulse-glow {
+  animation: pulseGlow 2s ease-in-out infinite;
+}
+.panel-appear {
+  animation: panelAppear 0.3s ease-out forwards;
+}
+.sun-spin {
+  transform-origin: center;
+  animation: sunSpin 12s linear infinite;
+}
+.wave-drift {
+  animation: waveDrift 8s linear infinite;
+}
+.droplet-float {
+  animation: dropletFloat 3s ease-out infinite;
+}
+.leaf-spin {
+  transform-origin: center;
+  animation: leafSpin 6s linear infinite;
+}
+.pulse-ring {
+  animation: pulseRing 2s ease-out infinite;
+}
+.neural-pulse {
+  animation: neuralPulse 3s ease-in-out infinite;
+}
+.count-up {
+  animation: countUp 0.4s ease-out forwards;
+}
+
+/* Stagger helpers */
+.delay-100 { animation-delay: 100ms; }
+.delay-200 { animation-delay: 200ms; }
+.delay-300 { animation-delay: 300ms; }
+.delay-400 { animation-delay: 400ms; }
+.delay-500 { animation-delay: 500ms; }
+.delay-600 { animation-delay: 600ms; }
+
+/* ─── Gram Urja — Hero animations ────────────────────────────────────────── */
+@keyframes guHeroText {
+  from { opacity: 0; transform: translateY(28px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+@keyframes guHeroVisual {
+  from { opacity: 0; transform: translateX(24px) scale(0.97); }
+  to   { opacity: 1; transform: translateX(0) scale(1); }
+}
+@keyframes guSunPulse {
+  0%, 100% { r: 17; opacity: 0.9; }
+  50%       { r: 20; opacity: 1; }
+}
+@keyframes guSunGlow {
+  0%, 100% { opacity: 0.6; }
+  50%       { opacity: 1; }
+}
+@keyframes guSunRay {
+  0%, 100% { opacity: 0.5; }
+  50%       { opacity: 1; }
+}
+@keyframes guCloud1 {
+  0%   { transform: translateX(0); }
+  50%  { transform: translateX(12px); }
+  100% { transform: translateX(0); }
+}
+@keyframes guCloud2 {
+  0%   { transform: translateX(0); }
+  50%  { transform: translateX(-10px); }
+  100% { transform: translateX(0); }
+}
+@keyframes guGasBubble {
+  0%   { transform: translateY(0) scale(1); opacity: 0.6; }
+  80%  { transform: translateY(-32px) scale(0.6); opacity: 0.2; }
+  100% { transform: translateY(-40px) scale(0.4); opacity: 0; }
+}
+@keyframes guDrip {
+  0%   { transform: translateY(0) scale(1); opacity: 0.7; }
+  60%  { transform: translateY(8px) scale(0.9); opacity: 0.5; }
+  100% { transform: translateY(14px) scale(0.5); opacity: 0; }
+}
+@keyframes guLeafFall {
+  0%   { transform: translateY(0) rotate(0deg) scale(1);   opacity: 0; }
+  10%  { opacity: 0.8; }
+  90%  { opacity: 0.4; }
+  100% { transform: translateY(120vh) rotate(540deg) scale(0.6); opacity: 0; }
+}
+@keyframes guFlowPulse {
+  0%, 100% { opacity: 0.5; stroke-dashoffset: 40; }
+  50%       { opacity: 0.9; stroke-dashoffset: 0; }
+}
+
+/* Gram Urja utility animation classes */
+.gu-hero-text {
+  animation: guHeroText 0.7s cubic-bezier(0.22,1,0.36,1) forwards;
+}
+.gu-hero-visual {
+  animation: guHeroVisual 0.8s cubic-bezier(0.22,1,0.36,1) 0.15s both;
+}
+.gu-sun-pulse {
+  animation: guSunPulse 3s ease-in-out infinite;
+}
+.gu-sun-glow {
+  animation: guSunGlow 2.5s ease-in-out infinite;
+}
+.gu-sun-ray {
+  animation: guSunRay 2.5s ease-in-out infinite;
+}
+.gu-cloud-1 {
+  animation: guCloud1 18s ease-in-out infinite;
+}
+.gu-cloud-2 {
+  animation: guCloud2 24s ease-in-out infinite;
+}
+.gu-gas-bubble-1 {
+  animation: guGasBubble 3s ease-out infinite;
+}
+.gu-gas-bubble-2 {
+  animation: guGasBubble 3s ease-out 1s infinite;
+}
+.gu-gas-bubble-3 {
+  animation: guGasBubble 3s ease-out 2s infinite;
+}
+.gu-drip {
+  animation: guDrip 2.5s ease-in infinite;
+}
+.gu-leaf-fall {
+  animation: guLeafFall 12s linear infinite;
+}
+.gu-energy-flow {
+  stroke-dasharray: 8 5;
+  animation: flow 2.5s linear infinite;
+}
+
+/* ─── Hero badge float ───────────────────────────────────────────────────── */
+@keyframes guBadgeFloat {
+  0%, 100% { transform: translateY(0px); }
+  50%       { transform: translateY(-4px); }
+}
+.gu-hero-badge {
+  animation: guBadgeFloat 3s ease-in-out infinite;
+}
+.gu-hero-badge:nth-child(2) { animation-delay: 0.75s; }
+.gu-hero-badge:nth-child(3) { animation-delay: 1.5s; }
+.gu-hero-badge:nth-child(4) { animation-delay: 2.25s; }
+
+/* ─── Solar panel spark travel ───────────────────────────────────────────── */
+@keyframes guSparkTravel {
+  0%   { transform: scale(0.4) translateY(0);   opacity: 0; }
+  15%  { transform: scale(1.2) translateY(0);   opacity: 1; }
+  80%  { transform: scale(0.8) translateY(-6px); opacity: 0.6; }
+  100% { transform: scale(0)   translateY(-12px); opacity: 0; }
+}
+.gu-spark {
+  animation: guSparkTravel 2.2s ease-in-out infinite;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   GLOBAL ENERGY CONSERVATION AMBIENT ANIMATIONS
+   These play across every page in the background.
+   Each animation type maps to a real conservation resource:
+     • Photon  → solar energy being harvested
+     • Leaf    → organic waste / biogas being recovered
+     • Drop    → rainwater being collected / saved
+     • Ring    → energy pulse being generated and distributed
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/* ── Solar photon: drifts diagonally downward with a gentle arc ── */
+@keyframes guAmbientPhoton {
+  0%   { transform: translate(0, 0) scale(1);     opacity: 0; }
+  8%   { opacity: 0.7; }
+  50%  { transform: translate(18px, 45vh) scale(0.85); opacity: 0.5; }
+  92%  { opacity: 0.3; }
+  100% { transform: translate(30px, 100vh) scale(0.6); opacity: 0; }
+}
+.gu-ambient-photon {
+  animation: guAmbientPhoton linear infinite;
+}
+
+/* ── Leaf: tumbles and drifts downward, slow rotation ── */
+@keyframes guAmbientLeaf {
+  0%   { transform: translateY(0)    rotate(0deg)   translateX(0);   opacity: 0; }
+  5%   { opacity: 1; }
+  25%  { transform: translateY(25vh)  rotate(120deg) translateX(12px); }
+  50%  { transform: translateY(50vh)  rotate(240deg) translateX(-8px); }
+  75%  { transform: translateY(75vh)  rotate(380deg) translateX(15px); }
+  95%  { opacity: 0.6; }
+  100% { transform: translateY(110vh) rotate(540deg) translateX(5px);  opacity: 0; }
+}
+.gu-ambient-leaf {
+  animation: guAmbientLeaf ease-in-out infinite;
+}
+
+/* ── Water drop: rises from bottom, grows, fades ── */
+@keyframes guAmbientDrop {
+  0%   { transform: translateY(0)    scale(1);   opacity: 0; }
+  10%  { opacity: 0.35; }
+  80%  { transform: translateY(-60vh) scale(0.5); opacity: 0.2; }
+  100% { transform: translateY(-80vh) scale(0.3); opacity: 0; }
+}
+.gu-ambient-drop {
+  animation: guAmbientDrop ease-out infinite;
+}
+
+/* ── Energy ring: expands outward and fades like a ripple ── */
+@keyframes guAmbientRing {
+  0%   { transform: scale(1);   opacity: 0.4; }
+  100% { transform: scale(4);   opacity: 0; }
+}
+.gu-ambient-ring {
+  animation: guAmbientRing ease-out infinite;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   PAGE-LEVEL CONSERVATION ANIMATIONS
+   Applied directly to dashboard elements to show real data moving.
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/* ── KPI card: pulses green border when "live" data is changing ── */
+@keyframes guKpiLive {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(22,163,74,0); border-color: #e5e7eb; }
+  50%       { box-shadow: 0 0 0 4px rgba(22,163,74,0.12); border-color: #86efac; }
+}
+.gu-kpi-live {
+  animation: guKpiLive 3s ease-in-out infinite;
+}
+
+/* ── Saving counter: number ticks up with a green flash ── */
+@keyframes guSavingTick {
+  0%   { color: inherit; }
+  20%  { color: #16a34a; transform: scale(1.04); }
+  100% { color: inherit; transform: scale(1); }
+}
+.gu-saving-tick {
+  animation: guSavingTick 4s ease-in-out infinite;
+}
+
+/* ── Energy bar fill: animates width from 0 on mount ── */
+@keyframes guBarFill {
+  from { width: 0 !important; }
+}
+.gu-bar-fill {
+  animation: guBarFill 1.2s cubic-bezier(0.22,1,0.36,1) forwards;
+}
+
+/* ── Solar generation shimmer on active panels ── */
+@keyframes guSolarShimmer {
+  0%   { background-position: -200% center; }
+  100% { background-position: 200% center; }
+}
+.gu-solar-shimmer {
+  background: linear-gradient(90deg, #1d4ed8 0%, #3b82f6 40%, #93c5fd 50%, #3b82f6 60%, #1d4ed8 100%);
+  background-size: 200% auto;
+  animation: guSolarShimmer 3s linear infinite;
+}
+
+/* ── CO₂ saved: text fades green as value grows ── */
+@keyframes guCo2Save {
+  0%, 80% { color: #059669; opacity: 1; }
+  40%      { color: #10b981; opacity: 0.8; transform: translateY(-1px); }
+  100%     { color: #059669; opacity: 1; transform: translateY(0); }
+}
+.gu-co2-save {
+  animation: guCo2Save 5s ease-in-out infinite;
+}
+
+/* ── Water saving ripple on stat rows ── */
+@keyframes guWaterRipple {
+  0%   { box-shadow: 0 0 0 0 rgba(14,165,233,0.3); }
+  70%  { box-shadow: 0 0 0 8px rgba(14,165,233,0); }
+  100% { box-shadow: 0 0 0 0 rgba(14,165,233,0); }
+}
+.gu-water-ripple {
+  animation: guWaterRipple 2.5s ease-out infinite;
+}
+
+/* ── Biogas bubble: small circles float upward off waste stat ── */
+@keyframes guBiogasRise {
+  0%   { transform: translateY(0) scale(1); opacity: 0.5; }
+  100% { transform: translateY(-24px) scale(0.3); opacity: 0; }
+}
+.gu-biogas-rise {
+  animation: guBiogasRise 2s ease-out infinite;
+}
+.gu-biogas-rise-2 { animation-delay: 0.7s; }
+.gu-biogas-rise-3 { animation-delay: 1.4s; }
+
+/* ── Score ring entrance ── */
+@keyframes guScoreEntrance {
+  from { stroke-dashoffset: 283; opacity: 0; }
+  to   { opacity: 1; }
+}
+.gu-score-ring {
+  animation: guScoreEntrance 1.2s cubic-bezier(0.22,1,0.36,1) forwards;
+}
+
+/* ── Live data blink dot (green pulse dot on stat labels) ── */
+@keyframes guLiveDot {
+  0%, 100% { transform: scale(1);   opacity: 1; }
+  50%       { transform: scale(1.6); opacity: 0.5; }
+}
+.gu-live-dot {
+  display: inline-block;
+  width: 6px; height: 6px;
+  border-radius: 50%;
+  background: #22c55e;
+  animation: guLiveDot 1.5s ease-in-out infinite;
+  vertical-align: middle;
+  margin-right: 4px;
+}
+
+/* ── Page section entrance (scroll-triggered via JS class add) ── */
+@keyframes guSectionIn {
+  from { opacity: 0; transform: translateY(20px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.gu-section-in {
+  animation: guSectionIn 0.6s cubic-bezier(0.22,1,0.36,1) forwards;
+}
+
+/* ── Stat card hover lift ── */
+.gu-stat-card {
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+.gu-stat-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 8px 24px rgba(22,163,74,0.12);
+}
+
+/* ── Energy flow line (SVG stroke-dasharray travel) ── */
+@keyframes guFlowLine {
+  0%   { stroke-dashoffset: 120; opacity: 0.3; }
+  50%  { opacity: 0.8; }
+  100% { stroke-dashoffset: 0;   opacity: 0.3; }
+}
+.gu-flow-line {
+  stroke-dasharray: 8 6;
+  animation: guFlowLine 2s linear infinite;
+}
+
+/* Respect reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  .gu-hero-text,
+  .gu-hero-visual,
+  .gu-sun-pulse,
+  .gu-sun-glow,
+  .gu-sun-ray,
+  .gu-cloud-1,
+  .gu-cloud-2,
+  .gu-gas-bubble-1,
+  .gu-gas-bubble-2,
+  .gu-gas-bubble-3,
+  .gu-drip,
+  .gu-leaf-fall,
+  .gu-energy-flow,
+  .gu-ambient-photon,
+  .gu-ambient-leaf,
+  .gu-ambient-drop,
+  .gu-ambient-ring,
+  .gu-kpi-live,
+  .gu-saving-tick,
+  .gu-solar-shimmer,
+  .gu-co2-save,
+  .gu-water-ripple,
+  .gu-biogas-rise,
+  .gu-score-ring,
+  .gu-live-dot,
+  .gu-section-in,
+  .gu-flow-line,
+  .energy-flow,
+  .solar-glow,
+  .sun-spin,
+  .pulse-ring {
+    animation: none !important;
+    opacity: 1 !important;
+  }
+  .gu-hero-text, .gu-hero-visual, .gu-stat-card:hover {
+    transform: none !important;
+  }
+}
