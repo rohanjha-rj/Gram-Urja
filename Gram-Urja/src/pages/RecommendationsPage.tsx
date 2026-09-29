@@ -110,7 +110,7 @@ const PRIORITY_ORDER = { critical: 0, high: 1, medium: 2, low: 3 };
 
 export default function RecommendationsPage() {
   const [expandedId, setExpandedId] = useState<string | null>(DEMO_RECOMMENDATIONS[0].id);
-  const [selectedAreaId, setSelectedAreaId] = useState('suryapur');
+  const [selectedAreaId, setSelectedAreaId] = useState('motipur');
   const [filterCategory, setFilterCategory] = useState<string>('all');
   const [filterArea, setFilterArea] = useState<string>(selectedAreaId);
   const [filterPriority, setFilterPriority] = useState<string>('all');

@@ -14,7 +14,7 @@ const areas = getAllAreaAnalyses();
 const COLORS = ['#16a34a', '#059669', '#f59e0b', '#84cc16'];
 
 export default function WastePage() {
-  const [selectedAreaId, setSelectedAreaId] = useState('suryapur');
+  const [selectedAreaId, setSelectedAreaId] = useState('motipur');
   const [cowDung, setCowDung] = useState(500);
   const [foodWaste, setFoodWaste] = useState(300);
   const [agriWaste, setAgriWaste] = useState(200);

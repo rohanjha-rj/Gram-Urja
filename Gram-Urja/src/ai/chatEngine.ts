@@ -33,7 +33,7 @@ export function generateAIResponse(userMessage: string): ChatMessage {
 
   // Greetings
   if (GREETINGS.some((g) => q.startsWith(g))) {
-    content = `नमस्ते! Hello! I'm GreenGrid AI, your sustainability assistant for the **Suryapur Sustainability Region**.
+    content = `नमस्ते! Hello! I'm GreenGrid AI, your sustainability assistant for the **Bihar Village Sustainability Region**.
 
 I can help you with:
 • Energy consumption & cost analysis
@@ -43,7 +43,7 @@ I can help you with:
 • Sustainability scores & recommendations
 • Alert explanations
 
-What would you like to know? Try asking: *"What is Navgram's monthly energy cost?"* or *"Which area has the highest solar potential?"*`;
+What would you like to know? Try asking: *"What is Motipur's monthly energy cost?"* or *"Which area has the highest solar potential?"*`;
     return { id: Math.random().toString(), role: 'assistant', content, timestamp: now, language: 'en' };
   }
 
@@ -52,19 +52,19 @@ What would you like to know? Try asking: *"What is Navgram's monthly energy cost
     content = `I can answer questions like:
 
 **Energy:** "What is [area] monthly consumption?" · "Which area consumes the most per household?"
-**Solar:** "What is [area] solar potential?" · "How many panels can fit in Suryapur?"
-**Water:** "How much rainwater can Navgram harvest?" · "What is Haritpur's water demand?"
-**Waste:** "What is the biogas potential of Navgram?"
-**Cost:** "How much does Ward 01 spend on electricity?"
-**Scores:** "What is Shantipur's sustainability score?"
-**Recommendations:** "What is the top recommendation?" · "How can Navgram improve?"
+**Solar:** "What is [area] solar potential?" · "How many panels can fit in Motipur?"
+**Water:** "How much rainwater can Amra harvest?" · "What is Oiara's water demand?"
+**Waste:** "What is the biogas potential of Motipur?"
+**Cost:** "How much does Korha spend on electricity?"
+**Scores:** "What is Barouni's sustainability score?"
+**Recommendations:** "What is the top recommendation?" · "How can Amra improve?"
 **Region:** "Give me the region overview"`;
     return { id: Math.random().toString(), role: 'assistant', content, timestamp: now, language: 'en' };
   }
 
   // Region overview
   if (q.includes('region') || q.includes('overview') || q.includes('all areas') || q.includes('summary')) {
-    content = `**Suryapur Sustainability Region — Overview**
+    content = `**Bihar Village Sustainability Region — Overview**
 
 | Metric | Value |
 |--------|-------|
@@ -75,7 +75,7 @@ What would you like to know? Try asking: *"What is Navgram's monthly energy cost
 | Monthly electricity cost | ${formatINR(totals.totalCost)} |
 | Monthly CO₂ emissions | ${(totals.totalCO2 / 1000).toFixed(1)} tonnes |
 
-**Priority areas for action:** Navgram (high consumption, zero solar) and Ward 01 (highest absolute usage).`;
+**Priority areas for action:** Motipur (highest consumption, solar unverified) and Amra (zero renewable, high cost).`;
     navigationSuggestion = '/village';
     return { id: Math.random().toString(), role: 'assistant', content, timestamp: now, language: 'en', navigationSuggestion };
   }
@@ -221,16 +221,16 @@ View all ${DEMO_RECOMMENDATIONS.length} recommendations on the Recommendations p
 • **पानी (Water):** मांग और वर्षा जल संचयन
 • **कचरे से ऊर्जा (Waste to Energy):** बायोगैस क्षमता
 
-किस क्षेत्र के बारे में जानना चाहते हैं? (Suryapur, Haritpur, Navgram, Shantipur, Ward 01, Ward 02)`;
+किस क्षेत्र के बारे में जानना चाहते हैं? (Motipur, Oiara, Amra, Barouni, Korha)`;
     return { id: Math.random().toString(), role: 'assistant', content, timestamp: now, language: 'hi' };
   }
 
   // Fallback
   content = `I didn't find a specific match for *"${userMessage}"*. Here are some things I can help with:
 
-• **Area-specific:** "What is Navgram's energy consumption?" 
+• **Area-specific:** "What is Motipur's energy consumption?"
 • **Comparisons:** "Which area has the best sustainability score?"
-• **Metrics:** "Show me Suryapur's solar potential"
+• **Metrics:** "Show me Korha's solar potential"
 • **Recommendations:** "What are the top recommendations?"
 • **Overview:** "Give me the region summary"
 

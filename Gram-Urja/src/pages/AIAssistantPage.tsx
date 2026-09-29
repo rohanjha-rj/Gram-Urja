@@ -7,13 +7,13 @@ import { DemoBadge } from '../components/ui';
 
 const QUICK_PROMPTS = [
   'Which area has the highest energy consumption?',
-  'What is Navgram\'s solar potential?',
-  'Show me Suryapur\'s water analysis',
+  'What is Motipur\'s solar potential?',
+  'Show me Amra\'s water analysis',
   'What are the top recommendations?',
   'What is the region overview?',
   'Which area has the best sustainability score?',
-  'What is Ward 01\'s monthly electricity cost?',
-  'How much biogas can Navgram produce?',
+  'What is Korha\'s monthly electricity cost?',
+  'How much biogas can Motipur produce?',
 ];
 
 const INITIAL_MESSAGE: ChatMessage = {
@@ -21,7 +21,7 @@ const INITIAL_MESSAGE: ChatMessage = {
   role: 'assistant',
   content: `**नमस्ते! Hello! Welcome to GreenGrid AI Assistant** 🌱
 
-I'm your sustainability intelligence assistant for the **Suryapur Sustainability Region**. I can answer questions about:
+I'm your sustainability intelligence assistant for the **Bihar Village Sustainability Region**. I can answer questions about:
 
 • ⚡ **Energy** — consumption, costs, per-household analysis
 • ☀️ **Solar** — potential, panels, savings, payback
@@ -32,7 +32,7 @@ I'm your sustainability intelligence assistant for the **Suryapur Sustainability
 
 I support **English and Hindi** text queries. Try a quick prompt below or type your question!
 
-*All data is from the Suryapur demo dataset. Click navigation suggestions to explore the relevant page.*`,
+*All data is from the Bihar Village demo dataset. Click navigation suggestions to explore the relevant page.*`,
   timestamp: new Date().toISOString(),
   language: 'en',
 };

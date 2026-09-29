@@ -532,7 +532,7 @@ export default function LandingPage() {
               {/* Live region pill */}
               <div className="inline-flex items-center gap-2 border border-green-400/30 bg-green-400/10 rounded-full px-4 py-1.5 text-xs font-semibold text-green-300 uppercase tracking-widest">
                 <span className="w-2 h-2 bg-green-400 rounded-full animate-pulse" />
-                Live · Suryapur Sustainability Region
+                Live · Bihar Village Sustainability Region
               </div>
 
               {/* Headline — fix "Waste , Water" punctuation spacing */}
@@ -615,7 +615,7 @@ export default function LandingPage() {
           </div>
           <h2 className="text-3xl font-extrabold text-gray-900 mb-3">Real Numbers. Real Change.</h2>
           <p className="text-gray-500 max-w-xl mx-auto text-sm">
-            Aggregated daily impact across all 6 areas of Suryapur region — calculated from live data using transparent formulas.
+            Aggregated daily impact across all 5 areas of Bihar Village region — calculated from live data using transparent formulas.
           </p>
         </div>
         <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-5">

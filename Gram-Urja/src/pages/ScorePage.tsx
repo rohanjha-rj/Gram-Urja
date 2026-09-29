@@ -70,7 +70,7 @@ export default function ScorePage() {
       <div className="bg-gradient-to-br from-purple-800 to-indigo-900 text-white rounded-2xl p-6 mb-6">
         <div className="flex items-center justify-between">
           <div>
-            <div className="text-purple-300 text-sm mb-1">{area.name} · Suryapur Region</div>
+            <div className="text-purple-300 text-sm mb-1">{area.name} · Bihar Village Region</div>
             <div className="flex items-end gap-4">
               <div>
                 <div className="text-7xl font-extrabold">{breakdown.total}</div>
