@@ -1,12 +1,12 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import {
-  Sun, Droplets, Leaf, Zap,
-  Lightbulb, Bell, Award, Bot, ArrowRight, TrendingUp,
-  Wind, ChevronRight,
+  Sun, Leaf, Zap,
+  TrendingUp, Wind, ChevronRight, ArrowRight,
 } from 'lucide-react';
 import { getAllAreaAnalyses } from '../services/energyService';
 import { ASSUMPTIONS } from '../calculations/engine';
+import { useLanguage } from '../context/LanguageContext';
 
 // ─── Derived live-impact metrics ─────────────────────────────────────────────
 function getLiveImpact() {
@@ -73,36 +73,37 @@ function useInView(threshold = 0.2): [React.RefObject<HTMLDivElement>, boolean] 
 
 // ─── Hero photo slideshow ────────────────────────────────────────────────────
 const HERO_PHOTOS = [
-  { url: 'https://images.unsplash.com/photo-1509391366360-2e959784a276?w=900&q=80&auto=format&fit=crop', label: '☀️ Solar Panels · Clean Energy' },
-  { url: 'https://images.unsplash.com/photo-1501854140801-50d01698950b?w=900&q=80&auto=format&fit=crop', label: '🌿 Green Fields · Rural India' },
-  { url: 'https://images.unsplash.com/photo-1497435334941-8c899ee9e8e9?w=900&q=80&auto=format&fit=crop', label: '🔋 Clean Storage · Sustainable Grid' },
-  { url: 'https://images.unsplash.com/photo-1508514177221-188b1cf16e9d?w=900&q=80&auto=format&fit=crop', label: '⚡ Renewable Energy · Villages' },
+  { url: 'https://images.unsplash.com/photo-1509391366360-2e959784a276?w=900&q=80&auto=format&fit=crop', labelEn: '☀️ Solar Panels · Clean Energy', labelHi: '☀️ सौर पैनल · स्वच्छ ऊर्जा' },
+  { url: 'https://images.unsplash.com/photo-1501854140801-50d01698950b?w=900&q=80&auto=format&fit=crop', labelEn: '🌿 Green Fields · Rural India', labelHi: '🌿 हरे-भरे खेत · ग्रामीण भारत' },
+  { url: 'https://images.unsplash.com/photo-1497435334941-8c899ee9e8e9?w=900&q=80&auto=format&fit=crop', labelEn: '🔋 Clean Storage · Sustainable Grid', labelHi: '🔋 स्वच्छ भंडारण · संवहनीय ग्रिड' },
+  { url: 'https://images.unsplash.com/photo-1508514177221-188b1cf16e9d?w=900&q=80&auto=format&fit=crop', labelEn: '⚡ Renewable Energy · Villages', labelHi: '⚡ नवीकरणीय ऊर्जा · ग्राम' },
 ];
 
-function VillageScene() {
+function VillageScene({ isHindi }: { isHindi: boolean }) {
   const [active, setActive] = useState(0);
   useEffect(() => {
     const id = setInterval(() => setActive(p => (p + 1) % HERO_PHOTOS.length), 4000);
     return () => clearInterval(id);
   }, []);
+
   return (
     <div className="relative w-full max-w-2xl mx-auto select-none rounded-2xl overflow-hidden shadow-2xl" style={{ aspectRatio: '16/10' }}>
       {HERO_PHOTOS.map((photo, i) => (
-        <img key={photo.url} src={photo.url} alt={photo.label} loading={i === 0 ? 'eager' : 'lazy'}
+        <img key={photo.url} src={photo.url} alt={isHindi ? photo.labelHi : photo.labelEn} loading={i === 0 ? 'eager' : 'lazy'}
           className="absolute inset-0 w-full h-full object-cover transition-opacity duration-1000"
           style={{ opacity: i === active ? 1 : 0 }} />
       ))}
       <div className="absolute inset-0 pointer-events-none"
         style={{ background: 'linear-gradient(135deg,rgba(0,0,0,0.28) 0%,transparent 50%,rgba(0,0,0,0.35) 100%)' }} />
       {[
-        { pos: 'top-3 left-3',      bg: 'bg-amber-400/90',   text: '☀️ Solar' },
-        { pos: 'top-3 right-3',     bg: 'bg-emerald-500/90', text: '🌿 Biogas' },
-        { pos: 'bottom-12 right-3', bg: 'bg-green-600/90',   text: '⚡ Power' },
+        { pos: 'top-3 left-3',      bg: 'bg-amber-400/90',   textEn: '☀️ Solar',  textHi: '☀️ सौर' },
+        { pos: 'top-3 right-3',     bg: 'bg-emerald-500/90', textEn: '🌿 Biogas', textHi: '🌿 बायोगैस' },
+        { pos: 'bottom-12 right-3', bg: 'bg-green-600/90',   textEn: '⚡ Power',  textHi: '⚡ ऊर्जा' },
       ].map(b => (
-        <div key={b.text}
+        <div key={b.pos}
           className={`absolute ${b.pos} ${b.bg} text-white text-xs font-bold px-2.5 py-1 rounded-full gu-hero-badge`}
           style={{ backdropFilter: 'blur(8px)', WebkitBackdropFilter: 'blur(8px)', boxShadow: '0 2px 8px rgba(0,0,0,0.35)' }}>
-          {b.text}
+          {isHindi ? b.textHi : b.textEn}
         </div>
       ))}
       <div className="absolute bottom-3 left-1/2 -translate-x-1/2 flex gap-1.5">
@@ -128,9 +129,10 @@ interface ImpactCardProps {
   inView: boolean;
   duration?: number;
   decimals?: number;
+  isHindi: boolean;
 }
 
-function ImpactCard({ icon, iconBg, label, sublabel, value, unit, trendPct, accentBar, inView, duration = 1800, decimals = 0 }: ImpactCardProps) {
+function ImpactCard({ icon, iconBg, label, sublabel, value, unit, trendPct, accentBar, inView, duration = 1800, decimals = 0, isHindi }: ImpactCardProps) {
   const animated = useCountUp(Math.round(value), duration, inView);
   const [liveDelta, setLiveDelta] = useState(0);
   useEffect(() => {
@@ -162,7 +164,7 @@ function ImpactCard({ icon, iconBg, label, sublabel, value, unit, trendPct, acce
         <div className="text-xs text-gray-400 mb-3">{sublabel}</div>
         <div className="flex items-center gap-1 text-xs font-semibold text-emerald-600">
           <TrendingUp className="w-3 h-3" />
-          ↑ {trendPct}% this month
+          ↑ {trendPct}% {isHindi ? 'इस माह' : 'this month'}
           {liveDelta > 0 && <span className="ml-1 text-green-600 gu-co2-save">+{liveDelta}</span>}
         </div>
       </div>
@@ -170,50 +172,49 @@ function ImpactCard({ icon, iconBg, label, sublabel, value, unit, trendPct, acce
   );
 }
 
-// ─── Flow diagram (Water Harvesting removed) ──────────────────────────────────
-const impact = getLiveImpact();
-
-const FLOW_NODES = [
-  {
-    icon: '☀️',
-    title: 'Solar Energy',
-    desc: `${impact.solarDailyKWh} kWh/day potential`,
-    bg: 'bg-amber-50',
-    border: 'border-amber-200',
-    accent: 'text-amber-700',
-    dot: 'bg-amber-400',
-  },
-  {
-    icon: '🌿',
-    title: 'Organic Waste',
-    desc: `${impact.wasteTonsPerDay}t/day collected`,
-    bg: 'bg-emerald-50',
-    border: 'border-emerald-200',
-    accent: 'text-emerald-700',
-    dot: 'bg-emerald-400',
-  },
-  {
-    icon: '⚡',
-    title: 'Clean Energy',
-    desc: `${impact.energyGenKWh} kWh/day generated`,
-    bg: 'bg-green-50',
-    border: 'border-green-200',
-    accent: 'text-green-700',
-    dot: 'bg-green-400',
-  },
-  {
-    icon: '🏘️',
-    title: 'Community Benefit',
-    desc: 'Lower cost · less CO₂',
-    bg: 'bg-purple-50',
-    border: 'border-purple-200',
-    accent: 'text-purple-700',
-    dot: 'bg-purple-400',
-  },
-];
-
-function ConservationFlow() {
+// ─── Flow diagram ─────────────────────────────────────────────────────────────
+function ConservationFlow({ impact, isHindi }: { impact: ReturnType<typeof getLiveImpact>; isHindi: boolean }) {
   const [flowRef, flowInView] = useInView(0.1);
+
+  const FLOW_NODES = [
+    {
+      icon: '☀️',
+      title: isHindi ? 'सौर ऊर्जा' : 'Solar Energy',
+      desc: isHindi ? `${impact.solarDailyKWh} kWh/दिन क्षमता` : `${impact.solarDailyKWh} kWh/day potential`,
+      bg: 'bg-amber-50',
+      border: 'border-amber-200',
+      accent: 'text-amber-700',
+      dot: 'bg-amber-400',
+    },
+    {
+      icon: '🌿',
+      title: isHindi ? 'जैविक अपशिष्ट' : 'Organic Waste',
+      desc: isHindi ? `${impact.wasteTonsPerDay} टन/दिन संकलित` : `${impact.wasteTonsPerDay}t/day collected`,
+      bg: 'bg-emerald-50',
+      border: 'border-emerald-200',
+      accent: 'text-emerald-700',
+      dot: 'bg-emerald-400',
+    },
+    {
+      icon: '⚡',
+      title: isHindi ? 'स्वच्छ विद्युत' : 'Clean Energy',
+      desc: isHindi ? `${impact.energyGenKWh} kWh/दिन उत्पादन` : `${impact.energyGenKWh} kWh/day generated`,
+      bg: 'bg-green-50',
+      border: 'border-green-200',
+      accent: 'text-green-700',
+      dot: 'bg-green-400',
+    },
+    {
+      icon: '🏘️',
+      title: isHindi ? 'सामुदायिक लाभ' : 'Community Benefit',
+      desc: isHindi ? 'कम खर्च · शून्य उत्सर्जन' : 'Lower cost · less CO₂',
+      bg: 'bg-purple-50',
+      border: 'border-purple-200',
+      accent: 'text-purple-700',
+      dot: 'bg-purple-400',
+    },
+  ];
+
   return (
     <div ref={flowRef} className="relative">
       {/* Desktop: horizontal flow */}
@@ -280,7 +281,7 @@ function ConservationFlow() {
       <div className="mt-5 text-center">
         <span className="inline-flex items-center gap-2 text-xs text-gray-500 border border-gray-200 bg-white rounded-full px-4 py-1.5">
           <span className="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse" />
-          Closed-loop circular model — each output feeds the next input
+          {isHindi ? 'बंद चक्रीय मॉडल — प्रत्येक उत्पाद अगले चरण को ऊर्जा प्रदान करता है' : 'Closed-loop circular model — each output feeds the next input'}
         </span>
       </div>
     </div>
@@ -289,57 +290,63 @@ function ConservationFlow() {
 
 // ─── Main Page ────────────────────────────────────────────────────────────────
 export default function LandingPage() {
+  const { t, isHindi } = useLanguage();
   const [impactRef, impactInView] = useInView(0.15);
+  const impact = getLiveImpact();
 
   const impactCards: ImpactCardProps[] = [
     {
       icon: <Sun className="w-5 h-5 text-amber-600" />,
       iconBg: 'bg-amber-100',
-      label: 'Solar Potential',
-      sublabel: 'Feasible daily generation across all areas',
+      label: t('solarPotentialLabel'),
+      sublabel: t('solarPotentialSub'),
       value: impact.solarDailyKWh,
-      unit: 'kWh/day',
+      unit: 'kWh/' + (isHindi ? 'दिन' : 'day'),
       trendPct: 12,
       accentBar: 'bg-amber-400',
       inView: impactInView,
       duration: 1400,
+      isHindi,
     },
     {
       icon: <Leaf className="w-5 h-5 text-emerald-600" />,
       iconBg: 'bg-emerald-100',
-      label: 'Waste Collected',
-      sublabel: 'Organic waste available for biogas recovery',
+      label: t('wasteCollectedLabel'),
+      sublabel: t('wasteCollectedSub'),
       value: Math.round(impact.wasteTonsPerDay * 10),
-      unit: 'tons/day',
+      unit: (isHindi ? 'टन/दिन' : 'tons/day'),
       trendPct: 18,
       accentBar: 'bg-emerald-400',
       inView: impactInView,
       duration: 1550,
       decimals: 1,
+      isHindi,
     },
     {
       icon: <Wind className="w-5 h-5 text-teal-600" />,
       iconBg: 'bg-teal-100',
-      label: 'CO₂ Mitigated',
-      sublabel: 'Clean energy carbon offset per day',
+      label: t('co2MitigatedLabel'),
+      sublabel: t('co2MitigatedSub'),
       value: impact.co2DailyKg,
-      unit: 'kg/day',
+      unit: 'kg/' + (isHindi ? 'दिन' : 'day'),
       trendPct: 22,
       accentBar: 'bg-teal-400',
       inView: impactInView,
       duration: 1700,
+      isHindi,
     },
     {
       icon: <Zap className="w-5 h-5 text-green-600" />,
       iconBg: 'bg-green-100',
-      label: 'Energy Generated',
-      sublabel: 'Biogas + existing solar combined',
+      label: t('energyGeneratedLabel'),
+      sublabel: t('energyGeneratedSub'),
       value: impact.energyGenKWh,
-      unit: 'kWh/day',
+      unit: 'kWh/' + (isHindi ? 'दिन' : 'day'),
       trendPct: 16,
       accentBar: 'bg-green-400',
       inView: impactInView,
       duration: 1850,
+      isHindi,
     },
   ];
 
@@ -347,12 +354,12 @@ export default function LandingPage() {
     <div className="min-h-screen" style={{ background: 'linear-gradient(180deg,#f0fdf4 0%,#f7fdf9 100%)' }}>
 
       {/* ═══════════════════════════════════════════════════════════════════════
-          HERO + MISSION — exactly one viewport height, internal scroll if needed
+          HERO + MISSION
       ══════════════════════════════════════════════════════════════════════ */}
       <section
         className="relative flex flex-col overflow-hidden"
         style={{
-          height: '100vh',
+          minHeight: '100vh',
           background: 'linear-gradient(160deg,#030d07 0%,#052e16 25%,#14532d 55%,#0d2e1e 80%,#020a05 100%)',
         }}
       >
@@ -378,41 +385,53 @@ export default function LandingPage() {
           ))}
         </div>
 
-        {/* ── Inner scroll container fills the section exactly ── */}
-        <div className="relative z-10 flex-1 min-h-0 overflow-y-auto">
-          <div className="max-w-7xl mx-auto w-full px-6 flex flex-col" style={{ minHeight: '100%' }}>
+        {/* ── Inner container ── */}
+        <div className="relative z-10 flex-1 min-h-0 py-10">
+          <div className="max-w-7xl mx-auto w-full px-6 flex flex-col justify-between" style={{ minHeight: '100%' }}>
 
             {/* ── HERO COPY + VISUAL ── */}
-            <div className="flex-1 grid lg:grid-cols-2 gap-8 items-center py-8 lg:py-10">
+            <div className="grid lg:grid-cols-2 gap-8 items-center py-6">
 
               {/* Left: copy */}
-              <div className="gu-hero-text space-y-4">
+              <div className="gu-hero-text space-y-5">
                 <div className="inline-flex items-center gap-2 border border-green-400/30 bg-green-400/10 rounded-full px-3 py-1 text-xs font-semibold text-green-300 uppercase tracking-widest">
                   <span className="w-2 h-2 bg-green-400 rounded-full animate-pulse" />
-                  Live · Bihar Village Sustainability Region
+                  {t('heroLiveRegion')}
                 </div>
 
-                <h1 className="text-3xl sm:text-4xl lg:text-[2.75rem] font-extrabold leading-[1.1] text-white">
-                  Powering Villages<br />
-                  with{' '}
-                  <span className="text-amber-300">Waste</span>
-                  <span className="text-white">,{' '}</span>
-                  <span className="text-green-300">Water</span>
-                  <span className="text-white">{' '}&amp;{' '}</span>
-                  <span className="text-yellow-300">Sun</span>
+                <h1 className="text-3xl sm:text-4xl lg:text-[2.75rem] font-extrabold leading-[1.15] text-white">
+                  {isHindi ? (
+                    <>
+                      ग्राम सशक्तीकरण<br />
+                      <span className="text-amber-300">कचरा</span>
+                      <span className="text-white">, </span>
+                      <span className="text-green-300">जल</span>
+                      <span className="text-white"> एवं </span>
+                      <span className="text-yellow-300">सूर्य</span>
+                      <span className="text-white"> से</span>
+                    </>
+                  ) : (
+                    <>
+                      Powering Villages<br />
+                      with{' '}
+                      <span className="text-amber-300">Waste</span>
+                      <span className="text-white">,{' '}</span>
+                      <span className="text-green-300">Water</span>
+                      <span className="text-white">{' '}&amp;{' '}</span>
+                      <span className="text-yellow-300">Sun</span>
+                    </>
+                  )}
                 </h1>
 
                 <p className="text-green-100/80 text-base leading-relaxed max-w-xl">
-                  Gram Urja transforms local village resources into clean energy,
-                  efficient water systems and measurable community impact —
-                  one village at a time.
+                  {t('heroSubtitle')}
                 </p>
 
                 <div>
                   <Link to="/login"
-                    className="group inline-flex items-center gap-2 bg-green-400 hover:bg-green-300 text-green-950 font-bold px-6 py-3 rounded-xl transition-all duration-200 shadow-lg shadow-green-900/40 hover:shadow-green-900/60 hover:-translate-y-0.5 text-sm">
+                    className="group inline-flex items-center gap-2 bg-green-400 hover:bg-green-300 text-green-950 font-bold px-6 py-3.5 rounded-xl transition-all duration-200 shadow-lg shadow-green-900/40 hover:shadow-green-900/60 hover:-translate-y-0.5 text-sm">
                     <Zap className="w-4 h-4" />
-                    Get Started — Choose Your Role
+                    {t('getStarted')}
                     <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-1" />
                   </Link>
                 </div>
@@ -420,11 +439,11 @@ export default function LandingPage() {
 
               {/* Right: photo scene */}
               <div className="gu-hero-visual lg:pl-4">
-                <VillageScene />
+                <VillageScene isHindi={isHindi} />
                 <div className="flex justify-center mt-3 gap-5 flex-wrap">
-                  {[{ dot: 'bg-amber-400', label: 'Solar Energy' }, { dot: 'bg-emerald-400', label: 'Biogas' }, { dot: 'bg-cyan-400', label: 'Water' }].map(l => (
-                    <div key={l.label} className="flex items-center gap-1.5 text-xs text-green-300/80 font-medium">
-                      <span className={`w-2 h-2 rounded-full ${l.dot}`} />{l.label}
+                  {[{ dot: 'bg-amber-400', labelEn: 'Solar Energy', labelHi: 'सौर ऊर्जा' }, { dot: 'bg-emerald-400', labelEn: 'Biogas', labelHi: 'बायोगैस' }, { dot: 'bg-cyan-400', labelEn: 'Clean Water', labelHi: 'स्वच्छ जल' }].map(l => (
+                    <div key={l.labelEn} className="flex items-center gap-1.5 text-xs text-green-300/80 font-medium">
+                      <span className={`w-2 h-2 rounded-full ${l.dot}`} />{isHindi ? l.labelHi : l.labelEn}
                     </div>
                   ))}
                 </div>
@@ -432,23 +451,24 @@ export default function LandingPage() {
             </div>
 
             {/* ── MISSION STRIP ── */}
-            <div className="border-t border-white/10 py-7 grid lg:grid-cols-2 gap-8 items-start">
+            <div className="border-t border-white/10 pt-8 mt-6 grid lg:grid-cols-2 gap-8 items-start">
               <div>
                 <div className="inline-flex items-center gap-2 bg-green-400/15 border border-green-400/25 text-green-300 rounded-full px-3 py-1 text-xs font-bold uppercase tracking-widest mb-3">
-                  🌱 Our Mission
+                  🌱 {t('ourMission')}
                 </div>
                 <h2 className="text-xl font-extrabold text-white leading-snug mb-2">
-                  Small steps create <span className="text-green-300">big change</span> for our villages.
+                  {t('missionHeading')}
                 </h2>
                 <p className="text-green-100/70 text-xs leading-relaxed mb-3">
-                  Every Indian village already possesses the natural ingredients for sustainable energy —
-                  <strong className="text-amber-300"> abundant sunlight</strong>,{' '}
-                  <strong className="text-emerald-300"> organic biomass &amp; agricultural residue</strong>, and{' '}
-                  <strong className="text-green-300"> local self-reliance</strong>.
-                  Gram Urja turns this untapped potential into measurable environmental and community benefit.
+                  {t('missionText')}
                 </p>
                 <div className="flex flex-wrap gap-2">
-                  {[{ n: '6', label: 'Areas tracked' }, { n: '100%', label: 'Formula transparency' }, { n: '2', label: 'Clean Energy Pillars' }, { n: '₹0', label: 'To get started' }].map(s => (
+                  {[
+                    { n: '5', label: t('areasTracked') },
+                    { n: '100%', label: t('formulaTransparency') },
+                    { n: '2', label: t('cleanEnergyPillars') },
+                    { n: '₹0', label: t('zeroToStart') }
+                  ].map(s => (
                     <div key={s.label} className="bg-white/8 border border-white/12 rounded-xl px-3 py-2 text-center">
                       <div className="text-base font-extrabold text-white">{s.n}</div>
                       <div className="text-[10px] text-green-300 font-medium">{s.label}</div>
@@ -456,11 +476,11 @@ export default function LandingPage() {
                   ))}
                 </div>
               </div>
-              <div className="grid grid-cols-1 gap-2">
+              <div className="grid grid-cols-1 gap-2.5">
                 {[
-                  { icon: <Sun className="w-4 h-4 text-amber-400" />, title: 'Solar — Untapped Potential', desc: 'Most village rooftops can offset 30–60% of electricity demand.', accent: 'border-amber-400/30' },
-                  { icon: <Leaf className="w-4 h-4 text-emerald-400" />, title: 'Waste — From Problem to Power', desc: 'Cow dung, food and agricultural residue generate biogas for cooking and electricity.', accent: 'border-emerald-400/30' },
-                  { icon: <Zap className="w-4 h-4 text-green-400" />, title: 'Energy Efficiency — Smarter Grid', desc: 'Smart appliance monitoring and LED microgrids optimize village power balance.', accent: 'border-green-400/30' },
+                  { icon: <Sun className="w-4 h-4 text-amber-400" />, title: t('solarUntapped'), desc: t('solarUntappedDesc'), accent: 'border-amber-400/30' },
+                  { icon: <Leaf className="w-4 h-4 text-emerald-400" />, title: t('wasteProblemPower'), desc: t('wasteProblemPowerDesc'), accent: 'border-emerald-400/30' },
+                  { icon: <Zap className="w-4 h-4 text-green-400" />, title: t('energyEfficiencyGrid'), desc: t('energyEfficiencyGridDesc'), accent: 'border-green-400/30' },
                 ].map(card => (
                   <div key={card.title} className={`bg-white/6 border ${card.accent} backdrop-blur-sm rounded-xl p-3 flex gap-3 hover:bg-white/10 transition-colors`}>
                     <div className="flex-shrink-0 p-1.5 bg-white/10 rounded-lg h-fit">{card.icon}</div>
@@ -477,8 +497,8 @@ export default function LandingPage() {
         </div>
 
         {/* Wave divider to next section */}
-        <div className="absolute bottom-0 left-0 right-0 pointer-events-none">
-          <svg viewBox="0 0 1440 60" preserveAspectRatio="none" className="w-full h-12">
+        <div className="w-full pointer-events-none mt-auto">
+          <svg viewBox="0 0 1440 60" preserveAspectRatio="none" className="w-full h-10">
             <path d="M0,40 C360,70 1080,10 1440,40 L1440,60 L0,60 Z" fill="#f0fdf4" />
           </svg>
         </div>
@@ -489,11 +509,11 @@ export default function LandingPage() {
         <div className="text-center mb-10">
           <div className="inline-flex items-center gap-2 bg-green-100 text-green-700 rounded-full px-4 py-1.5 text-xs font-bold uppercase tracking-widest mb-4">
             <span className="w-2 h-2 bg-green-500 rounded-full animate-pulse" />
-            Live Village Impact
+            {t('liveVillageImpact')}
           </div>
-          <h2 className="text-3xl font-extrabold text-gray-900 mb-3">Real Numbers. Real Change.</h2>
+          <h2 className="text-3xl font-extrabold text-gray-900 mb-3">{t('realNumbersRealChange')}</h2>
           <p className="text-gray-500 max-w-xl mx-auto text-sm">
-            Aggregated daily impact across all 5 areas of Bihar Village region — calculated from live data using transparent formulas.
+            {t('aggregatedImpactDesc')}
           </p>
         </div>
         <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-5">
@@ -509,14 +529,14 @@ export default function LandingPage() {
           <div className="text-center mb-10">
             <div className="inline-flex items-center gap-2 bg-emerald-100 text-emerald-700 rounded-full px-4 py-1.5 text-xs font-bold uppercase tracking-widest mb-4">
               <Wind className="w-3.5 h-3.5" />
-              Circular Sustainability Model
+              {t('circularModel')}
             </div>
-            <h2 className="text-3xl font-extrabold text-gray-900 mb-3">How Gram Urja Works</h2>
+            <h2 className="text-3xl font-extrabold text-gray-900 mb-3">{t('howGramUrjaWorks')}</h2>
             <p className="text-gray-500 max-w-xl mx-auto text-sm">
-              Village resources flow through a closed-loop system — each input becomes an output that feeds the next.
+              {t('circularModelDesc')}
             </p>
           </div>
-          <ConservationFlow />
+          <ConservationFlow impact={impact} isHindi={isHindi} />
         </div>
       </section>
     </div>

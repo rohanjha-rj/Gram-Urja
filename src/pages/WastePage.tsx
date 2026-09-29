@@ -13,6 +13,7 @@ import AreaSelector from '../components/AreaSelector';
 import { DEMO_AREAS } from '../data/demoData';
 import { useAuth } from '../context/AuthContext';
 import { useHousehold } from '../context/HouseholdContext';
+import { useLanguage } from '../context/LanguageContext';
 
 // ─── Village view (unchanged from original) ──────────────────────────────────
 
@@ -20,6 +21,7 @@ const areas = getAllAreaAnalyses();
 const COLORS = ['#16a34a', '#059669', '#f59e0b', '#84cc16'];
 
 function VillageWasteView() {
+  const { isHindi } = useLanguage();
   const [selectedAreaId, setSelectedAreaId] = useState('motipur');
   const [cowDung, setCowDung] = useState(500);
   const [foodWaste, setFoodWaste] = useState(300);
@@ -71,9 +73,9 @@ function VillageWasteView() {
           <div className="flex items-center justify-between">
             <div>
               <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
-                <Leaf className="w-6 h-6 text-green-600" /> Waste & Energy
+                <Leaf className="w-6 h-6 text-green-600" /> {isHindi ? 'कचरा एवं ऊर्जा' : 'Waste & Energy'}
               </h1>
-              <p className="text-gray-500 text-sm mt-1">Organic waste → biogas → electricity potential</p>
+              <p className="text-gray-500 text-sm mt-1">{isHindi ? 'जैविक कचरा → बायोगैस → बिजली उत्पादन क्षमता' : 'Organic waste → biogas → electricity potential'}</p>
             </div>
             <DemoBadge />
           </div>
@@ -83,64 +85,64 @@ function VillageWasteView() {
         </div>
         {/* Scale toggle */}
         <div className="bg-white border border-gray-200 rounded-xl p-4 mb-6 flex items-center gap-6">
-          <div className="font-medium text-sm text-gray-700">Scale:</div>
+          <div className="font-medium text-sm text-gray-700">{isHindi ? 'पैमाना:' : 'Scale:'}</div>
           {(['community', 'household'] as const).map((s) => (
             <button key={s} onClick={() => setScale(s)}
               className={`px-4 py-1.5 rounded-lg text-sm font-medium transition-colors ${scale === s ? 'bg-green-600 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}>
-              {s === 'community' ? 'Community (Village)' : 'Household (5 members)'}
+              {s === 'community' ? (isHindi ? 'सामुदायिक (गांव)' : 'Community (Village)') : (isHindi ? 'घरेलू (5 सदस्य)' : 'Household (5 members)')}
             </button>
           ))}
         </div>
         {/* Input sliders */}
-        <SectionCard title="Organic Waste Inputs" subtitle={`Per ${scale === 'community' ? 'day (village)' : 'day (household estimate)'}`} className="mb-6">
+        <SectionCard title={isHindi ? 'जैविक कचरा इनपुट' : 'Organic Waste Inputs'} subtitle={isHindi ? (scale === 'community' ? 'प्रति दिन (गांव)' : 'प्रति दिन (घरेलू अनुमान)') : `Per ${scale === 'community' ? 'day (village)' : 'day (household estimate)'}`} className="mb-6">
           <div className="grid sm:grid-cols-3 gap-6 text-sm">
             <div>
-              <label className="block font-medium text-green-700 mb-1">🐄 Cow Dung ({(cowDung * multiplier).toFixed(1)} kg/day)</label>
+              <label className="block font-medium text-green-700 mb-1">🐄 {isHindi ? 'गोबर' : 'Cow Dung'} ({(cowDung * multiplier).toFixed(1)} kg/day)</label>
               <input type="range" min="0" max="2000" step="10" value={cowDung}
                 onChange={(e) => setCowDung(+e.target.value)} className="w-full accent-green-600" />
-              <div className="text-xs text-gray-400 mt-1">0.04 m³ biogas per kg</div>
+              <div className="text-xs text-gray-400 mt-1">{isHindi ? '0.04 m³ बायोगैस प्रति किग्रा' : '0.04 m³ biogas per kg'}</div>
             </div>
             <div>
-              <label className="block font-medium text-amber-700 mb-1">🍱 Food Waste ({(foodWaste * multiplier).toFixed(1)} kg/day)</label>
+              <label className="block font-medium text-amber-700 mb-1">🍱 {isHindi ? 'भोजन अपशिष्ट' : 'Food Waste'} ({(foodWaste * multiplier).toFixed(1)} kg/day)</label>
               <input type="range" min="0" max="1000" step="10" value={foodWaste}
                 onChange={(e) => setFoodWaste(+e.target.value)} className="w-full accent-amber-500" />
-              <div className="text-xs text-gray-400 mt-1">0.06 m³ biogas per kg</div>
+              <div className="text-xs text-gray-400 mt-1">{isHindi ? '0.06 m³ बायोगैस प्रति किग्रा' : '0.06 m³ biogas per kg'}</div>
             </div>
             <div>
-              <label className="block font-medium text-yellow-700 mb-1">🌾 Agri Waste ({(agriWaste * multiplier).toFixed(1)} kg/day)</label>
+              <label className="block font-medium text-yellow-700 mb-1">🌾 {isHindi ? 'कृषि अपशिष्ट' : 'Agri Waste'} ({(agriWaste * multiplier).toFixed(1)} kg/day)</label>
               <input type="range" min="0" max="1000" step="10" value={agriWaste}
                 onChange={(e) => setAgriWaste(+e.target.value)} className="w-full accent-yellow-500" />
-              <div className="text-xs text-gray-400 mt-1">0.02 m³ biogas per kg</div>
+              <div className="text-xs text-gray-400 mt-1">{isHindi ? '0.02 m³ बायोगैस प्रति किग्रा' : '0.02 m³ biogas per kg'}</div>
             </div>
           </div>
         </SectionCard>
         {/* KPIs */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-          <KpiCard title="Daily Biogas" value={totalBiogasM3PerDay.toFixed(2)} unit="m³/day"
+          <KpiCard title={isHindi ? 'दैनिक बायोगैस' : 'Daily Biogas'} value={totalBiogasM3PerDay.toFixed(2)} unit="m³/day"
             icon={<Leaf className="w-5 h-5 text-green-600" />} iconBg="bg-green-100"
             formula="Σ(input_kg × biogas_factor_m³/kg)" source="MNRE biogas guidelines" dataType="Calculated" />
-          <KpiCard title="Thermal Energy" value={thermalPerDay.toFixed(2)} unit="kWh/day"
+          <KpiCard title={isHindi ? 'तापीय ऊर्जा' : 'Thermal Energy'} value={thermalPerDay.toFixed(2)} unit="kWh/day"
             icon={<Zap className="w-5 h-5 text-orange-600" />} iconBg="bg-orange-100"
             formula={`Biogas (m³) × ${ASSUMPTIONS.biogasThermalKWhPerM3} kWh/m³`} source="MNRE" dataType="Calculated" />
-          <KpiCard title="Electricity Potential" value={electricityPerMonth.toFixed(1)} unit="kWh/mo"
+          <KpiCard title={isHindi ? 'बिजली उत्पादन क्षमता' : 'Electricity Potential'} value={electricityPerMonth.toFixed(1)} unit="kWh/mo"
             icon={<Zap className="w-5 h-5 text-blue-600" />} iconBg="bg-blue-100"
             formula={`Biogas (m³) × ${ASSUMPTIONS.biogasElectricKWhPerM3} kWh/m³ × 30`} source="MNRE" dataType="Calculated" />
-          <KpiCard title="Monthly Cost Saving" value={'₹' + monthlySavings.toLocaleString()}
+          <KpiCard title={isHindi ? 'मासिक लागत बचत' : 'Monthly Cost Saving'} value={'₹' + monthlySavings.toLocaleString()}
             icon={<Leaf className="w-5 h-5 text-emerald-600" />} iconBg="bg-emerald-100"
             formula={`Electricity potential × ₹${ASSUMPTIONS.tariffINRPerKWh}/kWh`} source="Standard tariff" dataType="Estimated" />
         </div>
         <div className="mb-6">
-          <SectionCard title="Energy Recovery Summary" subtitle="Full chain from waste to energy" icon={<Zap className="w-4 h-4" />}>
+          <SectionCard title={isHindi ? 'ऊर्जा पुनर्चक्रण सारांश' : 'Energy Recovery Summary'} subtitle={isHindi ? 'कचरे से ऊर्जा तक की पूरी श्रृंखला' : 'Full chain from waste to energy'} icon={<Zap className="w-4 h-4" />}>
             <DemoBadge className="mb-4" />
-            <StatRow label="Total Waste Input" value={(cowDungInput + foodWasteInput + agriWasteInput).toFixed(1)} unit="kg/day" />
-            <StatRow label="Biogas Generated" value={totalBiogasM3PerDay.toFixed(3)} unit="m³/day" highlight />
-            <StatRow label="Monthly Biogas" value={(totalBiogasM3PerDay * 30).toFixed(1)} unit="m³/month" />
-            <StatRow label="Thermal Energy" value={thermalPerDay.toFixed(2)} unit="kWh/day" />
-            <StatRow label="Electricity (monthly)" value={electricityPerMonth.toFixed(1)} unit="kWh" highlight />
-            <StatRow label="CO₂ Offset" value={(co2OffsetPerMonth / 1000).toFixed(3)} unit="t/month" />
-            <StatRow label="Estimated Value" value={'₹' + monthlySavings.toLocaleString()} unit="/month" highlight />
+            <StatRow label={isHindi ? 'कुल कचरा इनपुट' : 'Total Waste Input'} value={(cowDungInput + foodWasteInput + agriWasteInput).toFixed(1)} unit="kg/day" />
+            <StatRow label={isHindi ? 'उत्पादित बायोगैस' : 'Biogas Generated'} value={totalBiogasM3PerDay.toFixed(3)} unit="m³/day" highlight />
+            <StatRow label={isHindi ? 'मासिक बायोगैस' : 'Monthly Biogas'} value={(totalBiogasM3PerDay * 30).toFixed(1)} unit="m³/month" />
+            <StatRow label={isHindi ? 'तापीय ऊर्जा' : 'Thermal Energy'} value={thermalPerDay.toFixed(2)} unit="kWh/day" />
+            <StatRow label={isHindi ? 'बिजली (मासिक)' : 'Electricity (monthly)'} value={electricityPerMonth.toFixed(1)} unit="kWh" highlight />
+            <StatRow label={isHindi ? 'CO₂ निवारण' : 'CO₂ Offset'} value={(co2OffsetPerMonth / 1000).toFixed(3)} unit="t/month" />
+            <StatRow label={isHindi ? 'अनुमानित मूल्य' : 'Estimated Value'} value={'₹' + monthlySavings.toLocaleString()} unit="/month" highlight />
             <div className="mt-4 p-3 bg-amber-50 border border-amber-200 rounded-lg text-xs text-amber-800">
-              <strong>Note:</strong> Actual biogas yield depends on digester design, temperature, feed mix, and retention time. These are theoretical estimates using MNRE guidelines.
+              <strong>{isHindi ? 'नोट:' : 'Note:'}</strong> {isHindi ? 'वास्तविक बायोगैस उत्पादन डाइजेस्टर डिज़ाइन, तापमान, मिश्रण और प्रतिधारण समय पर निर्भर करता है। ये MNRE दिशानिर्देशों पर आधारित सैद्धांतिक अनुमान हैं।' : 'Actual biogas yield depends on digester design, temperature, feed mix, and retention time. These are theoretical estimates using MNRE guidelines.'}
             </div>
           </SectionCard>
         </div>
@@ -370,6 +372,7 @@ const BIOGAS_SCHEMES = [
 ];
 
 function BiogasSchemeCard({ scheme }: { scheme: typeof BIOGAS_SCHEMES[0] }) {
+  const { isHindi } = useLanguage();
   const [open, setOpen] = useState(false);
   return (
     <div className="glass-card border border-gray-200 rounded-2xl overflow-hidden">
@@ -391,7 +394,7 @@ function BiogasSchemeCard({ scheme }: { scheme: typeof BIOGAS_SCHEMES[0] }) {
         <div className="px-5 pb-5 border-t border-gray-100">
           <p className="text-sm text-gray-700 mt-3 mb-3 leading-relaxed">{scheme.description}</p>
           <div className="mb-3">
-            <div className="text-xs font-bold text-gray-500 uppercase tracking-wide mb-1.5">Eligibility</div>
+            <div className="text-xs font-bold text-gray-500 uppercase tracking-wide mb-1.5">{isHindi ? 'पात्रता' : 'Eligibility'}</div>
             <ul className="space-y-1">
               {scheme.eligibility.map((e, i) => (
                 <li key={i} className="flex items-start gap-2 text-sm text-gray-700">
@@ -403,11 +406,11 @@ function BiogasSchemeCard({ scheme }: { scheme: typeof BIOGAS_SCHEMES[0] }) {
           </div>
           <div className="flex flex-wrap items-center gap-3">
             <div className="text-xs bg-green-50 text-green-700 border border-green-200 rounded-lg px-3 py-1.5">
-              <span className="font-semibold">Subsidy / Benefit: </span>{scheme.subsidy}
+              <span className="font-semibold">{isHindi ? 'सब्सिडी / लाभ: ' : 'Subsidy / Benefit: '}</span>{scheme.subsidy}
             </div>
             <a href={scheme.link} target="_blank" rel="noopener noreferrer"
               className="text-xs text-green-600 hover:underline font-medium">
-              Official Portal ↗
+              {isHindi ? 'आधिकारिक पोर्टल ↗' : 'Official Portal ↗'}
             </a>
           </div>
         </div>
@@ -419,6 +422,7 @@ function BiogasSchemeCard({ scheme }: { scheme: typeof BIOGAS_SCHEMES[0] }) {
 // ─── Household Waste View ─────────────────────────────────────────────────────
 
 function HouseholdWasteView() {
+  const { isHindi } = useLanguage();
   const { members } = useHousehold();
 
   // Household defaults: derived from members
@@ -483,9 +487,9 @@ function HouseholdWasteView() {
           <div className="flex items-center justify-between">
             <div>
               <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
-                <Leaf className="w-6 h-6 text-green-600" /> Waste & Energy
+                <Leaf className="w-6 h-6 text-green-600" /> {isHindi ? 'कचरा एवं ऊर्जा' : 'Waste & Energy'}
               </h1>
-              <p className="text-gray-500 text-sm mt-1">Your household organic waste → biogas → electricity potential</p>
+              <p className="text-gray-500 text-sm mt-1">{isHindi ? 'आपके घर का जैविक कचरा → बायोगैस → बिजली उत्पादन संभावना' : 'Your household organic waste → biogas → electricity potential'}</p>
             </div>
             <DemoBadge />
           </div>
@@ -498,10 +502,10 @@ function HouseholdWasteView() {
           </div>
           <div>
             <div className="font-semibold text-blue-900 text-sm">
-              Household size: <strong>{members} member{members !== 1 ? 's' : ''}</strong> — synced from My Dashboard
+              {isHindi ? `परिवार का आकार: ${members} सदस्य — डैशबोर्ड से सिंक्रनाइज़्ड` : `Household size: ${members} member${members !== 1 ? 's' : ''} — synced from My Dashboard`}
             </div>
             <div className="text-xs text-blue-700/80 mt-0.5">
-              Waste estimates below are auto-calibrated to your household size. Adjust sliders to match your actual waste.
+              {isHindi ? 'नीचे दिए गए कचरा अनुमान आपके परिवार के आकार के अनुसार समायोजित हैं। अपने वास्तविक कचरे के अनुसार स्लाइडर बदलें।' : 'Waste estimates below are auto-calibrated to your household size. Adjust sliders to match your actual waste.'}
             </div>
           </div>
         </div>
@@ -509,13 +513,13 @@ function HouseholdWasteView() {
         {/* Input sliders with icon thumbs */}
         <div className="glass-card rounded-2xl p-5 mb-6 fade-up">
           <div className="mb-4">
-            <h2 className="font-bold text-gray-900 text-base">Organic Waste Inputs</h2>
-            <p className="text-sm text-gray-500 mt-0.5">Adjust your household's daily organic waste (kg/day)</p>
+            <h2 className="font-bold text-gray-900 text-base">{isHindi ? 'जैविक कचरा इनपुट' : 'Organic Waste Inputs'}</h2>
+            <p className="text-sm text-gray-500 mt-0.5">{isHindi ? 'अपने परिवार का दैनिक जैविक कचरा (किग्रा/दिन) समायोजित करें' : "Adjust your household's daily organic waste (kg/day)"}</p>
           </div>
           <div className="grid sm:grid-cols-3 gap-8">
             <IconSlider
-              label="Cow Dung"
-              sublabel="0.04 m³ biogas per kg"
+              label={isHindi ? 'गोबर' : 'Cow Dung'}
+              sublabel={isHindi ? '0.04 m³ बायोगैस प्रति किग्रा' : '0.04 m³ biogas per kg'}
               value={cowDung}
               displayValue={`${cowDung} kg/day`}
               min={0} max={30} step={1}
@@ -524,11 +528,11 @@ function HouseholdWasteView() {
               trackColor="#16a34a"
               labelColor="text-green-800"
               icon={<CowIcon size={26} />}
-              hint="0.04 m³ biogas per kg"
+              hint={isHindi ? '0.04 m³ बायोगैस प्रति किग्रा' : '0.04 m³ biogas per kg'}
             />
             <IconSlider
-              label="Food Waste"
-              sublabel="0.06 m³ biogas per kg"
+              label={isHindi ? 'भोजन अपशिष्ट' : 'Food Waste'}
+              sublabel={isHindi ? '0.06 m³ बायोगैस प्रति किग्रा' : '0.06 m³ biogas per kg'}
               value={foodWaste}
               displayValue={`${foodWaste} kg/day`}
               min={0} max={20} step={1}
@@ -537,11 +541,11 @@ function HouseholdWasteView() {
               trackColor="#f59e0b"
               labelColor="text-amber-800"
               icon={<FoodIcon size={26} />}
-              hint="0.06 m³ biogas per kg"
+              hint={isHindi ? '0.06 m³ बायोगैस प्रति किग्रा' : '0.06 m³ biogas per kg'}
             />
             <IconSlider
-              label="Agri Waste"
-              sublabel="0.02 m³ biogas per kg"
+              label={isHindi ? 'कृषि अपशिष्ट' : 'Agri Waste'}
+              sublabel={isHindi ? '0.02 m³ बायोगैस प्रति किग्रा' : '0.02 m³ biogas per kg'}
               value={agriWaste}
               displayValue={`${agriWaste} kg/day`}
               min={0} max={15} step={1}
@@ -550,23 +554,23 @@ function HouseholdWasteView() {
               trackColor="#ca8a04"
               labelColor="text-yellow-800"
               icon={<CropIcon size={26} />}
-              hint="0.02 m³ biogas per kg"
+              hint={isHindi ? '0.02 m³ बायोगैस प्रति किग्रा' : '0.02 m³ biogas per kg'}
             />
           </div>
         </div>
 
         {/* KPIs */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-          <KpiCard title="Daily Biogas" value={totalBiogasM3PerDay.toFixed(3)} unit="m³/day"
+          <KpiCard title={isHindi ? 'दैनिक बायोगैस' : 'Daily Biogas'} value={totalBiogasM3PerDay.toFixed(3)} unit="m³/day"
             icon={<Leaf className="w-5 h-5 text-green-600" />} iconBg="bg-green-100"
             formula="Σ(input_kg × biogas_factor_m³/kg)" source="MNRE biogas guidelines" dataType="Calculated" />
-          <KpiCard title="Thermal Energy" value={thermalPerDay.toFixed(3)} unit="kWh/day"
+          <KpiCard title={isHindi ? 'तापीय ऊर्जा' : 'Thermal Energy'} value={thermalPerDay.toFixed(3)} unit="kWh/day"
             icon={<Zap className="w-5 h-5 text-orange-600" />} iconBg="bg-orange-100"
             formula={`Biogas (m³) × ${ASSUMPTIONS.biogasThermalKWhPerM3} kWh/m³`} source="MNRE" dataType="Calculated" />
-          <KpiCard title="Electricity Potential" value={electricityPerMonth.toFixed(2)} unit="kWh/mo"
+          <KpiCard title={isHindi ? 'बिजली उत्पादन क्षमता' : 'Electricity Potential'} value={electricityPerMonth.toFixed(2)} unit="kWh/mo"
             icon={<Zap className="w-5 h-5 text-blue-600" />} iconBg="bg-blue-100"
             formula={`Biogas × ${ASSUMPTIONS.biogasElectricKWhPerM3} kWh/m³ × 30`} source="MNRE" dataType="Calculated" />
-          <KpiCard title="Monthly Saving" value={'₹' + monthlySavings.toLocaleString()}
+          <KpiCard title={isHindi ? 'मासिक बचत' : 'Monthly Saving'} value={'₹' + monthlySavings.toLocaleString()}
             icon={<Leaf className="w-5 h-5 text-emerald-600" />} iconBg="bg-emerald-100"
             formula={`Electricity × ₹${ASSUMPTIONS.tariffINRPerKWh}/kWh`} source="Standard tariff" dataType="Estimated" />
         </div>
@@ -574,19 +578,19 @@ function HouseholdWasteView() {
         {/* Chart: Biogas contribution by waste type */}
         <div className="glass-card rounded-2xl p-5 mb-6 fade-up">
           <h2 className="font-bold text-gray-900 mb-1 flex items-center gap-2">
-            <Leaf className="w-4 h-4 text-green-600" /> Energy Recovery — Household Overview
+            <Leaf className="w-4 h-4 text-green-600" /> {isHindi ? 'ऊर्जा पुनर्चक्रण — घरेलू अवलोकन' : 'Energy Recovery — Household Overview'}
           </h2>
-          <p className="text-xs text-gray-500 mb-4">Biogas contribution by waste type (m³/day) and monthly output metrics</p>
+          <p className="text-xs text-gray-500 mb-4">{isHindi ? 'कचरा प्रकार (m³/दिन) और मासिक आउटपुट मेट्रिक्स द्वारा बायोगैस योगदान' : 'Biogas contribution by waste type (m³/day) and monthly output metrics'}</p>
 
           <div className="grid md:grid-cols-2 gap-6">
             {/* Biogas by source bar chart */}
             <div>
-              <div className="text-xs font-semibold text-gray-600 uppercase tracking-wide mb-2">Biogas by Waste Source (m³/day)</div>
+              <div className="text-xs font-semibold text-gray-600 uppercase tracking-wide mb-2">{isHindi ? 'कचरा स्रोत द्वारा बायोगैस (m³/दिन)' : 'Biogas by Waste Source (m³/day)'}</div>
               <ResponsiveContainer width="100%" height={200}>
                 <BarChart data={energyChartData} margin={{ top: 4, right: 10, left: -10, bottom: 0 }}>
                   <XAxis dataKey="name" tick={{ fontSize: 11 }} />
                   <YAxis tick={{ fontSize: 11 }} />
-                  <Tooltip formatter={(v: number) => [`${v} m³/day`, 'Biogas']} />
+                  <Tooltip formatter={(v: number) => [`${v} m³/day`, isHindi ? 'बायोगैस' : 'Biogas']} />
                   <Bar dataKey="biogas" radius={[6, 6, 0, 0]}>
                     {energyChartData.map((entry, i) => (
                       <Cell key={i} fill={entry.fill} />
@@ -598,7 +602,7 @@ function HouseholdWasteView() {
 
             {/* Monthly energy metrics bar chart */}
             <div>
-              <div className="text-xs font-semibold text-gray-600 uppercase tracking-wide mb-2">Monthly Output Metrics (scaled)</div>
+              <div className="text-xs font-semibold text-gray-600 uppercase tracking-wide mb-2">{isHindi ? 'मासिक आउटपुट मेट्रिक्स' : 'Monthly Output Metrics (scaled)'}</div>
               <ResponsiveContainer width="100%" height={200}>
                 <BarChart data={monthlyChart} margin={{ top: 4, right: 10, left: -10, bottom: 0 }}>
                   <XAxis dataKey="name" tick={{ fontSize: 9 }} />
@@ -612,7 +616,7 @@ function HouseholdWasteView() {
                 </BarChart>
               </ResponsiveContainer>
               <div className="text-[10px] text-gray-400 text-center mt-1">
-                * Biogas and Savings are scaled (×10 and ÷10) for readability
+                {isHindi ? '* पठनीयता के लिए बायोगैस और बचत को स्केल (×10 और ÷10) किया गया है' : '* Biogas and Savings are scaled (×10 and ÷10) for readability'}
               </div>
             </div>
           </div>
@@ -620,31 +624,31 @@ function HouseholdWasteView() {
           {/* Summary row */}
           <div className="mt-4 grid grid-cols-3 gap-3">
             <div className="bg-green-50 border border-green-200 rounded-xl p-3 text-center">
-              <div className="text-xs text-green-700 font-semibold uppercase">Monthly Biogas</div>
+              <div className="text-xs text-green-700 font-semibold uppercase">{isHindi ? 'मासिक बायोगैस' : 'Monthly Biogas'}</div>
               <div className="text-lg font-extrabold text-green-900 mt-0.5">{biogasPerMonth.toFixed(1)} <span className="text-xs font-bold">m³</span></div>
             </div>
             <div className="bg-purple-50 border border-purple-200 rounded-xl p-3 text-center">
-              <div className="text-xs text-purple-700 font-semibold uppercase">CO₂ Offset</div>
+              <div className="text-xs text-purple-700 font-semibold uppercase">{isHindi ? 'CO₂ निवारण' : 'CO₂ Offset'}</div>
               <div className="text-lg font-extrabold text-purple-900 mt-0.5">{co2OffsetPerMonth.toFixed(2)} <span className="text-xs font-bold">kg/mo</span></div>
             </div>
             <div className="bg-emerald-50 border border-emerald-200 rounded-xl p-3 text-center">
-              <div className="text-xs text-emerald-700 font-semibold uppercase">Est. Value</div>
+              <div className="text-xs text-emerald-700 font-semibold uppercase">{isHindi ? 'अनुमानित मूल्य' : 'Est. Value'}</div>
               <div className="text-lg font-extrabold text-emerald-900 mt-0.5">₹{monthlySavings.toLocaleString()} <span className="text-xs font-bold">/mo</span></div>
             </div>
           </div>
 
           <div className="mt-4 p-3 bg-amber-50 border border-amber-200 rounded-lg text-xs text-amber-800">
-            <strong>Note:</strong> Actual biogas yield depends on digester design, temperature, feed mix, and retention time. These are theoretical estimates using MNRE guidelines.
+            <strong>{isHindi ? 'नोट:' : 'Note:'}</strong> {isHindi ? 'वास्तविक बायोगैस उत्पादन डाइजेस्टर डिज़ाइन, तापमान, मिश्रण और प्रतिधारण समय पर निर्भर करता है। ये MNRE दिशानिर्देशों पर आधारित सैद्धांतिक अनुमान हैं।' : 'Actual biogas yield depends on digester design, temperature, feed mix, and retention time. These are theoretical estimates using MNRE guidelines.'}
           </div>
         </div>
 
         {/* Government Biogas Schemes */}
         <div className="glass-card rounded-2xl p-6 fade-up">
           <h2 className="font-bold text-gray-900 mb-1 flex items-center gap-2">
-            <Lightbulb className="w-5 h-5 text-green-500" /> Government Biogas & Waste-to-Energy Schemes
+            <Lightbulb className="w-5 h-5 text-green-500" /> {isHindi ? 'सरकारी बायोगैस एवं कचरा-से-ऊर्जा योजनाएं' : 'Government Biogas & Waste-to-Energy Schemes'}
           </h2>
           <p className="text-sm text-gray-500 mb-4">
-            Indian government subsidies and programmes for biogas & organic waste adoption — click any scheme to expand eligibility &amp; details.
+            {isHindi ? 'बायोगैस और जैविक कचरे के लिए सरकारी सब्सिडी और कार्यक्रम — पात्रता और विवरण देखने के लिए क्लिक करें।' : 'Indian government subsidies and programmes for biogas & organic waste adoption — click any scheme to expand eligibility & details.'}
           </p>
           <div className="space-y-3">
             {BIOGAS_SCHEMES.map(scheme => (

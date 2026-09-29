@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { Bot, Send, Mic, MicOff, ExternalLink, Globe, Volume2, VolumeX, ArrowLeft } from 'lucide-react';
 import { generateAIResponse } from '../ai/chatEngine';
 import { useAuth } from '../context/AuthContext';
+import { useLanguage } from '../context/LanguageContext';
 import type { ChatMessage } from '../types';
 
 // ── Quick prompts by role + language ────────────────────────────────────────
@@ -13,7 +14,7 @@ const QUICK_PROMPTS_VILLAGE_EN = [
   "Show me Amra's water analysis",
   'What are the top recommendations?',
   'What is the region overview?',
-  'Which area has the best sustainability score?',
+  'How much biogas can we generate from waste?',
 ];
 
 const QUICK_PROMPTS_VILLAGE_HI = [
@@ -22,25 +23,25 @@ const QUICK_PROMPTS_VILLAGE_HI = [
   'अमरा का जल विश्लेषण दिखाएं',
   'शीर्ष सुझाव क्या हैं?',
   'क्षेत्र का अवलोकन दें',
-  'सर्वश्रेष्ठ स्थिरता स्कोर किस क्षेत्र का है?',
+  'कचरे से कितनी बायोगैस बन सकती है?',
 ];
 
 const QUICK_PROMPTS_HOUSEHOLD_EN = [
   'How can I reduce my electricity bill?',
   'Which appliance uses the most power?',
   'How much can I save with solar panels?',
-  'What is my household sustainability score?',
   'How do I save water at home?',
   'What is biogas and how does it help?',
+  'What are BEE 5-star energy ratings?',
 ];
 
 const QUICK_PROMPTS_HOUSEHOLD_HI = [
   'मैं बिजली का बिल कैसे कम करूं?',
   'कौन सा उपकरण सबसे ज़्यादा बिजली खाता है?',
   'सोलर पैनल से कितनी बचत होगी?',
-  'मेरा घरेलू स्थिरता स्कोर क्या है?',
   'घर में पानी कैसे बचाएं?',
   'बायोगैस क्या है और यह कैसे मदद करता है?',
+  'BEE 5-स्टार रेटिंग क्या होती है?',
 ];
 
 // ── Initial messages by language + role ──────────────────────────────────────
@@ -50,32 +51,30 @@ function buildInitialMessage(language: 'en' | 'hi', role: string): ChatMessage {
   const content =
     language === 'hi'
       ? isHousehold
-        ? `**नमस्ते! मैं किरण हूँ।** 🌿
+        ? `**नमस्ते! मैं मनु AI हूँ।** 🌿
 
-मैं आपकी **घरेलू ऊर्जा AI सहायक** हूँ। मैं इन विषयों पर मदद कर सकती हूँ:
+मैं आपकी **घरेलू ऊर्जा AI सहायक** हूँ। मैं इन विषयों पर मदद कर सकता हूँ:
 
 • ⚡ **बिजली बिल** — खपत घटाने के उपाय
-• ☀️ **सोलर पैनल** — बचत और payback गणना
+• ☀️ **सोलर पैनल** — बचत और लागत वसूली गणना
 • 💡 **उपकरण** — कौन सा ज़्यादा बिजली खाता है
 • 💧 **पानी बचत** — घर में जल प्रबंधन
-• 🌿 **बायोगैस** — जैविक कचरे से ऊर्जा
-• 🏆 **स्थिरता स्कोर** — अपना स्कोर सुधारें
+• 🌿 **बायोगैस** — जैविक कचरे से स्वच्छ ऊर्जा
 
 नीचे दिए त्वरित प्रश्न आज़माएं या अपना सवाल टाइप करें!`
-        : `**नमस्ते! मैं किरण हूँ।** 🌿
+        : `**नमस्ते! मैं मनु AI हूँ।** 🌿
 
-मैं **Bihar Village Sustainability Region** के लिए आपकी AI सहायक हूँ। मैं इन विषयों पर मदद कर सकती हूँ:
+मैं **GramUrja बिहार ग्रामीण संवहनीयता क्षेत्र** के लिए आपका AI सहायक हूँ। मैं इन विषयों पर मदद कर सकता हूँ:
 
 • ⚡ **ऊर्जा** — खपत, लागत, प्रति-घर विश्लेषण
-• ☀️ **सौर** — क्षमता, पैनल, बचत, payback
-• 💧 **पानी** — मांग, वर्षा जल, पंप ऊर्जा
-• 🌿 **कचरा** — बायोगैस क्षमता
-• 🏆 **स्कोर** — स्थिरता रेटिंग
-• 💡 **सुझाव** — प्राथमिकता कार्य
+• ☀️ **सौर** — क्षमता, रूफटॉप पैनल, बचत
+• 💧 **पानी** — मांग, वर्षा जल संचयन
+• 🌿 **कचरा** — बायोगैस एवं स्वच्छ ऊर्जा
+• 💡 **सुझाव** — प्राथमिकता विकास कार्य
 
 नीचे दिए त्वरित प्रश्न आज़माएं या अपना प्रश्न टाइप करें!`
       : isHousehold
-      ? `**Hello! I'm Kiran.** 🌿
+      ? `**Hello! I'm Manu AI.** 🌿
 
 I'm your **Household Energy AI Assistant**. Here's how I can help:
 
@@ -84,19 +83,17 @@ I'm your **Household Energy AI Assistant**. Here's how I can help:
 • 💡 **Appliances** — find out which ones drain the most power
 • 💧 **Water Saving** — smart water management at home
 • 🌿 **Biogas** — turn kitchen waste into clean energy
-• 🏆 **Sustainability Score** — understand and improve your rating
 
 Try the quick questions below or type your own!`
-      : `**Hello! I'm Kiran.** 🌿
+      : `**Hello! I'm Manu AI.** 🌿
 
-I'm the AI assistant for the **Bihar Village Sustainability Region**. I can help with:
+I'm the AI assistant for **GramUrja Bihar Village Sustainability Region**. I can help with:
 
 • ⚡ **Energy** — consumption, cost, per-household analysis
-• ☀️ **Solar** — potential, panels, savings, payback
-• 💧 **Water** — demand, rainwater harvesting, pump energy
-• 🌿 **Waste** — biogas potential from organic matter
-• 🏆 **Scores** — sustainability ratings across all areas
-• 💡 **Recommendations** — priority actions for each area
+• ☀️ **Solar** — potential, rooftop capacity, payback
+• 💧 **Water** — demand and water management
+• 🌿 **Waste** — biogas potential from organic biomass
+• 💡 **Recommendations** — actionable priority solutions
 
 Try the quick questions below or type your own!`;
 
@@ -173,12 +170,17 @@ function MessageBubble({
       return;
     }
 
+    // Strip emojis completely so TTS engine does NOT read out emoji names (e.g. "herb", "sun", etc.)
     const cleanText = msg.content
       .replace(/\*\*([^*]+)\*\*/g, '$1')
       .replace(/\*([^*]+)\*/g, '$1')
       .replace(/•/g, '')
       .replace(/\|[-:]+\|/g, '')
-      .replace(/\|/g, ' ');
+      .replace(/\|/g, ' ')
+      // Strip all Unicode emojis and pictographs
+      .replace(/[\u{1F300}-\u{1F9FF}\u{2600}-\u{26FF}\u{2700}-\u{27BF}\u{1F1E6}-\u{1F1FF}\u{1F600}-\u{1F64F}\u{1F680}-\u{1F6FF}\u{1F900}-\u{1F9FF}\u{1FA70}-\u{1FAFF}\u{200D}\u{FE0F}\u{2000}-\u{206F}]/gu, '')
+      .replace(/\s+/g, ' ')
+      .trim();
 
     const utterance = new SpeechSynthesisUtterance(cleanText);
     utterance.lang = msg.language === 'hi' ? 'hi-IN' : 'en-GB';
@@ -187,12 +189,10 @@ function MessageBubble({
       utterance.rate = 0.88;
       utterance.pitch = 1.05;
     } else {
-      // Natural, clear English — slightly slower than default, warmer pitch
-      utterance.rate = 0.82;
-      utterance.pitch = 1.1;
+      utterance.rate = 0.84;
+      utterance.pitch = 1.05;
     }
 
-    // Try to load a better voice; voices may not be ready immediately
     const trySetVoice = () => {
       const voice = getBestVoice(msg.language ?? 'en');
       if (voice) utterance.voice = voice;
@@ -257,19 +257,19 @@ function MessageBubble({
   return (
     <div className={`flex ${isUser ? 'justify-end' : 'justify-start'} mb-4`}>
       {!isUser && (
-        <div className="w-8 h-8 rounded-full bg-green-600 flex items-center justify-center mr-2 shrink-0 mt-1">
+        <div className="w-8 h-8 rounded-full bg-emerald-600 flex items-center justify-center mr-2 shrink-0 mt-1 shadow-sm">
           <Bot className="w-4 h-4 text-white" />
         </div>
       )}
       <div
         className={`max-w-[85%] rounded-2xl px-4 py-3 ${
           isUser
-            ? 'bg-green-600 text-white rounded-tr-sm'
+            ? 'bg-emerald-600 text-white rounded-tr-sm shadow-md'
             : 'bg-white border border-gray-200 text-gray-800 rounded-tl-sm shadow-sm'
         }`}
       >
         {!isUser && isHindi && (
-          <div className="flex items-center gap-1 text-xs text-blue-500 mb-1">
+          <div className="flex items-center gap-1 text-xs text-emerald-600 mb-1 font-semibold">
             <Globe className="w-3 h-3" /> हिंदी
           </div>
         )}
@@ -284,16 +284,16 @@ function MessageBubble({
           <button
             onClick={speakMessage}
             title={speaking ? 'Stop speaking' : 'Listen to this message'}
-            className="mt-2 flex items-center gap-1 text-xs text-gray-400 hover:text-green-600 transition-colors"
+            className="mt-2 flex items-center gap-1 text-xs text-gray-400 hover:text-emerald-600 transition-colors font-medium"
           >
-            {speaking ? <VolumeX className="w-3 h-3" /> : <Volume2 className="w-3 h-3" />}
+            {speaking ? <VolumeX className="w-3 h-3 text-red-500" /> : <Volume2 className="w-3 h-3" />}
             {speaking ? (isHindi ? 'रोकें' : 'Stop') : (isHindi ? 'सुनें' : 'Listen')}
           </button>
         )}
         {msg.navigationSuggestion && !isUser && (
           <button
             onClick={() => onNavigate(msg.navigationSuggestion!)}
-            className="mt-1 flex items-center gap-1 text-xs text-green-600 hover:text-green-800 font-medium"
+            className="mt-1.5 flex items-center gap-1 text-xs text-emerald-700 hover:text-emerald-900 font-semibold"
           >
             <ExternalLink className="w-3 h-3" />
             {isHindi ? 'संबंधित पृष्ठ खोलें' : 'Open related page'}
@@ -301,7 +301,7 @@ function MessageBubble({
         )}
       </div>
       {isUser && (
-        <div className="w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center ml-2 shrink-0 mt-1 text-xs font-bold text-gray-600">
+        <div className="w-8 h-8 rounded-full bg-emerald-100 flex items-center justify-center ml-2 shrink-0 mt-1 text-xs font-bold text-emerald-800">
           U
         </div>
       )}
@@ -313,9 +313,9 @@ function MessageBubble({
 
 export default function AIAssistantPage() {
   const { role } = useAuth();
-  const [language, setLanguage] = useState<'en' | 'hi'>('en');
+  const { language, setLanguage, isHindi } = useLanguage();
   const [messages, setMessages] = useState<ChatMessage[]>(() => [
-    buildInitialMessage('en', role),
+    buildInitialMessage(language, role),
   ]);
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
@@ -418,7 +418,7 @@ export default function AIAssistantPage() {
   return (
     <div
       className="min-h-screen relative flex flex-col"
-      style={{ background: 'linear-gradient(160deg, #0f172a 0%, #0a1628 50%, #0f172a 100%)' }}
+      style={{ background: 'linear-gradient(160deg, #0f172a 0%, #0a2e1c 50%, #0f172a 100%)' }}
     >
       {/* Neural network background */}
       <div className="absolute inset-0 pointer-events-none overflow-hidden" aria-hidden="true">
@@ -457,18 +457,18 @@ export default function AIAssistantPage() {
             >
               <ArrowLeft className="w-4 h-4" />
             </button>
-            <div className="p-2 bg-green-600 rounded-xl">
+            <div className="p-2.5 bg-emerald-600 rounded-xl shadow-md shadow-emerald-900/40">
               <Bot className="w-5 h-5 text-white" />
             </div>
             <div>
-              <h1 className="text-xl font-bold text-white">Kiran</h1>
-              <p className="text-xs text-gray-400">
-                GreenGrid AI ·{' '}
+              <h1 className="text-xl font-bold text-white">Manu AI</h1>
+              <p className="text-xs text-emerald-300/80">
+                GramUrja ·{' '}
                 {isHousehold
-                  ? language === 'hi'
-                    ? 'घरेलू सहायक'
+                  ? isHindi
+                    ? 'घरेलू ऊर्जा सहायक'
                     : 'Household Assistant'
-                  : language === 'hi'
+                  : isHindi
                   ? 'ग्राम प्रशासन सहायक'
                   : 'Village Admin Assistant'}
               </p>
@@ -476,31 +476,31 @@ export default function AIAssistantPage() {
           </div>
 
           {/* Language toggle */}
-          <div className="flex bg-gray-800 rounded-lg p-0.5 border border-gray-700">
+          <div className="flex bg-gray-800/80 backdrop-blur-md rounded-xl p-0.5 border border-gray-700">
             {(['en', 'hi'] as const).map((lang) => (
               <button
                 key={lang}
                 onClick={() => setLanguage(lang)}
-                className={`px-3 py-1 rounded-md text-xs font-semibold transition-colors ${
+                className={`px-3 py-1 rounded-lg text-xs font-semibold transition-colors ${
                   language === lang
-                    ? 'bg-green-600 text-white shadow'
+                    ? 'bg-emerald-600 text-white shadow-xs'
                     : 'text-gray-400 hover:text-gray-200'
                 }`}
               >
-                {lang === 'en' ? 'EN' : 'हिं'}
+                {lang === 'en' ? 'English' : 'हिन्दी'}
               </button>
             ))}
           </div>
         </div>
 
         {/* Messages area */}
-        <div className="flex-1 overflow-y-auto bg-gray-50 rounded-2xl border border-gray-200 p-4 mb-4">
+        <div className="flex-1 overflow-y-auto bg-gray-50/95 backdrop-blur-md rounded-2xl border border-gray-200 p-4 mb-4 shadow-inner">
           {messages.map((msg) => (
             <MessageBubble key={msg.id} msg={msg} onNavigate={navigate} />
           ))}
           {loading && (
             <div className="flex items-center gap-2 text-gray-400 text-sm">
-              <div className="w-8 h-8 rounded-full bg-green-600 flex items-center justify-center">
+              <div className="w-8 h-8 rounded-full bg-emerald-600 flex items-center justify-center">
                 <Bot className="w-4 h-4 text-white" />
               </div>
               <div className="bg-white border border-gray-200 rounded-2xl px-4 py-2 flex gap-1">
@@ -519,7 +519,7 @@ export default function AIAssistantPage() {
             <button
               key={p}
               onClick={() => sendMessage(p)}
-              className="text-xs bg-white/10 border border-white/20 rounded-full px-3 py-1 text-gray-300 hover:bg-green-600/20 hover:border-green-400/50 hover:text-green-300 transition-colors"
+              className="text-xs bg-white/10 border border-white/20 rounded-full px-3 py-1 text-gray-200 hover:bg-emerald-600/30 hover:border-emerald-400/50 hover:text-emerald-300 transition-colors shadow-xs"
             >
               {p}
             </button>
@@ -535,18 +535,18 @@ export default function AIAssistantPage() {
             placeholder={
               language === 'en'
                 ? isHousehold
-                  ? 'Ask about your bill, appliances, solar, water…'
-                  : 'Ask Kiran about energy, solar, water, waste…'
+                  ? 'Ask Manu AI about your bill, appliances, solar, water…'
+                  : 'Ask Manu AI about energy, solar, water, waste…'
                 : isHousehold
-                ? 'बिल, उपकरण, सोलर, पानी के बारे में पूछें…'
-                : 'किरण से ऊर्जा, सौर, पानी, कचरे के बारे में पूछें…'
+                ? 'मनु AI से बिल, उपकरण, सोलर, पानी के बारे में पूछें…'
+                : 'मनु AI से ऊर्जा, सौर, पानी, कचरे के बारे में पूछें…'
             }
-            className="flex-1 border border-gray-600 bg-gray-800 text-white rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 placeholder-gray-500"
+            className="flex-1 border border-gray-600 bg-gray-800/90 text-white rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 placeholder-gray-400"
           />
           <button
             onClick={() => sendMessage(input)}
             disabled={!input.trim() || loading}
-            className="bg-green-600 text-white px-4 py-3 rounded-xl hover:bg-green-700 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+            className="bg-emerald-600 text-white px-4 py-3 rounded-xl hover:bg-emerald-700 disabled:opacity-40 disabled:cursor-not-allowed transition-colors shadow-md"
             title="Send"
           >
             <Send className="w-4 h-4" />
@@ -565,15 +565,15 @@ export default function AIAssistantPage() {
         </div>
 
         {listening && (
-          <p className="text-xs text-center text-red-400 mt-1 animate-pulse">
-            🎙️ {language === 'hi' ? 'सुन रही हूँ… बोलें' : 'Listening… speak now'}
+          <p className="text-xs text-center text-red-400 mt-1 animate-pulse font-medium">
+            🎙️ {language === 'hi' ? 'सुन रहे हैं… बोलें' : 'Listening… speak now'}
           </p>
         )}
 
-        <div className="text-xs text-center text-gray-500 mt-2">
+        <div className="text-xs text-center text-gray-400 mt-2">
           {language === 'hi'
-            ? 'नियम-आधारित AI · केवल अनुमानित डेटा · लाइव API से जुड़ा नहीं'
-            : 'Rule-based AI · Estimated data only · Not connected to live APIs'}
+            ? 'GramUrja मनु AI · ग्रामीण ऊर्जा विश्लेषण एवं संवहनीयता'
+            : 'GramUrja Manu AI · Rural Energy Analytics & Sustainability'}
         </div>
       </div>
     </div>

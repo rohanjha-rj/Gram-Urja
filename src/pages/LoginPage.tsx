@@ -1,13 +1,15 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Building2, Home, ArrowRight, Zap, Leaf, Mail, Lock, Eye, EyeOff, X } from 'lucide-react';
+import { Building2, Home, ArrowRight, Zap, Leaf, Mail, Lock, Eye, EyeOff, X, Globe } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
+import { useLanguage } from '../context/LanguageContext';
 
 type Screen = 'roles' | 'household-auth';
 type AuthMode = 'login' | 'signup';
 
 export default function LoginPage() {
   const { setRole, signIn, signUp } = useAuth();
+  const { language, setLanguage, t, isHindi } = useLanguage();
   const navigate = useNavigate();
 
   const [screen, setScreen] = useState<Screen>('roles');
@@ -21,7 +23,7 @@ export default function LoginPage() {
 
   function enterOfficial() {
     setRole('official');
-    navigate('/village');
+    navigate('/overview');
   }
 
   async function handleHouseholdAuth(e: React.FormEvent) {
@@ -36,14 +38,14 @@ export default function LoginPage() {
         setError(err);
       } else {
         setRole('citizen');
-        navigate('/household');
+        navigate('/overview');
       }
     } else {
       const { error: err } = await signUp(email, password);
       if (err) {
         setError(err);
       } else {
-        setSuccess('Account created! Check your email to confirm, then log in.');
+        setSuccess(isHindi ? 'खाता बनाया गया! लॉग इन करें।' : 'Account created! Please log in.');
         setAuthMode('login');
       }
     }
@@ -72,6 +74,17 @@ export default function LoginPage() {
       <div className="absolute bottom-1/4 right-1/4 w-80 h-80 bg-blue-500/8 rounded-full blur-3xl pointer-events-none" />
       <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-green-900/10 rounded-full blur-3xl pointer-events-none" />
 
+      {/* Language Switcher in top corner */}
+      <div className="absolute top-6 right-6 z-20">
+        <button
+          onClick={() => setLanguage(language === 'en' ? 'hi' : 'en')}
+          className="flex items-center gap-2 bg-white/10 hover:bg-white/20 border border-white/20 text-white text-xs font-semibold px-3 py-1.5 rounded-full transition-all backdrop-blur-md shadow-md"
+        >
+          <Globe className="w-3.5 h-3.5 text-emerald-400" />
+          <span>{language === 'en' ? 'हिन्दी में देखें' : 'Switch to English'}</span>
+        </button>
+      </div>
+
       <div className="relative z-10 w-full max-w-4xl px-6">
 
         {/* ── Logo ── */}
@@ -81,12 +94,12 @@ export default function LoginPage() {
               <Zap className="w-7 h-7 text-white" />
             </div>
             <div className="text-left">
-              <div className="text-3xl font-extrabold text-white tracking-tight">Gram Urja</div>
-              <div className="text-emerald-400 text-xs font-medium tracking-widest uppercase">Village Sustainability Platform</div>
+              <div className="text-3xl font-extrabold text-white tracking-tight">GramUrja</div>
+              <div className="text-emerald-400 text-xs font-medium tracking-widest uppercase">{t('brandTagline')}</div>
             </div>
           </div>
           <p className="text-white/50 text-sm max-w-sm mx-auto">
-            Clean Energy · Biomass &amp; Solar · Zero Waste
+            {isHindi ? 'स्वच्छ ऊर्जा · बायोमास एवं सौर · शून्य अपशिष्ट' : 'Clean Energy · Biomass & Solar · Zero Waste'}
           </p>
         </div>
 
@@ -94,7 +107,7 @@ export default function LoginPage() {
         {screen === 'roles' && (
           <>
             <p className="text-center text-white/70 font-medium mb-6 text-base">
-              Choose your role to continue
+              {t('chooseRole')}
             </p>
 
             <div className="grid md:grid-cols-2 gap-5 mb-6">
@@ -111,21 +124,21 @@ export default function LoginPage() {
                     <Building2 className="w-8 h-8 text-emerald-300" />
                   </div>
                   <div>
-                    <div className="text-[10px] text-emerald-400 font-bold uppercase tracking-widest mb-1">Government Access</div>
-                    <h2 className="text-xl font-bold text-white">Village Official</h2>
-                    <div className="text-xs text-emerald-200/70">Panchayat / Ward Officer</div>
+                    <div className="text-[10px] text-emerald-400 font-bold uppercase tracking-widest mb-1">{t('govAccess')}</div>
+                    <h2 className="text-xl font-bold text-white">{t('roleOfficial')}</h2>
+                    <div className="text-xs text-emerald-200/70">{t('panchayatOfficer')}</div>
                   </div>
                 </div>
                 <p className="text-white/55 text-sm leading-relaxed mb-5">
-                  For Panchayat members, Ward officers, and local administrators. Community Command Centre with multi-village insights and infrastructure monitoring.
+                  {t('officialDesc')}
                 </p>
                 <div className="flex flex-wrap gap-1.5 mb-5">
-                  {['Village Dashboard', 'Priority Index', 'Alerts Centre'].map(tag => (
+                  {[(isHindi ? 'ग्राम डैशबोर्ड' : 'Village Dashboard'), (isHindi ? 'ऊर्जा विश्लेषण' : 'Energy Analytics'), (isHindi ? 'सौर एवं बायोगैस' : 'Solar & Biogas')].map(tag => (
                     <span key={tag} className="text-[11px] bg-emerald-500/15 border border-emerald-400/25 text-emerald-300 rounded-full px-2.5 py-0.5">{tag}</span>
                   ))}
                 </div>
                 <div className="flex items-center gap-2 text-emerald-300 text-sm font-semibold group-hover:gap-3 transition-all">
-                  Enter Village Dashboard <ArrowRight className="w-4 h-4" />
+                  {t('enterVillageDashboard')} <ArrowRight className="w-4 h-4" />
                 </div>
               </button>
 
@@ -139,16 +152,16 @@ export default function LoginPage() {
                     <Home className="w-8 h-8 text-blue-300" />
                   </div>
                   <div>
-                    <div className="text-[10px] text-blue-400 font-bold uppercase tracking-widest mb-1">Household Access</div>
-                    <h2 className="text-xl font-bold text-white">Household Member</h2>
-                    <div className="text-xs text-blue-200/70">Resident / Citizen</div>
+                    <div className="text-[10px] text-blue-400 font-bold uppercase tracking-widest mb-1">{t('householdAccess')}</div>
+                    <h2 className="text-xl font-bold text-white">{t('roleCitizen')}</h2>
+                    <div className="text-xs text-blue-200/70">{t('residentCitizen')}</div>
                   </div>
                 </div>
                 <p className="text-white/55 text-sm leading-relaxed mb-5">
-                  Track your appliances, calculate energy costs, and get personalized recommendations to save money and energy.
+                  {t('householdDesc')}
                 </p>
                 <div className="flex flex-wrap gap-1.5 mb-5">
-                  {['My Appliances', 'Cost Tracker', 'Solar Advisor'].map(tag => (
+                  {[(isHindi ? 'मेरे उपकरण' : 'My Appliances'), (isHindi ? 'लागत ट्रैकर' : 'Cost Tracker'), (isHindi ? 'सौर कैलकुलेटर' : 'Solar Advisor')].map(tag => (
                     <span key={tag} className="text-[11px] bg-blue-500/15 border border-blue-400/25 text-blue-300 rounded-full px-2.5 py-0.5">{tag}</span>
                   ))}
                 </div>
@@ -158,13 +171,13 @@ export default function LoginPage() {
                     onClick={() => { setAuthMode('login'); setScreen('household-auth'); }}
                     className="flex-1 bg-blue-500 hover:bg-blue-400 text-white text-sm font-bold py-2.5 px-4 rounded-xl transition-colors"
                   >
-                    Log In
+                    {t('logIn')}
                   </button>
                   <button
                     onClick={() => { setAuthMode('signup'); setScreen('household-auth'); }}
                     className="flex-1 bg-white/10 hover:bg-white/20 border border-blue-400/40 text-blue-200 text-sm font-bold py-2.5 px-4 rounded-xl transition-colors"
                   >
-                    Sign Up
+                    {t('signUp')}
                   </button>
                 </div>
               </div>
@@ -173,10 +186,10 @@ export default function LoginPage() {
             {/* Guest link */}
             <div className="text-center">
               <button
-                onClick={() => { setRole('guest'); navigate('/'); }}
+                onClick={() => { setRole('guest'); navigate('/overview'); }}
                 className="text-white/40 hover:text-white/70 text-sm transition-colors inline-flex items-center gap-1.5"
               >
-                Just browsing? Explore the platform <ArrowRight className="w-3 h-3" />
+                {t('explorePlatform')} <ArrowRight className="w-3 h-3" />
               </button>
             </div>
           </>
@@ -189,7 +202,7 @@ export default function LoginPage() {
               onClick={() => { setScreen('roles'); setError(null); setSuccess(null); }}
               className="flex items-center gap-1.5 text-white/50 hover:text-white/80 text-sm mb-6 transition-colors"
             >
-              <X className="w-4 h-4" /> Back to role selection
+              <X className="w-4 h-4" /> {t('backToRoleSelection')}
             </button>
 
             <div className="bg-white/[0.07] backdrop-blur-md border border-white/[0.12] rounded-2xl p-8">
@@ -199,9 +212,9 @@ export default function LoginPage() {
                   <Home className="w-6 h-6 text-blue-300" />
                 </div>
                 <div>
-                  <h2 className="text-lg font-bold text-white">Household Member</h2>
+                  <h2 className="text-lg font-bold text-white">{t('roleCitizen')}</h2>
                   <p className="text-xs text-white/50">
-                    {authMode === 'login' ? 'Sign in to your account' : 'Create a new account'}
+                    {authMode === 'login' ? (isHindi ? 'अपने खाते में साइन इन करें' : 'Sign in to your account') : (isHindi ? 'नया खाता बनाएं' : 'Create a new account')}
                   </p>
                 </div>
               </div>
@@ -212,13 +225,13 @@ export default function LoginPage() {
                   onClick={() => { setAuthMode('login'); setError(null); setSuccess(null); }}
                   className={`flex-1 text-sm font-semibold py-2 rounded-lg transition-all ${authMode === 'login' ? 'bg-blue-500 text-white shadow-md' : 'text-white/50 hover:text-white/80'}`}
                 >
-                  Log In
+                  {t('logIn')}
                 </button>
                 <button
                   onClick={() => { setAuthMode('signup'); setError(null); setSuccess(null); }}
                   className={`flex-1 text-sm font-semibold py-2 rounded-lg transition-all ${authMode === 'signup' ? 'bg-blue-500 text-white shadow-md' : 'text-white/50 hover:text-white/80'}`}
                 >
-                  Sign Up
+                  {t('signUp')}
                 </button>
               </div>
 
@@ -226,7 +239,7 @@ export default function LoginPage() {
               <form onSubmit={handleHouseholdAuth} className="space-y-4">
                 {/* Email */}
                 <div>
-                  <label className="block text-xs text-white/60 font-medium mb-1.5">Email address</label>
+                  <label className="block text-xs text-white/60 font-medium mb-1.5">{t('emailAddress')}</label>
                   <div className="relative">
                     <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/30" />
                     <input
@@ -242,7 +255,7 @@ export default function LoginPage() {
 
                 {/* Password */}
                 <div>
-                  <label className="block text-xs text-white/60 font-medium mb-1.5">Password</label>
+                  <label className="block text-xs text-white/60 font-medium mb-1.5">{t('password')}</label>
                   <div className="relative">
                     <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/30" />
                     <input
@@ -250,7 +263,7 @@ export default function LoginPage() {
                       required
                       value={password}
                       onChange={e => setPassword(e.target.value)}
-                      placeholder={authMode === 'signup' ? 'Min. 6 characters' : '••••••••'}
+                      placeholder={authMode === 'signup' ? (isHindi ? 'कम से कम 6 अक्षर' : 'Min. 6 characters') : '••••••••'}
                       className="w-full bg-white/[0.07] border border-white/[0.15] text-white placeholder-white/30 rounded-xl pl-10 pr-10 py-2.5 text-sm focus:outline-none focus:border-blue-400/60 focus:bg-white/[0.10] transition"
                     />
                     <button
@@ -278,7 +291,7 @@ export default function LoginPage() {
                 {/* Demo Credentials Quick Fill Banner */}
                 <div className="bg-blue-500/10 border border-blue-400/20 rounded-xl p-3 text-xs text-blue-200/90 flex flex-col gap-2">
                   <div className="flex items-center justify-between">
-                    <span className="font-semibold text-blue-300">💡 Sample Login Credentials</span>
+                    <span className="font-semibold text-blue-300">💡 {t('sampleCredentials')}</span>
                     <button
                       type="button"
                       onClick={() => {
@@ -288,7 +301,7 @@ export default function LoginPage() {
                       }}
                       className="text-[11px] bg-blue-500/30 hover:bg-blue-500/50 text-blue-100 font-medium px-2 py-0.5 rounded transition"
                     >
-                      Auto-fill Sample
+                      {t('autoFillSample')}
                     </button>
                   </div>
                   <div className="text-[11px] text-white/60 space-y-0.5">
@@ -305,7 +318,7 @@ export default function LoginPage() {
                 >
                   {loading
                     ? <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                    : authMode === 'login' ? 'Sign In' : 'Create Account'
+                    : authMode === 'login' ? t('logIn') : t('signUp')
                   }
                 </button>
               </form>
@@ -317,7 +330,7 @@ export default function LoginPage() {
         <div className="text-center mt-8">
           <div className="inline-flex items-center gap-2 text-xs text-white/25">
             <Leaf className="w-3 h-3" />
-            Bihar Village Sustainability Region
+            {t('regionName')}
           </div>
         </div>
       </div>

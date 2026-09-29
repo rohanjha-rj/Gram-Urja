@@ -75,18 +75,17 @@ export function generateAIResponse(
     // ── Greetings (household) ───────────────────────────────────────────────
     if (GREETINGS.some((g) => q.startsWith(g) || q === g)) {
       content = isHindi
-        ? `नमस्ते! मैं किरण हूँ — आपकी **घरेलू ऊर्जा AI सहायक**।
+        ? `नमस्ते! मैं मनु AI हूँ — आपकी **घरेलू ऊर्जा AI सहायक**।
 
-मैं आपकी इन बातों में मदद कर सकती हूँ:
+मैं आपकी इन बातों में मदद कर सकता हूँ:
 • बिजली बिल कम करने के उपाय
 • सबसे ज़्यादा बिजली खाने वाले उपकरण
-• सोलर पैनल की बचत और payback
+• सोलर पैनल की बचत और लागत वसूली
 • घर में पानी की बचत
 • बायोगैस से खाना पकाना
-• अपना स्थिरता स्कोर सुधारना
 
 उदाहरण: *"मेरा फ्रिज कितनी बिजली खाता है?"* या *"LED बल्ब से कितनी बचत होगी?"*`
-        : `Hello! I'm Kiran — your **Household Energy AI Assistant**.
+        : `Hello! I'm Manu AI — your **Household Energy AI Assistant**.
 
 I can help you with:
 • Cutting your electricity bill
@@ -94,7 +93,6 @@ I can help you with:
 • Solar panel savings and payback for your home
 • Smart water saving tips
 • Using biogas from kitchen waste
-• Improving your household sustainability score
 
 Try asking: *"How much electricity does my fridge use?"* or *"How much can I save with LED bulbs?"*`;
       return { id: Math.random().toString(), role: 'assistant', content, timestamp: now, language };

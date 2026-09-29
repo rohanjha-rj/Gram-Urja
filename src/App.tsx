@@ -2,6 +2,7 @@ import React from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { HouseholdProvider } from './context/HouseholdContext';
+import { LanguageProvider } from './context/LanguageContext';
 import Layout from './components/Layout';
 import LoginPage from './pages/LoginPage';
 import LandingPage from './pages/LandingPage';
@@ -10,8 +11,6 @@ import HouseholdDashboard from './pages/HouseholdDashboard';
 import SolarPage from './pages/SolarPage';
 import WastePage from './pages/WastePage';
 import RecommendationsPage from './pages/RecommendationsPage';
-import AlertsPage from './pages/AlertsPage';
-import ScorePage from './pages/ScorePage';
 import AIAssistantPage from './pages/AIAssistantPage';
 
 function AppRoutes() {
@@ -51,8 +50,8 @@ function AppRoutes() {
       <Route path="/solar" element={<Layout><SolarPage /></Layout>} />
       <Route path="/waste" element={<Layout><WastePage /></Layout>} />
       <Route path="/recommendations" element={<Layout><RecommendationsPage /></Layout>} />
-      <Route path="/alerts" element={<Layout><AlertsPage /></Layout>} />
-      <Route path="/score" element={<Layout><ScorePage /></Layout>} />
+      <Route path="/alerts" element={<Navigate to="/overview" replace />} />
+      <Route path="/score" element={<Navigate to="/overview" replace />} />
       <Route path="/ai" element={<AIAssistantPage />} />
       {/* Default redirect */}
       <Route path="*" element={<Navigate to="/login" replace />} />
@@ -64,9 +63,11 @@ export default function App() {
   return (
     <AuthProvider>
       <HouseholdProvider>
-        <BrowserRouter>
-          <AppRoutes />
-        </BrowserRouter>
+        <LanguageProvider>
+          <BrowserRouter>
+            <AppRoutes />
+          </BrowserRouter>
+        </LanguageProvider>
       </HouseholdProvider>
     </AuthProvider>
   );

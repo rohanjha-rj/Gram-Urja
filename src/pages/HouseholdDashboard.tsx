@@ -5,13 +5,14 @@ import {
   ChevronDown, ChevronUp, Star, Lightbulb, Fan,
   Tv, Laptop, Monitor, Snowflake, Waves, Flame,
   Wind, Sparkles, Sliders, PieChart as PieChartIcon,
-  RotateCcw, Users, Activity, ShieldCheck, ArrowUpRight
+  RotateCcw, Users, Activity, ArrowUpRight
 } from 'lucide-react';
 import { APPLIANCE_DATABASE } from '../data/demoData';
 import { calculateElectricityCost, calculateCO2, calculateBiogas, calculateWaterDemand, ASSUMPTIONS } from '../calculations/engine';
 import { SectionCard, KpiCard, DemoBadge, AssumptionBox, StatRow } from '../components/ui';
 import { getProductCategory } from '../data/productData';
 import { useHousehold, DEFAULT_APPLIANCES } from '../context/HouseholdContext';
+import { useLanguage } from '../context/LanguageContext';
 import type { HouseholdAppliance } from '../types';
 import type { ApplianceCategory } from '../data/productData';
 
@@ -82,6 +83,7 @@ function getApplianceIcon(specId: string, category: string) {
 
 export default function HouseholdDashboard() {
   const { appliances, setAppliances, members, setMembers, totalKWh } = useHousehold();
+  const { t, isHindi } = useLanguage();
   const [addingAppliance, setAddingAppliance] = useState(false);
   const [selectedSpec, setSelectedSpec] = useState(APPLIANCE_DATABASE[0].id);
   const [expandedCategory, setExpandedCategory] = useState<string | null>(null);
@@ -98,37 +100,46 @@ export default function HouseholdDashboard() {
   const categoryBreakdown = useMemo(() => {
     const map: Record<string, number> = {};
     appliances.filter((a) => a.enabled).forEach((a) => {
-      const cat = a.spec.category;
       const kwh = a.spec.unit === 'kWh/day'
         ? a.spec.wattage * a.quantity * a.daysPerMonth
         : (a.spec.wattage * a.quantity * a.hoursPerDay * a.daysPerMonth) / 1000;
-      map[cat] = (map[cat] ?? 0) + kwh;
+      map[a.spec.category] = (map[a.spec.category] ?? 0) + kwh;
     });
-    return Object.entries(map).map(([name, value]) => ({
-      name,
-      value: +value.toFixed(1),
-      percent: totalKWh > 0 ? Math.round((value / totalKWh) * 100) : 0,
-    }));
+    return Object.entries(map)
+      .map(([name, value]) => ({
+        name,
+        value: +value.toFixed(1),
+        percent: totalKWh > 0 ? +((value / totalKWh) * 100).toFixed(1) : 0,
+      }))
+      .filter((d) => d.value > 0)
+      .sort((a, b) => b.value - a.value);
   }, [appliances, totalKWh]);
 
-  // Top consuming category
-  const topCategory = useMemo(() => {
-    if (categoryBreakdown.length === 0) return null;
-    return [...categoryBreakdown].sort((a, b) => b.value - a.value)[0];
-  }, [categoryBreakdown]);
+  const topCategory = categoryBreakdown[0];
 
-  function updateAppliance(idx: number, patch: Partial<HouseholdAppliance>) {
-    setAppliances((prev) => prev.map((a, i) => i === idx ? { ...a, ...patch } : a));
+  function updateAppliance(index: number, patch: Partial<HouseholdAppliance>) {
+    setAppliances((prev) =>
+      prev.map((item, i) => (i === index ? { ...item, ...patch } : item))
+    );
   }
 
-  function removeAppliance(idx: number) {
-    setAppliances((prev) => prev.filter((_, i) => i !== idx));
+  function removeAppliance(index: number) {
+    setAppliances((prev) => prev.filter((_, i) => i !== index));
   }
 
   function addAppliance() {
     const spec = APPLIANCE_DATABASE.find((s) => s.id === selectedSpec);
     if (!spec) return;
-    setAppliances((prev) => [...prev, { spec, quantity: 1, hoursPerDay: 4, daysPerMonth: 30, enabled: true }]);
+    setAppliances((prev) => [
+      ...prev,
+      {
+        spec,
+        quantity: 1,
+        hoursPerDay: (spec as any).typicalDailyHours ?? 4,
+        daysPerMonth: 30,
+        enabled: true,
+      },
+    ]);
     setAddingAppliance(false);
   }
 
@@ -136,77 +147,49 @@ export default function HouseholdDashboard() {
     setAppliances(DEFAULT_APPLIANCES);
   }
 
-  // Sustainability score
-  const hhScore = Math.round(Math.max(0, Math.min(100, 100 - (totalKWh - 50) * 0.8)));
-
-  // Upgrade options
+  // Energy upgrade suggestions
   const upgradeCategories = useMemo(() => {
-    const seen = new Set<string>();
-    const cats: ApplianceCategory[] = [];
-    appliances.forEach((a) => {
-      const cat = getProductCategory(a.spec.id);
-      if (cat && !seen.has(cat.id)) {
-        seen.add(cat.id);
-        cats.push(cat);
-      }
-    });
-    return cats;
+    const result = [];
+    const seenCategories = new Set<string>();
+    for (const app of appliances.filter((a) => a.enabled)) {
+      const productCat = getProductCategory(app.spec.id);
+      if (!productCat || seenCategories.has(productCat.id)) continue;
+      seenCategories.add(productCat.id);
+      result.push({
+        ...productCat,
+        currentPowerW: app.spec.wattage,
+        currentEnergyKWhPerDay: app.spec.unit === 'kWh/day' ? app.spec.wattage : undefined,
+        currentHoursPerDay: app.hoursPerDay,
+        currentName: app.spec.name,
+      });
+    }
+    return result;
   }, [appliances]);
 
   return (
-    <div className="relative min-h-screen overflow-hidden bg-gradient-to-br from-emerald-50/70 via-teal-50/40 to-cyan-50/60 pb-16">
-      
-      {/* ── Background Animated Visuals ────────────────────────────────────────── */}
-      <div className="absolute inset-0 pointer-events-none overflow-hidden z-0" aria-hidden="true">
-        {/* Soft floating energy glow orbs */}
-        <div className="absolute top-12 left-10 w-96 h-96 rounded-full bg-emerald-300/20 blur-3xl animate-pulse-slow" />
-        <div className="absolute top-80 right-10 w-[28rem] h-[28rem] rounded-full bg-amber-300/15 blur-3xl animate-pulse-slow delay-300" />
-        <div className="absolute bottom-20 left-1/3 w-80 h-80 rounded-full bg-cyan-300/20 blur-3xl animate-pulse-slow delay-500" />
-
-        {/* Floating animated household energy badges & particles */}
-        <div className="absolute top-24 right-1/4 select-none opacity-25 animate-bounce" style={{ animationDuration: '6s' }}>
-          <div className="p-3 bg-white/80 rounded-2xl shadow-sm border border-emerald-100 flex items-center gap-2 text-xs font-semibold text-emerald-800">
-            <Zap className="w-4 h-4 text-emerald-500" /> Live Power Matrix
-          </div>
-        </div>
-        <div className="absolute top-[480px] -left-6 select-none opacity-20 animate-pulse" style={{ animationDuration: '8s' }}>
-          <div className="p-3 bg-white/80 rounded-2xl shadow-sm border border-cyan-100 flex items-center gap-2 text-xs font-semibold text-cyan-800">
-            <Droplets className="w-4 h-4 text-cyan-500" /> Rural Water LPCD: 55L
-          </div>
-        </div>
-        <div className="absolute bottom-32 right-12 select-none opacity-20 animate-bounce" style={{ animationDuration: '7s' }}>
-          <div className="p-3 bg-white/80 rounded-2xl shadow-sm border border-amber-100 flex items-center gap-2 text-xs font-semibold text-amber-800">
-            <Leaf className="w-4 h-4 text-amber-500" /> Biogas Recycling
-          </div>
-        </div>
-
-        {/* Ambient SVG Energy grid / rays */}
-        <svg className="absolute inset-0 w-full h-full opacity-[0.035]" xmlns="http://www.w3.org/2000/svg">
-          <defs>
-            <pattern id="household-grid" width="48" height="48" patternUnits="userSpaceOnUse">
-              <path d="M 48 0 L 0 0 0 48" fill="none" stroke="#059669" strokeWidth="1" />
-            </pattern>
-          </defs>
-          <rect width="100%" height="100%" fill="url(#household-grid)" />
-        </svg>
+    <div className="min-h-screen relative" style={{ background: 'linear-gradient(160deg, #052e16 0%, #14532d 40%, #0a1f14 100%)' }}>
+      {/* Background ambient lighting */}
+      <div className="absolute inset-0 overflow-hidden pointer-events-none">
+        <div className="absolute -top-40 -right-40 w-96 h-96 bg-emerald-500/10 rounded-full blur-3xl" />
+        <div className="absolute top-1/2 -left-40 w-96 h-96 bg-teal-500/10 rounded-full blur-3xl" />
       </div>
 
-      <div className="relative z-10 max-w-6xl mx-auto px-4 sm:px-6 pt-6">
+      <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 py-6 sm:py-8">
 
-        {/* ── Modern Header & Profile Bar (Village Card Removed) ──────────────── */}
-        <div className="bg-white/80 backdrop-blur-md rounded-2xl border border-emerald-100/80 shadow-sm p-5 mb-6 fade-up">
-          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-            <div>
+        {/* ── Page Header ── */}
+        <div className="glass-card rounded-2xl p-5 mb-6 fade-up">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div className="flex items-center gap-3">
               <div className="flex items-center gap-2.5">
                 <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-emerald-600 to-teal-500 flex items-center justify-center text-white shadow-md shadow-emerald-600/20">
                   <Activity className="w-5 h-5" />
                 </div>
                 <div>
                   <h1 className="text-2xl font-black text-gray-900 tracking-tight flex items-center gap-2">
-                    My Household Dashboard
+                    {t('householdTitle')}
                   </h1>
                   <p className="text-gray-500 text-xs sm:text-sm">
-                    Interactive appliance inventory, real-time consumption dynamics & clean energy savings
+                    {t('householdSubtitle')}
                   </p>
                 </div>
               </div>
@@ -216,7 +199,7 @@ export default function HouseholdDashboard() {
             <div className="flex flex-wrap items-center gap-3 bg-emerald-50/80 border border-emerald-200/60 rounded-xl px-4 py-2.5">
               <div className="flex items-center gap-2">
                 <Users className="w-4 h-4 text-emerald-700" />
-                <span className="text-xs font-semibold text-emerald-900">Family Members:</span>
+                <span className="text-xs font-semibold text-emerald-900">{isHindi ? 'परिवार के सदस्य:' : 'Family Members:'}</span>
                 <div className="flex items-center gap-1.5 bg-white rounded-lg p-0.5 border border-emerald-200 shadow-xs">
                   <button
                     onClick={() => setMembers((m) => Math.max(1, m - 1))}
@@ -237,16 +220,16 @@ export default function HouseholdDashboard() {
               </div>
               <div className="h-4 w-px bg-emerald-200 hidden sm:block" />
               <div className="text-xs text-emerald-800 font-medium">
-                <span className="font-bold text-emerald-950">{waterDemand.toFixed(0)} L/day</span> Water Need
+                <span className="font-bold text-emerald-950">{waterDemand.toFixed(0)} L/{isHindi ? 'दिन' : 'day'}</span> {isHindi ? 'जल मांग' : 'Water Need'}
               </div>
             </div>
           </div>
         </div>
 
-        {/* ── KPI Metric Cards ───────────────────────────────────────────────── */}
+        {/* ── KPI Metric Cards ── */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
           <KpiCard
-            title="Monthly Consumption"
+            title={isHindi ? 'मासिक बिजली खपत' : 'Monthly Consumption'}
             value={totalKWh.toFixed(1)}
             unit="kWh"
             icon={<Zap className="w-5 h-5 text-blue-600" />}
@@ -256,7 +239,7 @@ export default function HouseholdDashboard() {
             dataType="Live"
           />
           <KpiCard
-            title="Estimated Cost"
+            title={isHindi ? 'अनुमानित बिजली खर्च' : 'Estimated Cost'}
             value={'₹' + totalCost.toLocaleString()}
             unit={`@ ₹${ASSUMPTIONS.tariffINRPerKWh}/kWh`}
             icon={<Zap className="w-5 h-5 text-amber-600" />}
@@ -266,24 +249,24 @@ export default function HouseholdDashboard() {
             dataType="Estimated"
           />
           <KpiCard
-            title="CO₂ Emissions"
+            title={isHindi ? 'CO₂ उत्सर्जन' : 'CO₂ Emissions'}
             value={totalCO2.toFixed(2)}
-            unit="kg/mo"
-            icon={<Leaf className="w-5 h-5 text-green-600" />}
-            iconBg="bg-green-100"
+            unit={isHindi ? 'किग्रा/माह' : 'kg/mo'}
+            icon={<Leaf className="w-5 h-5 text-emerald-600" />}
+            iconBg="bg-emerald-100"
             formula={`kWh × ${ASSUMPTIONS.gridEmissionFactor} kg/kWh`}
             source="CEA 2023"
             dataType="Estimated"
           />
           <KpiCard
-            title="Sustainability Score"
-            value={hhScore}
-            unit="/100"
-            icon={<ShieldCheck className="w-5 h-5 text-purple-600" />}
-            iconBg="bg-purple-100"
-            formula="100 - penalty for excess consumption over 50 kWh"
-            source="GreenGrid"
-            dataType="Calculated"
+            title={isHindi ? 'बायोगैस उत्पादन क्षमता' : 'Biogas Potential'}
+            value={(biogasM3 * 30).toFixed(1)}
+            unit={isHindi ? 'm³/माह' : 'm³/mo'}
+            icon={<Sparkles className="w-5 h-5 text-teal-600" />}
+            iconBg="bg-teal-100"
+            formula="0.5 kg waste/person × 0.06 m³/kg"
+            source="GramUrja"
+            dataType="Estimated"
           />
         </div>
 
@@ -297,9 +280,9 @@ export default function HouseholdDashboard() {
                   <Sliders className="w-5 h-5" />
                 </span>
                 <div>
-                  <h2 className="text-xl font-bold text-gray-900">Appliance Inventory & Consumption Breakdown</h2>
+                  <h2 className="text-xl font-bold text-gray-900">{isHindi ? 'उपकरण सूची एवं खपत विभाजन' : 'Appliance Inventory & Consumption Breakdown'}</h2>
                   <p className="text-xs sm:text-sm text-gray-500">
-                    Directly change appliance counts or daily hours below — chart and costs update instantly!
+                    {isHindi ? 'उपकरण संख्या या दैनिक घंटों को बदलें — चार्ट और लागत तुरंत अपडेट होंगे!' : 'Directly change appliance counts or daily hours below — chart and costs update instantly!'}
                   </p>
                 </div>
               </div>
@@ -308,14 +291,14 @@ export default function HouseholdDashboard() {
             <div className="flex items-center gap-2 flex-wrap">
               <span className="text-xs bg-emerald-50 text-emerald-800 border border-emerald-200 font-semibold px-2.5 py-1 rounded-full flex items-center gap-1">
                 <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-                {appliances.filter((a) => a.enabled).length} Active Devices
+                {appliances.filter((a) => a.enabled).length} {isHindi ? 'सक्रिय उपकरण' : 'Active Devices'}
               </span>
               <button
                 onClick={resetDefaultAppliances}
                 title="Reset to default appliances"
-                className="text-xs text-gray-500 hover:text-gray-800 bg-gray-100 hover:bg-gray-200 px-2.5 py-1 rounded-lg flex items-center gap-1 transition"
+                className="text-xs text-gray-500 hover:text-gray-800 bg-gray-100 hover:bg-gray-200 px-2.5 py-1 rounded-lg flex items-center gap-1 transition font-medium"
               >
-                <RotateCcw className="w-3 h-3" /> Reset
+                <RotateCcw className="w-3 h-3" /> {isHindi ? 'रीसेट' : 'Reset'}
               </button>
             </div>
           </div>
@@ -328,10 +311,10 @@ export default function HouseholdDashboard() {
               <div>
                 <div className="flex items-center justify-between mb-3">
                   <div className="text-xs font-bold text-gray-500 uppercase tracking-wider">
-                    Your Household Appliances ({appliances.length})
+                    {isHindi ? 'आपके घरेलू उपकरण' : 'Your Household Appliances'} ({appliances.length})
                   </div>
                   <div className="text-xs text-gray-400">
-                    Direct controls enabled
+                    {isHindi ? 'सीधा नियंत्रण सक्रिय' : 'Direct controls enabled'}
                   </div>
                 </div>
 
@@ -374,7 +357,7 @@ export default function HouseholdDashboard() {
                         {/* Direct Stepper: Quantity */}
                         <div className="flex flex-col items-center">
                           <span className="text-[10px] font-semibold text-gray-600 uppercase tracking-tight mb-1">
-                            Qty
+                            {isHindi ? 'संख्या' : 'Qty'}
                           </span>
                           <div className="flex items-center border-2 border-emerald-100 rounded-lg bg-emerald-50/50 overflow-hidden shadow-xs hover:border-emerald-300 transition-colors">
                             <button
@@ -405,11 +388,11 @@ export default function HouseholdDashboard() {
                         {/* Direct Stepper: Hours per day */}
                         <div className="flex flex-col items-center">
                           <span className="text-[10px] font-semibold text-gray-600 uppercase tracking-tight mb-1">
-                            Hours / Day
+                            {isHindi ? 'घंटे/दिन' : 'Hours/Day'}
                           </span>
                           {a.spec.unit === 'kWh/day' ? (
                             <div className="h-7 px-2 flex items-center text-xs text-gray-400 bg-gray-100 rounded-lg">
-                              24h fixed
+                              24h
                             </div>
                           ) : (
                             <div className="flex items-center border-2 border-sky-100 rounded-lg bg-sky-50/50 overflow-hidden shadow-xs hover:border-sky-300 transition-colors">
@@ -441,7 +424,7 @@ export default function HouseholdDashboard() {
                               {kwh.toFixed(1)} <span className="text-[10px] font-normal text-gray-500">kWh</span>
                             </div>
                             <div className="text-[10px] text-gray-400">
-                              ₹{(kwh * ASSUMPTIONS.tariffINRPerKWh).toFixed(0)}/mo
+                              ₹{(kwh * ASSUMPTIONS.tariffINRPerKWh).toFixed(0)}/{isHindi ? 'माह' : 'mo'}
                             </div>
                           </div>
 
@@ -493,13 +476,13 @@ export default function HouseholdDashboard() {
                         onClick={addAppliance}
                         className="bg-emerald-600 text-white text-xs font-semibold px-4 py-2 rounded-lg hover:bg-emerald-700 shadow-sm transition"
                       >
-                        Add to Inventory
+                        {isHindi ? 'सूची में जोड़ें' : 'Add to Inventory'}
                       </button>
                       <button
                         onClick={() => setAddingAppliance(false)}
                         className="text-gray-500 hover:text-gray-800 text-xs px-2 py-1"
                       >
-                        Cancel
+                        {isHindi ? 'रद्द करें' : 'Cancel'}
                       </button>
                     </div>
                   ) : (
@@ -507,7 +490,7 @@ export default function HouseholdDashboard() {
                       onClick={() => setAddingAppliance(true)}
                       className="w-full py-2.5 border-2 border-dashed border-emerald-200 hover:border-emerald-400 rounded-xl text-xs sm:text-sm font-semibold text-emerald-700 hover:text-emerald-800 hover:bg-emerald-50/50 flex items-center justify-center gap-1.5 transition"
                     >
-                      <Plus className="w-4 h-4" /> Add Another Household Appliance
+                      <Plus className="w-4 h-4" /> {isHindi ? 'अन्य घरेलू उपकरण जोड़ें' : 'Add Another Household Appliance'}
                     </button>
                   )}
                 </div>
@@ -516,11 +499,11 @@ export default function HouseholdDashboard() {
               {/* Total Tally Summary Footer */}
               <div className="mt-4 pt-3 border-t border-gray-100 flex items-center justify-between text-xs text-gray-600 bg-gray-50/70 rounded-xl p-3">
                 <div className="font-semibold text-gray-800">
-                  Total Active Power Load:
+                  {isHindi ? 'कुल सक्रिय विद्युत भार:' : 'Total Active Power Load:'}
                 </div>
                 <div className="text-right">
-                  <span className="text-base font-extrabold text-emerald-700">{totalKWh.toFixed(1)} kWh/month</span>
-                  <span className="text-gray-400 ml-2">(₹{totalCost.toLocaleString()}/mo)</span>
+                  <span className="text-base font-extrabold text-emerald-700">{totalKWh.toFixed(1)} kWh/{isHindi ? 'माह' : 'month'}</span>
+                  <span className="text-gray-400 ml-2">(₹{totalCost.toLocaleString()}/{isHindi ? 'माह' : 'mo'})</span>
                 </div>
               </div>
             </div>
@@ -531,14 +514,14 @@ export default function HouseholdDashboard() {
                 <div className="flex items-center justify-between mb-2">
                   <div className="flex items-center gap-2">
                     <PieChartIcon className="w-4 h-4 text-emerald-600" />
-                    <h3 className="font-bold text-gray-900 text-sm">Live Consumption by Category</h3>
+                    <h3 className="font-bold text-gray-900 text-sm">{isHindi ? 'श्रेणीवार बिजली खपत' : 'Live Consumption by Category'}</h3>
                   </div>
-                  <span className="text-[11px] font-semibold text-blue-600 bg-blue-50 border border-blue-200 rounded-full px-2 py-0.5">
-                    Reactive
+                  <span className="text-[11px] font-semibold text-emerald-700 bg-emerald-50 border border-emerald-200 rounded-full px-2 py-0.5">
+                    Live
                   </span>
                 </div>
                 <p className="text-xs text-gray-500 mb-4">
-                  Visual energy share dynamically updating with your appliance adjustments.
+                  {isHindi ? 'उपकरण समायोजन के साथ ऊर्जा वितरण तुरंत अपडेट होता है।' : 'Visual energy share dynamically updating with your appliance adjustments.'}
                 </p>
 
                 {/* Donut Chart */}
@@ -560,7 +543,7 @@ export default function HouseholdDashboard() {
                         ))}
                       </Pie>
                       <Tooltip
-                        formatter={(val: number) => [`${val} kWh`, 'Consumption']}
+                        formatter={(val: number) => [`${val} kWh`, isHindi ? 'खपत' : 'Consumption']}
                         contentStyle={{ borderRadius: '10px', fontSize: '12px', border: '1px solid #e2e8f0' }}
                       />
                     </PieChart>
@@ -568,9 +551,9 @@ export default function HouseholdDashboard() {
 
                   {/* Centered Total inside Donut */}
                   <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none text-center">
-                    <span className="text-[10px] uppercase font-bold text-gray-400">Total</span>
+                    <span className="text-[10px] uppercase font-bold text-gray-400">{isHindi ? 'कुल' : 'Total'}</span>
                     <span className="text-lg font-black text-gray-900">{totalKWh.toFixed(0)}</span>
-                    <span className="text-[10px] text-gray-500 font-medium">kWh/mo</span>
+                    <span className="text-[10px] text-gray-500 font-medium">kWh/{isHindi ? 'माह' : 'mo'}</span>
                   </div>
                 </div>
 
@@ -611,10 +594,10 @@ export default function HouseholdDashboard() {
                 <div className="mt-5 p-3 rounded-xl bg-amber-50/90 border border-amber-200/80 text-xs">
                   <div className="flex items-center gap-1.5 font-bold text-amber-900 mb-1">
                     <Zap className="w-3.5 h-3.5 text-amber-600" />
-                    <span>Highest Drain: <span className="capitalize">{topCategory.name}</span> ({topCategory.percent}%)</span>
+                    <span>{isHindi ? 'सर्वाधिक बिजली खपत:' : 'Highest Drain:'} <span className="capitalize">{topCategory.name}</span> ({topCategory.percent}%)</span>
                   </div>
                   <p className="text-amber-800 text-[11px] leading-relaxed">
-                    Upgrading older cooling & lighting to 5-star BEE rated equipment can save up to 45% on this category.
+                    {isHindi ? 'पुराने उपकरणों को 5-स्टार BEE रेटेड उपकरणों से बदलने पर 45% तक बिजली बचत संभव है।' : 'Upgrading older cooling & lighting to 5-star BEE rated equipment can save up to 45% on this category.'}
                   </p>
                 </div>
               )}
@@ -623,34 +606,34 @@ export default function HouseholdDashboard() {
           </div>
         </div>
 
-        {/* ── Water Usage & Food Waste / Biogas Cards ───────────────────────── */}
+        {/* ── Water Usage & Food Waste / Biogas Cards ── */}
         <div className="grid lg:grid-cols-2 gap-6 mb-8">
           <SectionCard
-            title="Water Usage Breakdown"
-            subtitle={`${members} household members · 55 LPCD Standard`}
+            title={isHindi ? 'जल उपयोग विश्लेषण' : 'Water Usage Breakdown'}
+            subtitle={`${members} ${isHindi ? 'परिवार सदस्य · 55 LPCD मानक' : 'household members · 55 LPCD Standard'}`}
             icon={<Droplets className="w-4 h-4 text-cyan-600" />}
           >
             <DemoBadge className="mb-4" />
-            <StatRow label="Daily Household Water Demand" value={waterDemand.toFixed(0)} unit="litres" highlight />
-            <StatRow label="Monthly Water Volume" value={(waterDemand * 30 / 1000).toFixed(1)} unit="kL" />
-            <StatRow label="LPCD Standard Standardized" value="55" unit="L/person/day" />
-            <StatRow label="Estimated Monthly Water Cost" value={`₹${(waterDemand * 30 * 0.02).toFixed(0)}`} />
+            <StatRow label={isHindi ? 'दैनिक घरेलू जल मांग' : 'Daily Household Water Demand'} value={waterDemand.toFixed(0)} unit={isHindi ? 'लीटर' : 'litres'} highlight />
+            <StatRow label={isHindi ? 'मासिक जल आयतन' : 'Monthly Water Volume'} value={(waterDemand * 30 / 1000).toFixed(1)} unit="kL" />
+            <StatRow label={isHindi ? 'LPCD मानक' : 'LPCD Standard'} value="55" unit="L/person/day" />
+            <StatRow label={isHindi ? 'अनुमानित मासिक जल लागत' : 'Estimated Monthly Water Cost'} value={`₹${(waterDemand * 30 * 0.02).toFixed(0)}`} />
             <AssumptionBox items={[
               { label: 'Rural LPCD', value: '55 L/person/day (WHO/GoI standard)' },
-              { label: 'Water rate', value: '₹0.02/litre (illustrative tariff)' },
+              { label: 'Water rate', value: '₹0.02/litre' },
             ]} />
           </SectionCard>
 
           <SectionCard
-            title="Household Waste & Biogas Potential"
-            subtitle="Organic food waste → clean cooking fuel"
+            title={isHindi ? 'घरेलू कचरा एवं बायोगैस संभावना' : 'Household Waste & Biogas Potential'}
+            subtitle={isHindi ? 'जैविक रसोई अपशिष्ट → स्वच्छ रसोई गैस' : 'Organic food waste → clean cooking fuel'}
             icon={<Leaf className="w-4 h-4 text-emerald-600" />}
           >
             <DemoBadge className="mb-4" />
-            <StatRow label="Estimated Daily Food Waste" value={(biogasKgPerDay).toFixed(1)} unit="kg/day" />
-            <StatRow label="Biogas Generation Potential" value={biogasM3.toFixed(3)} unit="m³/day" highlight />
-            <StatRow label="Clean Thermal Energy" value={(biogasM3 * ASSUMPTIONS.biogasThermalKWhPerM3).toFixed(3)} unit="kWh/day" />
-            <StatRow label="Monthly Biogas Output" value={(biogasM3 * 30).toFixed(2)} unit="m³/month" />
+            <StatRow label={isHindi ? 'अनुमानित दैनिक खाद्य अपशिष्ट' : 'Estimated Daily Food Waste'} value={(biogasKgPerDay).toFixed(1)} unit="kg/day" />
+            <StatRow label={isHindi ? 'बायोगैस उत्पादन क्षमता' : 'Biogas Generation Potential'} value={biogasM3.toFixed(3)} unit="m³/day" highlight />
+            <StatRow label={isHindi ? 'स्वच्छ तापीय ऊर्जा' : 'Clean Thermal Energy'} value={(biogasM3 * ASSUMPTIONS.biogasThermalKWhPerM3).toFixed(3)} unit="kWh/day" />
+            <StatRow label={isHindi ? 'मासिक बायोगैस उत्पादन' : 'Monthly Biogas Output'} value={(biogasM3 * 30).toFixed(2)} unit="m³/month" />
             <AssumptionBox items={[
               { label: 'Food waste/person', value: '0.5 kg/day (average)' },
               { label: 'Food waste→biogas yield', value: '0.06 m³/kg' },
@@ -659,18 +642,18 @@ export default function HouseholdDashboard() {
           </SectionCard>
         </div>
 
-        {/* ── Upgrade Recommendations ───────────────────────────────────────── */}
+        {/* ── Upgrade Recommendations ── */}
         {upgradeCategories.length > 0 && (
           <div className="mt-8">
             <div className="flex items-center gap-2 mb-3 fade-left">
               <Zap className="w-5 h-5 text-amber-500" />
-              <h2 className="text-xl font-bold text-gray-900">Recommended Energy Efficient Upgrades</h2>
+              <h2 className="text-xl font-bold text-gray-900">{isHindi ? 'ऊर्जा-कुशल उपकरण अपग्रेड सुझाव' : 'Recommended Energy Efficient Upgrades'}</h2>
               <span className="text-xs bg-amber-100 text-amber-800 border border-amber-200 rounded-full px-2.5 py-0.5 font-bold ml-1">
-                {upgradeCategories.length} upgrades available
+                {upgradeCategories.length} {isHindi ? 'सुझाव उपलब्ध' : 'upgrades available'}
               </span>
             </div>
-            <p className="text-xs sm:text-sm text-gray-500 mb-5 italic">
-              Estimated savings are calculated against your active inventory power specifications and average rural tariff.
+            <p className="text-xs sm:text-sm text-gray-400 mb-5 italic">
+              {isHindi ? 'अनुमानित बचत आपके सक्रिय उपकरणों और औसत ग्रामीण शुल्क के आधार पर आंकी गई है।' : 'Estimated savings are calculated against your active inventory power specifications and average rural tariff.'}
             </p>
 
             <div className="space-y-5">
@@ -707,9 +690,9 @@ export default function HouseholdDashboard() {
                       <div className="flex items-center gap-3">
                         <span className="text-2xl">{cat.icon}</span>
                         <div>
-                          <div className="font-bold text-gray-900">{cat.label} Upgrade Options</div>
+                          <div className="font-bold text-gray-900">{cat.label} {isHindi ? 'अपग्रेड विकल्प' : 'Upgrade Options'}</div>
                           <div className="text-xs text-gray-500">
-                            Current: {cat.currentName} ·{' '}
+                            {isHindi ? 'वर्तमान:' : 'Current:'} {cat.currentName} ·{' '}
                             {cat.currentEnergyKWhPerDay
                               ? `${cat.currentEnergyKWhPerDay} kWh/day`
                               : `${cat.currentPowerW}W`}
@@ -718,7 +701,7 @@ export default function HouseholdDashboard() {
                       </div>
                       <div className="flex items-center gap-2">
                         <span className="text-xs text-emerald-700 font-semibold hidden sm:inline">
-                          {isExpanded ? 'Hide options' : 'View products & payback'}
+                          {isExpanded ? (isHindi ? 'विकल्प छिपाएं' : 'Hide options') : (isHindi ? 'उत्पाद एवं लागत वसूली देखें' : 'View products & payback')}
                         </span>
                         {isExpanded ? <ChevronUp className="w-5 h-5 text-gray-400" /> : <ChevronDown className="w-5 h-5 text-gray-400" />}
                       </div>
@@ -750,7 +733,7 @@ export default function HouseholdDashboard() {
                               >
                                 {isBestValue && (
                                   <div className="absolute -top-2.5 left-3 bg-emerald-600 text-white text-[10px] font-extrabold px-2.5 py-0.5 rounded-full shadow-xs">
-                                    ✨ Best Value Choice
+                                    ✨ {isHindi ? 'सर्वश्रेष्ठ विकल्प' : 'Best Value Choice'}
                                   </div>
                                 )}
                                 <div className="text-2xl mb-1.5">{cat.icon}</div>
@@ -768,40 +751,40 @@ export default function HouseholdDashboard() {
                                 )}
                                 <div className="space-y-1 text-xs text-gray-600 mb-3 border-t border-gray-100 pt-2">
                                   <div className="flex justify-between">
-                                    <span>Power Rating</span>
+                                    <span>{isHindi ? 'पावर रेटिंग' : 'Power Rating'}</span>
                                     <span className="font-semibold text-blue-700">
                                       {opt.energyKWhPerDay ? `${opt.energyKWhPerDay} kWh/day` : `${opt.powerW}W`}
                                     </span>
                                   </div>
                                   <div className="flex justify-between">
-                                    <span>Monthly usage</span>
+                                    <span>{isHindi ? 'मासिक खपत' : 'Monthly usage'}</span>
                                     <span className="font-semibold">{optMonthlyKWh.toFixed(1)} kWh</span>
                                   </div>
                                   <div className="flex justify-between">
-                                    <span>Monthly saving</span>
+                                    <span>{isHindi ? 'मासिक बचत' : 'Monthly saving'}</span>
                                     <span className="font-bold text-emerald-700">
                                       {savingKWh > 0 ? `${savingKWh} kWh (₹${savingINR})` : 'Baseline'}
                                     </span>
                                   </div>
                                   <div className="flex justify-between">
-                                    <span>Annual saving</span>
+                                    <span>{isHindi ? 'वार्षिक बचत' : 'Annual saving'}</span>
                                     <span className="font-bold text-emerald-700">
                                       {savingKWh > 0 ? `₹${(savingINR * 12).toLocaleString()}` : '—'}
                                     </span>
                                   </div>
                                 </div>
                                 <div className="bg-white rounded-lg p-2.5 border border-gray-200 mb-2">
-                                  <div className="text-[10px] text-gray-400 uppercase font-semibold">Estimated Cost</div>
+                                  <div className="text-[10px] text-gray-400 uppercase font-semibold">{isHindi ? 'अनुमानित लागत' : 'Estimated Cost'}</div>
                                   <div className="font-extrabold text-gray-900 text-sm">₹{opt.approxCostINR.toLocaleString()}</div>
                                 </div>
                                 {paybackMonths && (
                                   <div className="text-xs text-center font-bold text-purple-700 bg-purple-50 rounded-lg py-1.5 mb-2">
-                                    Payback in ~{paybackMonths} months
+                                    {isHindi ? `लागत वसूली ~${paybackMonths} माह में` : `Payback in ~${paybackMonths} months`}
                                   </div>
                                 )}
                                 <details className="mt-2 text-xs">
                                   <summary className="text-emerald-700 font-semibold cursor-pointer hover:underline">
-                                    Efficiency Analysis →
+                                    {isHindi ? 'दक्षता विश्लेषण →' : 'Efficiency Analysis →'}
                                   </summary>
                                   <p className="text-gray-600 mt-1.5 leading-relaxed text-[11px] bg-white p-2 rounded-lg border border-gray-100">
                                     {opt.notes}

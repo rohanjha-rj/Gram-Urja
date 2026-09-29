@@ -1,28 +1,12 @@
 import React, { useState } from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
 import {
-  Zap, LayoutDashboard, Home, Sun, Droplets, Leaf,
-  Lightbulb, Bell, Award, Bot, Menu, X, Activity, LogOut,
-  ChevronLeft, ChevronRight,
+  Zap, LayoutDashboard, Home, Sun, Leaf,
+  Lightbulb, Bot, Menu, X, Activity, LogOut,
+  ChevronLeft, ChevronRight, Globe,
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
-
-const ALL_NAV_ITEMS = [
-  { to: '/overview', icon: <Home className="w-4 h-4" />, label: 'Overview', roles: ['official', 'citizen', 'guest'] },
-  { to: '/household', icon: <Activity className="w-4 h-4" />, label: 'My Dashboard', roles: ['citizen'] },
-  { to: '/village', icon: <LayoutDashboard className="w-4 h-4" />, label: 'Village Dashboard', roles: ['official', 'guest'] },
-  { to: '/solar', icon: <Sun className="w-4 h-4" />, label: 'Solar', roles: ['official', 'citizen', 'guest'] },
-  { to: '/waste', icon: <Leaf className="w-4 h-4" />, label: 'Waste & Energy', roles: ['official', 'citizen', 'guest'] },
-  { to: '/recommendations', icon: <Lightbulb className="w-4 h-4" />, label: 'Recommendations', roles: ['official', 'citizen', 'guest'] },
-  { to: '/alerts', icon: <Bell className="w-4 h-4" />, label: 'Alerts', badge: '6', roles: ['official', 'guest'] },
-  { to: '/score', icon: <Award className="w-4 h-4" />, label: 'Sustainability Score', roles: ['official', 'citizen', 'guest'] },
-];
-
-const ROLE_LABELS: Record<string, { label: string; color: string }> = {
-  official: { label: 'Village Official', color: 'bg-green-100 text-green-700' },
-  citizen: { label: 'Household Member', color: 'bg-blue-100 text-blue-700' },
-  guest: { label: 'Guest', color: 'bg-gray-100 text-gray-600' },
-};
+import { useLanguage } from '../context/LanguageContext';
 
 export default function Layout({ children }: { children: React.ReactNode }) {
   // Mobile overlay toggle
@@ -31,9 +15,25 @@ export default function Layout({ children }: { children: React.ReactNode }) {
   const [collapsed, setCollapsed] = useState(false);
 
   const { role, signOut } = useAuth();
+  const { language, setLanguage, t, isHindi } = useLanguage();
   const navigate = useNavigate();
 
-  const visibleNav = ALL_NAV_ITEMS.filter((item) => item.roles.includes(role));
+  const navItems = [
+    { to: '/overview', icon: <Home className="w-4 h-4" />, label: t('navOverview'), roles: ['official', 'citizen', 'guest'] },
+    { to: '/household', icon: <Activity className="w-4 h-4" />, label: t('navMyDashboard'), roles: ['citizen'] },
+    { to: '/village', icon: <LayoutDashboard className="w-4 h-4" />, label: t('navVillageDashboard'), roles: ['official', 'guest'] },
+    { to: '/solar', icon: <Sun className="w-4 h-4" />, label: t('navSolar'), roles: ['official', 'citizen', 'guest'] },
+    { to: '/waste', icon: <Leaf className="w-4 h-4" />, label: t('navWaste'), roles: ['official', 'citizen', 'guest'] },
+    { to: '/recommendations', icon: <Lightbulb className="w-4 h-4" />, label: t('navRecommendations'), roles: ['official', 'citizen', 'guest'] },
+  ];
+
+  const ROLE_LABELS: Record<string, { label: string; color: string }> = {
+    official: { label: t('roleOfficial'), color: 'bg-green-100 text-green-700' },
+    citizen: { label: t('roleCitizen'), color: 'bg-blue-100 text-blue-700' },
+    guest: { label: t('roleGuest'), color: 'bg-gray-100 text-gray-600' },
+  };
+
+  const visibleNav = navItems.filter((item) => item.roles.includes(role));
   const roleInfo = ROLE_LABELS[role] ?? ROLE_LABELS['guest'];
 
   async function handleLogout() {
@@ -120,8 +120,8 @@ export default function Layout({ children }: { children: React.ReactNode }) {
           </div>
           {!collapsed && (
             <div className="flex-1 min-w-0">
-              <div className="font-bold text-gray-900 text-base leading-tight truncate">GreenGrid AI</div>
-              <div className="text-[11px] text-emerald-600 font-medium truncate">Sustainability Intelligence</div>
+              <div className="font-bold text-gray-900 text-base leading-tight truncate">GramUrja</div>
+              <div className="text-[11px] text-emerald-600 font-medium truncate">{t('brandTagline')}</div>
             </div>
           )}
           {/* Mobile close */}
@@ -138,33 +138,61 @@ export default function Layout({ children }: { children: React.ReactNode }) {
           </button>
         </div>
 
-        {/* ── Role badge ── */}
+        {/* ── Language Switcher + Role badge ── */}
         {!collapsed && (
-          <div className="flex-shrink-0 px-4 py-3 space-y-1.5"
+          <div className="flex-shrink-0 px-4 py-3 space-y-2"
             style={{ borderBottom: '1px solid rgba(16,185,129,0.10)' }}>
-            <div className="flex items-center justify-between">
+            
+            {/* Language toggle pill */}
+            <div className="flex items-center justify-between bg-emerald-500/10 p-1 rounded-xl border border-emerald-500/20">
+              <button
+                onClick={() => setLanguage('en')}
+                className={`flex-1 text-xs font-semibold py-1 rounded-lg transition-all ${
+                  language === 'en' ? 'bg-emerald-600 text-white shadow-xs' : 'text-emerald-800 hover:bg-emerald-500/10'
+                }`}
+              >
+                English
+              </button>
+              <button
+                onClick={() => setLanguage('hi')}
+                className={`flex-1 text-xs font-semibold py-1 rounded-lg transition-all ${
+                  language === 'hi' ? 'bg-emerald-600 text-white shadow-xs' : 'text-emerald-800 hover:bg-emerald-500/10'
+                }`}
+              >
+                हिन्दी
+              </button>
+            </div>
+
+            <div className="flex items-center justify-between pt-1">
               <span className={`text-xs font-semibold px-2.5 py-1 rounded-full ${roleInfo.color}`}>
                 {roleInfo.label}
               </span>
               <button onClick={handleLogout}
                 className="text-gray-400 hover:text-red-500 transition-colors p-1 rounded-lg hover:bg-red-50"
-                title="Log out">
+                title={t('logout')}>
                 <LogOut className="w-3.5 h-3.5" />
               </button>
             </div>
             <div className="text-[11px] text-emerald-700 font-semibold tracking-wide">
-              Bihar Village Sustainability Region
+              {t('regionName')}
             </div>
           </div>
         )}
 
-        {/* ── Collapsed: logout icon only ── */}
+        {/* ── Collapsed: language & logout icons only ── */}
         {collapsed && (
-          <div className="flex-shrink-0 flex justify-center py-3"
+          <div className="flex-shrink-0 flex flex-col items-center gap-2 py-3"
             style={{ borderBottom: '1px solid rgba(16,185,129,0.10)' }}>
+            <button
+              onClick={() => setLanguage(language === 'en' ? 'hi' : 'en')}
+              className="p-1.5 text-xs font-bold text-emerald-700 rounded-lg hover:bg-emerald-100"
+              title={language === 'en' ? 'Switch to Hindi' : 'Switch to English'}
+            >
+              {language === 'en' ? 'HI' : 'EN'}
+            </button>
             <button onClick={handleLogout}
               className="text-gray-400 hover:text-red-500 transition-colors p-1.5 rounded-lg hover:bg-red-50"
-              title="Log out">
+              title={t('logout')}>
               <LogOut className="w-4 h-4" />
             </button>
           </div>
@@ -189,11 +217,6 @@ export default function Layout({ children }: { children: React.ReactNode }) {
             >
               <span className="flex-shrink-0">{item.icon}</span>
               {!collapsed && <span className="flex-1 min-w-0 truncate">{item.label}</span>}
-              {!collapsed && item.badge && (
-                <span className="flex-shrink-0 ml-auto bg-red-500 text-white text-[10px] font-bold min-w-[1.25rem] px-1.5 py-0.5 rounded-full leading-none text-center mr-1">
-                  {item.badge}
-                </span>
-              )}
             </NavLink>
           ))}
         </nav>
@@ -202,8 +225,8 @@ export default function Layout({ children }: { children: React.ReactNode }) {
         {!collapsed && (
           <div className="flex-shrink-0 px-4 py-3"
             style={{ borderTop: '1px solid rgba(16,185,129,0.10)' }}>
-            <div className="text-[11px] text-gray-400 text-center">
-              GreenGrid AI v0.1
+            <div className="text-[11px] text-gray-400 text-center font-medium">
+              GramUrja · {isHindi ? 'संवहनीय मंच' : 'Sustainability Platform'}
             </div>
           </div>
         )}
@@ -218,8 +241,8 @@ export default function Layout({ children }: { children: React.ReactNode }) {
       {/* ── Main content — takes remaining width, scrolls independently ── */}
       <div className="relative z-10 flex-1 flex flex-col min-w-0 h-screen overflow-hidden">
 
-        {/* Top bar — mobile menu toggle only, no status text */}
-        <header className="flex-shrink-0 z-20 flex items-center px-4 h-12 lg:hidden"
+        {/* Top bar — mobile menu toggle and quick language switch */}
+        <header className="flex-shrink-0 z-20 flex items-center justify-between px-4 h-12 lg:hidden"
           style={{
             background: 'rgba(255,255,255,0.85)',
             backdropFilter: 'blur(12px)',
@@ -231,6 +254,15 @@ export default function Layout({ children }: { children: React.ReactNode }) {
             className="text-gray-500 hover:text-gray-700 flex-shrink-0 p-1 rounded-lg hover:bg-gray-100 transition-colors">
             <Menu className="w-5 h-5" />
           </button>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => setLanguage(language === 'en' ? 'hi' : 'en')}
+              className="flex items-center gap-1 text-xs font-semibold text-emerald-800 bg-emerald-50 px-2.5 py-1 rounded-full border border-emerald-200"
+            >
+              <Globe className="w-3 h-3 text-emerald-600" />
+              <span>{language === 'en' ? 'हिन्दी' : 'English'}</span>
+            </button>
+          </div>
         </header>
 
         {/* Page content — this scrolls, sidebar stays fixed */}
@@ -239,15 +271,15 @@ export default function Layout({ children }: { children: React.ReactNode }) {
         </main>
       </div>
 
-      {/* ── Floating Kiran button (bottom-right, always visible) ── */}
+      {/* ── Floating Manu AI button (bottom-right, always visible) ── */}
       <button
         onClick={() => navigate('/ai')}
-        title="Chat with Kiran"
-        className="fixed bottom-6 right-6 z-50 flex items-center gap-2 bg-green-600 hover:bg-green-700 active:scale-95 text-white rounded-full shadow-lg transition-all duration-200 pl-4 pr-5 py-3"
-        style={{ boxShadow: '0 4px 20px rgba(22,163,74,0.45)' }}
+        title={t('chatWithManu')}
+        className="fixed bottom-6 right-6 z-50 flex items-center gap-2 bg-emerald-600 hover:bg-emerald-700 active:scale-95 text-white rounded-full shadow-lg transition-all duration-200 pl-4 pr-5 py-3"
+        style={{ boxShadow: '0 4px 20px rgba(16,185,129,0.45)' }}
       >
         <Bot className="w-5 h-5 flex-shrink-0" />
-        <span className="text-sm font-semibold leading-none">Kiran</span>
+        <span className="text-sm font-semibold leading-none">{t('aiName')}</span>
       </button>
     </div>
   );
