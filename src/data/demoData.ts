@@ -104,7 +104,7 @@ export const DEMO_AREAS: AreaProfile[] = [
   },
   {
     id: 'barouni',
-    name: 'Barouni (Part)',
+    name: 'Barouni',
     type: 'village',
     population: 1560,
     households: 300,
