@@ -57,15 +57,39 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   async function signIn(email: string, password: string) {
     if (!SUPABASE_CONFIGURED) {
-      return { error: 'Supabase is not configured. Add VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY to your .env file.' };
+      // Offline / Demo Mode: Allow demo login or any valid email
+      const mockUser: User = {
+        id: 'demo-household-user-001',
+        app_metadata: {},
+        user_metadata: { name: 'Demo Household Resident', email },
+        aud: 'authenticated',
+        created_at: new Date().toISOString(),
+        email: email || 'demo@gramurja.in',
+      } as unknown as User;
+      const mockSession: Session = {
+        access_token: 'mock-access-token',
+        refresh_token: 'mock-refresh-token',
+        expires_in: 3600,
+        token_type: 'bearer',
+        user: mockUser,
+      };
+      setSession(mockSession);
+      setUser(mockUser);
+      setRole('citizen');
+      return { error: null };
     }
-    const { error } = await supabase.auth.signInWithPassword({ email, password });
+    const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+    if (data?.session) {
+      setSession(data.session);
+      setUser(data.session.user);
+    }
     return { error: error?.message ?? null };
   }
 
   async function signUp(email: string, password: string) {
     if (!SUPABASE_CONFIGURED) {
-      return { error: 'Supabase is not configured. Add VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY to your .env file.' };
+      // Offline / Demo Mode: Simulate successful signup
+      return { error: null };
     }
     const { error } = await supabase.auth.signUp({ email, password });
     return { error: error?.message ?? null };
@@ -73,6 +97,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   async function signOut() {
     if (SUPABASE_CONFIGURED) await supabase.auth.signOut();
+    setSession(null);
+    setUser(null);
     setRole('guest');
   }
 

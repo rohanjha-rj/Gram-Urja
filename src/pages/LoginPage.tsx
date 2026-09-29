@@ -275,6 +275,28 @@ export default function LoginPage() {
                   </div>
                 )}
 
+                {/* Demo Credentials Quick Fill Banner */}
+                <div className="bg-blue-500/10 border border-blue-400/20 rounded-xl p-3 text-xs text-blue-200/90 flex flex-col gap-2">
+                  <div className="flex items-center justify-between">
+                    <span className="font-semibold text-blue-300">💡 Sample Login Credentials</span>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setEmail('demo@gramurja.in');
+                        setPassword('password123');
+                        setError(null);
+                      }}
+                      className="text-[11px] bg-blue-500/30 hover:bg-blue-500/50 text-blue-100 font-medium px-2 py-0.5 rounded transition"
+                    >
+                      Auto-fill Sample
+                    </button>
+                  </div>
+                  <div className="text-[11px] text-white/60 space-y-0.5">
+                    <div><span className="text-white/40">Email:</span> <code className="text-blue-300">demo@gramurja.in</code></div>
+                    <div><span className="text-white/40">Password:</span> <code className="text-blue-300">password123</code></div>
+                  </div>
+                </div>
+
                 {/* Submit */}
                 <button
                   type="submit"
