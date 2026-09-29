@@ -1,5 +1,4 @@
 import React, { useState, useMemo, useEffect, useRef } from 'react';
-import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts';
 import { Sun, Zap, Leaf, TrendingDown, ArrowRight, ChevronDown, ChevronUp, Lightbulb, Clock, BatteryCharging, TreePine, Sparkles, ShieldCheck } from 'lucide-react';
 import {
   calculateSolarCapacity, calculateSolarGeneration, calculateSolarOffset,
@@ -604,145 +603,320 @@ function SolarBackground({ children }: { children: React.ReactNode }) {
 function VillageSolarView() {
   const { t, isHindi: isHi } = useLanguage();
   const [selectedAreaId, setSelectedAreaId] = useState(areas[0].area.id);
-  const [panelCount, setPanelCount]         = useState(25);
-  const [availAreaSqFt, setAvailAreaSqFt]   = useState(8000);
-  const [irradiation, setIrradiation]       = useState<number>(ASSUMPTIONS.solarKWhPerKWPerDay);
+  const [panelCount, setPanelCount]         = useState(100);
+  const [availAreaSqFt, setAvailAreaSqFt]   = useState(15000);
+  const [sunPreset, setSunPreset]           = useState<'auto' | 'morning' | 'noon' | 'afternoon' | 'evening'>('auto');
+
+  const PANEL_KW        = 0.4;
+  const PANEL_AREA_SQFT = 10;
+  const IRRADIATION     = ASSUMPTIONS.solarKWhPerKWPerDay;
 
   useEffect(() => {
     const area = DEMO_AREAS.find(a => a.id === selectedAreaId);
     if (area) {
       const roof = area.infrastructure.solar.roofAreaSqFt ?? 0;
       const land = area.infrastructure.solar.openLandSqFt ?? 0;
-      setAvailAreaSqFt(roof + land);
+      const totalArea = (roof + land) > 0 ? (roof + land) : 15000;
+      setAvailAreaSqFt(totalArea);
+
+      // Sizing preset for selected village
+      const cons = area.monthlyElectricity;
+      const suggested = Math.ceil(cons / (IRRADIATION * 30) / PANEL_KW);
+      const maxP = Math.floor(totalArea / PANEL_AREA_SQFT);
+      setPanelCount(Math.min(suggested, maxP, 250));
     }
   }, [selectedAreaId]);
 
   const areaAnalysis  = areas.find(a => a.area.id === selectedAreaId) ?? areas[0];
   const consumption   = areaAnalysis.area.monthlyElectricity;
 
-  const PANEL_KW        = 0.4;
-  const PANEL_AREA_SQFT = 10;
   const totalCapacity   = panelCount * PANEL_KW;
   const usedAreaSqFt    = panelCount * PANEL_AREA_SQFT;
-  const monthlyGenKWh   = calculateSolarGeneration(totalCapacity, irradiation, 30);
-  const annualGenKWh    = calculateSolarGeneration(totalCapacity, irradiation, 365);
+  const monthlyGenKWh   = calculateSolarGeneration(totalCapacity, IRRADIATION, 30);
+  const annualGenKWh    = calculateSolarGeneration(totalCapacity, IRRADIATION, 365);
   const offsetPct       = calculateSolarOffset(monthlyGenKWh, consumption);
-  const co2Avoided      = calculateSolarCO2Avoided(monthlyGenKWh);
   const investment      = Math.round(totalCapacity * ASSUMPTIONS.solarCostINRPerKW);
   const annualSavings   = calculateElectricityCost(annualGenKWh);
   const payback         = annualSavings > 0 ? (investment / annualSavings).toFixed(1) : '—';
   const beforeAfter     = calculateBeforeAfterScenario(consumption, monthlyGenKWh);
 
-  const areaCompare = areas.map(a => ({
-    name: a.area.name,
-    'Current Gen': +(a.area.infrastructure.solar.installedCapacity * irradiation * 30).toFixed(0),
-    'Potential':   +calculateSolarGeneration(a.solarPotential.feasibleCapacityKW, irradiation, 30).toFixed(0),
-  }));
+  const maxPanelsByArea = Math.max(1, Math.floor(availAreaSqFt / PANEL_AREA_SQFT));
+
+  const suggestedPanels = useMemo(() => {
+    if (IRRADIATION <= 0) return 0;
+    return Math.ceil(consumption / (IRRADIATION * 30) / PANEL_KW);
+  }, [consumption]);
+
+  // Sun angle calculation based on preset
+  const customSunAngle = useMemo(() => {
+    switch (sunPreset) {
+      case 'morning':   return 25;
+      case 'noon':      return 90;
+      case 'afternoon': return 135;
+      case 'evening':   return 165;
+      default:          return undefined; // auto tick
+    }
+  }, [sunPreset]);
+
+  // Derived environmental & lifetime calculations
+  const dailyGenKWh     = (monthlyGenKWh / 30);
+  const co2AvoidedKg    = Math.round(annualGenKWh * 0.82);
+  const treesPlanted    = Math.max(1, Math.round(co2AvoidedKg / 21));
+  const lifetimeSavings = Math.max(0, (annualSavings * 25) - investment);
+  const directSelfUse   = Math.min(monthlyGenKWh, consumption);
+  const gridExportUnits = Math.max(0, monthlyGenKWh - consumption);
 
   return (
     <SolarBackground>
-      <div className="relative z-10 max-w-6xl mx-auto px-6 py-8">
-        {/* Configuration + metrics */}
-        <div className="glass-card rounded-2xl p-5 mb-4 fade-up">
-          <div className="grid lg:grid-cols-2 gap-6">
-            {/* Left — sliders */}
-            <div>
-              <div className="flex items-center justify-between mb-4">
-                <h2 className="font-bold text-gray-900 flex items-center gap-2 text-sm uppercase tracking-wide">
-                  <Sun className="w-4 h-4 text-amber-500"/> {isHi ? 'विन्यास' : 'Configuration'}
-                </h2>
-                <DemoBadge/>
-              </div>
-              <div className="mb-4">
+      <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 py-8 space-y-6">
+
+        {/* ── Merged Configuration + Live Roof Simulator — side by side ── */}
+        <div className="glass-card rounded-2xl p-5 sm:p-6 fade-up shadow-xl border border-gray-200/80">
+          <div className="flex flex-wrap items-center justify-between gap-2 mb-6 pb-4 border-b border-gray-100">
+            <h2 className="font-bold text-gray-900 flex items-center gap-2.5 text-base sm:text-lg tracking-wide">
+              <span className="p-2 rounded-xl bg-amber-100 text-amber-600 shadow-sm">
+                <Sun className="w-5 h-5"/>
+              </span>
+              {isHi ? 'ग्राम सौर विन्यास एवं लाइव इंटरैक्टिव रूफ सिम्युलेटर' : 'Village Solar Configuration & Live Interactive Roof Simulator'}
+            </h2>
+            <DemoBadge/>
+          </div>
+
+          {/* Side-by-side Grid: config left (5 cols), simulator + live telemetry right (7 cols) */}
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-stretch">
+
+            {/* ── Left column: inputs & configuration ── */}
+            <div className="lg:col-span-5 flex flex-col gap-4 text-sm">
+
+              {/* Area / Village Selector */}
+              <div className="bg-white/70 border border-gray-200/80 rounded-xl p-3.5 shadow-sm">
+                <div className="text-xs font-bold text-gray-700 uppercase tracking-wider mb-2 flex items-center justify-between">
+                  <span>{isHi ? 'निगरानी ग्राम चयन' : 'Select Monitored Village'}</span>
+                  <span className="text-[10px] text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full font-bold border border-emerald-200">
+                    {areaAnalysis.area.households.toLocaleString()} {isHi ? 'घर · बिहार' : 'HH · Bihar'}
+                  </span>
+                </div>
                 <AreaSelector selectedAreaId={selectedAreaId} onSelect={setSelectedAreaId}/>
               </div>
-              <div className="space-y-4 text-sm">
-                <div>
-                  <div className="flex items-center justify-between mb-1">
-                    <label className="font-medium text-gray-700">{isHi ? 'पैनलों की संख्या' : 'Number of Panels'}</label>
-                    <span className="text-lg font-bold text-amber-600">{panelCount}</span>
+
+              {/* Village Grid Energy Demand */}
+              <div className="rounded-xl border border-blue-200 bg-blue-50/70 p-4 shadow-sm">
+                <div className="flex items-center justify-between mb-1.5">
+                  <span className="font-semibold text-blue-900 flex items-center gap-1.5 text-xs sm:text-sm">
+                    <Zap className="w-4 h-4 text-blue-600"/> {isHi ? 'ग्राम पंचायत ग्रिड मांग' : 'Gram Panchayat Grid Demand'}
+                  </span>
+                  <span className="text-base sm:text-lg font-extrabold text-blue-700 bg-blue-100/80 px-2.5 py-0.5 rounded-lg">
+                    {consumption.toLocaleString()} kWh/mo
+                  </span>
+                </div>
+                <p className="text-xs text-blue-700/80 leading-relaxed">
+                  {isHi
+                    ? `${areaAnalysis.area.name} पंचायत का मासिक लोड। ग्राम स्तर पर सौर ऊर्जा की आवश्यकता स्वतः गणना करता है।`
+                    : `Average monthly grid load for ${areaAnalysis.area.name} Panchayat. Auto-calculates village solar offset requirements.`}
+                </p>
+              </div>
+
+              {/* Available Roof & Land Area */}
+              <div className="bg-white/60 border border-gray-200/80 rounded-xl p-4 shadow-sm">
+                <div className="flex items-center justify-between mb-2">
+                  <label className="font-semibold text-gray-800 flex items-center gap-1.5">
+                    {isHi ? 'उपलब्ध छत एवं भूमि क्षेत्र' : 'Available Roof & Open Land'}
+                  </label>
+                  <span className="text-sm font-bold text-green-700 bg-green-50 px-2 py-0.5 rounded-md border border-green-200">
+                    {availAreaSqFt.toLocaleString()} sq ft
+                  </span>
+                </div>
+                <input type="range" min="1000" max="60000" step="500" value={availAreaSqFt}
+                  onChange={e => setAvailAreaSqFt(+e.target.value)} className="w-full accent-green-600 h-2 bg-gray-200 rounded-lg cursor-pointer"/>
+                <div className="flex justify-between text-xs text-gray-500 mt-2 font-medium">
+                  <span>Capacity: fits up to <strong>{maxPanelsByArea.toLocaleString()}</strong> panels</span>
+                  <span className="text-gray-400">10 sq ft/panel</span>
+                </div>
+              </div>
+
+              {/* Number of Panels */}
+              <div className="bg-white/60 border border-gray-200/80 rounded-xl p-4 shadow-sm">
+                <div className="flex items-center justify-between mb-2">
+                  <label className="font-semibold text-gray-800">{isHi ? 'सोलर पैनलों की संख्या' : 'Number of Solar Panels'}</label>
+                  <span className="text-base font-extrabold text-amber-600 bg-amber-50 px-2.5 py-0.5 rounded-md border border-amber-200">
+                    {panelCount.toLocaleString()} panels
+                  </span>
+                </div>
+                <input type="range" min="1" max={Math.max(maxPanelsByArea, 1)} step="1" value={panelCount}
+                  onChange={e => setPanelCount(+e.target.value)} className="w-full accent-amber-500 h-2 bg-gray-200 rounded-lg cursor-pointer mb-3"/>
+                <div className="flex gap-2">
+                  {[25, 50, 100, 250, 500].filter(n => n <= maxPanelsByArea || n === 25).map(n => (
+                    <button key={n} onClick={() => setPanelCount(Math.min(n, maxPanelsByArea))}
+                      className={`flex-1 py-1.5 text-xs font-bold rounded-lg transition-all shadow-xs ${
+                        panelCount === n
+                          ? 'bg-amber-500 text-white shadow-amber-200 ring-2 ring-amber-400'
+                          : 'bg-amber-50 text-amber-800 border border-amber-200/80 hover:bg-amber-100/80'
+                      }`}>{n} {isHi ? 'पैनल' : 'Panels'}</button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Suggested panels for village */}
+              <div className="rounded-xl border border-amber-300/80 bg-gradient-to-br from-amber-50 to-orange-50/40 p-4 shadow-sm">
+                <div className="flex items-start gap-3">
+                  <div className="p-1.5 rounded-lg bg-amber-100 text-amber-700 shrink-0">
+                    <Lightbulb className="w-4 h-4"/>
                   </div>
-                  <input type="range" min="1" max="200" step="1" value={panelCount}
-                    onChange={e => setPanelCount(+e.target.value)} className="w-full accent-amber-500 mb-2"/>
-                  <div className="flex gap-1.5">
-                    {[10, 25, 50, 100].map(n => (
-                      <button key={n} onClick={() => setPanelCount(n)}
-                        className={`flex-1 py-1 text-xs font-semibold rounded-lg transition-colors ${
-                          panelCount === n ? 'bg-amber-500 text-white' : 'bg-amber-50 text-amber-700 border border-amber-200 hover:bg-amber-100'
-                        }`}>{n}</button>
+                  <div className="flex-1">
+                    <div className="flex items-center justify-between">
+                      <span className="font-semibold text-amber-900 text-xs uppercase tracking-wider">{isHi ? 'अनुशंसित ग्राम आकार' : 'Recommended Village Sizing'}</span>
+                      <span className="text-xl font-extrabold text-amber-700">{suggestedPanels.toLocaleString()} {isHi ? 'पैनल' : 'panels'}</span>
+                    </div>
+                    <p className="text-xs text-amber-800 mt-1 leading-relaxed">
+                      Matches <strong>{areaAnalysis.area.name} ({consumption.toLocaleString()} kWh/mo)</strong> demand at <strong>{IRRADIATION} kWh/kW/day</strong> irradiation (~{(suggestedPanels * PANEL_AREA_SQFT).toLocaleString()} sq ft).
+                      {suggestedPanels > maxPanelsByArea && (
+                        <span className="block mt-1 text-red-600 font-semibold">
+                          ⚠ Fits {maxPanelsByArea.toLocaleString()} panels maximum on current space ({((maxPanelsByArea / suggestedPanels) * 100).toFixed(0)}% coverage).
+                        </span>
+                      )}
+                    </p>
+                    <button onClick={() => setPanelCount(Math.min(suggestedPanels, maxPanelsByArea))}
+                      className="mt-2.5 text-xs font-bold text-amber-800 bg-amber-200/70 hover:bg-amber-300/80 border border-amber-400/60 px-3.5 py-1.5 rounded-lg transition-all">
+                      {isHi ? 'सुझाव लागू करें' : 'Apply Suggestion'}
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              {/* Installed capacity banner */}
+              <div className="rounded-2xl p-4 text-white shadow-lg relative overflow-hidden" style={{ background: 'linear-gradient(135deg, #b45309 0%, #d97706 50%, #f59e0b 100%)' }}>
+                <div className="relative z-10">
+                  <div className="flex items-center justify-between mb-1">
+                    <span className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-amber-100">
+                      <Sun className="w-4 h-4"/> {isHi ? 'स्थापित सौर क्षमता' : 'Installed Solar Capacity'}
+                    </span>
+                    <span className="text-xs bg-white/20 px-2 py-0.5 rounded text-white font-medium">400W High Efficiency</span>
+                  </div>
+                  <div className="text-3xl sm:text-4xl font-black mb-1">
+                    <AnimatedNum value={totalCapacity} decimals={1}/> kW
+                  </div>
+                  <div className="text-xs text-amber-100 flex items-center justify-between font-medium">
+                    <span>{panelCount} panels · {usedAreaSqFt.toLocaleString()} sq ft</span>
+                    <span>{availAreaSqFt > 0 ? ((usedAreaSqFt / availAreaSqFt) * 100).toFixed(0) : 0}% space occupied</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Key metric summary rows */}
+              <div className="bg-white/80 border border-gray-200/80 rounded-xl p-3.5 space-y-2 text-sm shadow-sm">
+                <StatRow label={isHi ? 'मासिक उत्पादन' : 'Monthly Generation'} value={`${monthlyGenKWh.toFixed(0)} kWh`}/>
+                <StatRow label={isHi ? 'वार्षिक बिजली बचत' : 'Annual Electricity Savings'} value={`₹${(annualSavings / 1000).toFixed(1)}k`}/>
+                <StatRow label={isHi ? 'अनुमानित निवेश' : 'Estimated System Investment'} value={`₹${(investment / 100000).toFixed(1)} ${isHi ? 'लाख' : 'Lakhs'}`}/>
+                <StatRow label={isHi ? 'अनुमानित वसूली अवधि' : 'Estimated Payback Period'} value={payback} unit={isHi ? 'वर्ष' : 'years'} highlight/>
+                <StatRow label={isHi ? 'वार्षिक सौर उत्पादन' : 'Annual Solar Output'} value={`${(annualGenKWh / 1000).toFixed(1)}k kWh`}/>
+                <StatRow label={isHi ? 'ग्रिड मांग ऑफसेट' : 'Grid Demand Offset'} value={`${offsetPct.toFixed(1)}%`}/>
+              </div>
+
+            </div>
+
+            {/* ── Right column: Enlarged Simulator & Live Telemetry ── */}
+            <div className="lg:col-span-7 flex flex-col gap-4">
+
+              {/* Enlarged Panel Simulator */}
+              <div className="flex-1 min-h-[420px]">
+                <PanelSimulator
+                  panelCount={panelCount}
+                  availAreaSqFt={availAreaSqFt}
+                  totalCapacity={totalCapacity}
+                  monthlyGen={monthlyGenKWh}
+                  offsetPct={offsetPct}
+                  irradiation={IRRADIATION}
+                  showFooterStats={true}
+                  customSunAngle={customSunAngle}
+                />
+              </div>
+
+              {/* Live Solar Control & Diagnostics Bar */}
+              <div className="glass-card rounded-2xl p-4.5 border border-gray-200/80 bg-white/90 shadow-md space-y-4">
+                
+                {/* Sun Position / Time of Day Selector */}
+                <div className="flex flex-wrap items-center justify-between gap-2 pb-3 border-b border-gray-100">
+                  <div className="flex items-center gap-2">
+                    <Clock className="w-4 h-4 text-amber-500"/>
+                    <span className="text-xs font-bold text-gray-700 uppercase tracking-wider">
+                      Interactive Sun Simulator
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-1.5 bg-gray-100/80 p-1 rounded-xl">
+                    {(['auto', 'morning', 'noon', 'afternoon', 'evening'] as const).map(mode => (
+                      <button
+                        key={mode}
+                        onClick={() => setSunPreset(mode)}
+                        className={`px-2.5 py-1 text-xs font-bold rounded-lg transition-all capitalize ${
+                          sunPreset === mode
+                            ? 'bg-amber-500 text-white shadow-sm'
+                            : 'text-gray-600 hover:text-gray-900 hover:bg-gray-200/60'
+                        }`}
+                      >
+                        {mode === 'auto' ? '🔄 Live Orbit' : mode}
+                      </button>
                     ))}
                   </div>
                 </div>
-                <div>
-                  <div className="flex items-center justify-between mb-1">
-                    <label className="font-medium text-gray-700">{isHi ? 'उपलब्ध क्षेत्र' : 'Available Area'}</label>
-                    <span className="text-sm text-gray-500">{availAreaSqFt.toLocaleString()} sq ft</span>
-                  </div>
-                  <input type="range" min="500" max="30000" step="500" value={availAreaSqFt}
-                    onChange={e => setAvailAreaSqFt(+e.target.value)} className="w-full accent-green-600"/>
-                </div>
-                <div>
-                  <div className="flex items-center justify-between mb-1">
-                    <label className="font-medium text-gray-700">{isHi ? 'विकिरण' : 'Irradiation'}</label>
-                    <span className="text-sm text-gray-500">{irradiation} kWh/kW/day</span>
-                  </div>
-                  <input type="range" min="3.0" max="6.5" step="0.1" value={irradiation}
-                    onChange={e => setIrradiation(+e.target.value)} className="w-full accent-yellow-500"/>
-                </div>
-              </div>
-            </div>
 
-            {/* Right — capacity + metrics */}
-            <div className="flex flex-col gap-3">
-              <div className="rounded-2xl p-5 text-white" style={{ background: 'linear-gradient(135deg, #b45309, #f59e0b)' }}>
-                <div className="flex items-center gap-2 mb-2">
-                  <Sun className="w-5 h-5"/>
-                  <span className="font-semibold text-sm">{isHi ? 'स्थापित क्षमता' : 'Installed Capacity'}</span>
-                  <DemoBadge className="bg-white/20 text-white border-white/30 ml-auto"/>
-                </div>
-                <div className="text-5xl font-extrabold mb-1">
-                  <AnimatedNum value={totalCapacity} decimals={1}/> kW
-                </div>
-                <div className="text-sm opacity-80">{panelCount} panels × 400W each</div>
-                <div className="text-sm opacity-80">Uses {usedAreaSqFt} sq ft of {availAreaSqFt.toLocaleString()} sq ft</div>
-              </div>
-
-              <div className="grid grid-cols-2 gap-3">
-                {[
-                  { label: isHi ? 'मासिक उत्पादन' : 'Monthly Gen',    value: monthlyGenKWh,       unit: ' kWh',   decimals: 0, color: 'text-blue-700' },
-                  { label: isHi ? 'मांग ऑफसेट' : 'Demand Offset',  value: offsetPct,            unit: '%',      decimals: 1, color: 'text-green-700' },
-                  { label: isHi ? 'CO₂ निवारण' : 'CO₂ Avoided',   value: co2Avoided / 1000,    unit: isHi ? ' टन/माह' : ' t/mo',  decimals: 2, color: 'text-emerald-700' },
-                  { label: isHi ? 'वार्षिक बचत' : 'Annual Savings', value: annualSavings / 1000, unit: 'k ₹',   decimals: 1, color: 'text-purple-700', prefix: '₹' },
-                ].map(s => (
-                  <div key={s.label} className="glass-card border border-gray-200 rounded-xl p-3 text-center">
-                    <div className={`text-xl font-bold ${s.color}`}>
-                      <AnimatedNum value={s.value} decimals={s.decimals} prefix={s.prefix} suffix={s.unit}/>
+                {/* Real-time Telemetry & Performance Breakdown */}
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                  <div className="rounded-xl p-3 bg-gradient-to-br from-amber-50 to-amber-100/60 border border-amber-200/60 text-center">
+                    <div className="text-xs font-semibold text-amber-700 uppercase">{isHi ? 'दैनिक उत्पादन' : 'Daily Yield'}</div>
+                    <div className="text-xl font-extrabold text-amber-900 mt-0.5">
+                      {dailyGenKWh.toFixed(1)} <span className="text-xs font-bold text-amber-700">kWh/{isHi ? 'दिन' : 'day'}</span>
                     </div>
-                    <div className="text-xs text-gray-500">{s.label}</div>
+                    <div className="text-[11px] text-amber-700/80 mt-0.5">{isHi ? 'औसत उत्पादन' : 'Avg production'}</div>
                   </div>
-                ))}
+
+                  <div className="rounded-xl p-3 bg-gradient-to-br from-blue-50 to-blue-100/60 border border-blue-200/60 text-center">
+                    <div className="text-xs font-semibold text-blue-700 uppercase">{isHi ? 'प्रत्यक्ष उपयोग' : 'Direct Usage'}</div>
+                    <div className="text-xl font-extrabold text-blue-900 mt-0.5">
+                      {directSelfUse.toFixed(0)} <span className="text-xs font-bold text-blue-700">kWh/{isHi ? 'माह' : 'mo'}</span>
+                    </div>
+                    <div className="text-[11px] text-blue-700/80 mt-0.5">{isHi ? 'ग्राम उपभोग' : 'Village-consumed'}</div>
+                  </div>
+
+                  <div className="rounded-xl p-3 bg-gradient-to-br from-green-50 to-green-100/60 border border-green-200/60 text-center">
+                    <div className="text-xs font-semibold text-green-700 uppercase">{isHi ? 'ग्रिड निर्यात' : 'Grid Export'}</div>
+                    <div className="text-xl font-extrabold text-green-900 mt-0.5">
+                      {gridExportUnits > 0 ? gridExportUnits.toFixed(0) : '0'} <span className="text-xs font-bold text-green-700">kWh/{isHi ? 'माह' : 'mo'}</span>
+                    </div>
+                    <div className="text-[11px] text-green-700/80 mt-0.5">{isHi ? 'डिस्कॉम क्रेडिट' : 'DISCOM export'}</div>
+                  </div>
+
+                  <div className="rounded-xl p-3 bg-gradient-to-br from-emerald-50 to-emerald-100/60 border border-emerald-200/60 text-center">
+                    <div className="text-xs font-semibold text-emerald-700 uppercase">{isHi ? '25 वर्ष बचत' : '25-Yr Savings'}</div>
+                    <div className="text-xl font-extrabold text-emerald-900 mt-0.5">
+                      ₹{(lifetimeSavings / 100000).toFixed(1)} <span className="text-xs font-bold text-emerald-700">{isHi ? 'लाख' : 'L'}</span>
+                    </div>
+                    <div className="text-[11px] text-emerald-700/80 mt-0.5">{isHi ? 'कुल जीवनकाल ROI' : 'Net lifetime ROI'}</div>
+                  </div>
+                </div>
+
+                {/* Eco & Environmental Badges */}
+                <div className="flex flex-wrap items-center justify-between gap-3 bg-slate-900 text-white px-4 py-3 rounded-xl">
+                  <div className="flex items-center gap-2 text-xs">
+                    <Leaf className="w-4 h-4 text-emerald-400"/>
+                    <span className="text-slate-300">{isHi ? 'स्वच्छ ऊर्जा प्रभाव:' : 'Clean Energy Impact:'}</span>
+                    <strong className="text-emerald-300 font-bold">{co2AvoidedKg.toLocaleString()} kg CO₂ {isHi ? 'निवारण/वर्ष' : 'avoided/yr'}</strong>
+                  </div>
+                  <div className="flex items-center gap-2 text-xs">
+                    <TreePine className="w-4 h-4 text-green-400"/>
+                    <span className="text-slate-300">{isHi ? 'समतुल्य:' : 'Equivalent to:'}</span>
+                    <strong className="text-green-300 font-bold">~{treesPlanted.toLocaleString()} {isHi ? 'पेड़ रोपण/वर्ष' : 'Trees planted/yr'}</strong>
+                  </div>
+                  <div className="flex items-center gap-1.5 text-xs text-amber-300 font-semibold bg-amber-500/20 px-2.5 py-1 rounded-lg border border-amber-500/30">
+                    <ShieldCheck className="w-3.5 h-3.5 text-amber-400"/>
+                    {isHi ? '25 वर्ष वाणिज्यिक वारंटी' : '25-Year Commercial Warranty'}
+                  </div>
+                </div>
+
               </div>
 
-              <div className="glass-card border border-gray-200 rounded-xl p-4 space-y-2">
-                <StatRow label={isHi ? 'निवेश' : 'Investment'}        value={`₹${(investment / 100000).toFixed(1)}L`}/>
-                <StatRow label={isHi ? 'वसूली अवधि' : 'Payback Period'}    value={payback} unit={isHi ? 'वर्ष' : 'years'} highlight/>
-                <StatRow label={isHi ? 'वार्षिक उत्पादन' : 'Annual Generation'} value={`${(annualGenKWh / 1000).toFixed(1)}k kWh`}/>
-              </div>
             </div>
-          </div>
-        </div>
 
-        {/* Live Roof Simulator — separate card with footer stats */}
-        <div className="mb-6 fade-up delay-200">
-          <PanelSimulator
-            panelCount={panelCount}
-            availAreaSqFt={availAreaSqFt}
-            totalCapacity={totalCapacity}
-            monthlyGen={monthlyGenKWh}
-            offsetPct={offsetPct}
-            irradiation={irradiation}
-            showFooterStats={true}
-          />
+          </div>
         </div>
 
         {/* Before/After */}
@@ -758,22 +932,21 @@ function VillageSolarView() {
           />
         </div>
 
-        {/* Current vs Potential chart */}
+        {/* Government Solar Schemes */}
         <div className="glass-card rounded-2xl p-6 fade-up delay-300">
-          <h2 className="font-bold text-gray-900 mb-4 flex items-center gap-2">
-            <Zap className="w-5 h-5 text-amber-500"/> {isHi ? 'वर्तमान बनाम संभावित · सभी क्षेत्र' : 'Current vs Potential · All Areas'}
+          <h2 className="font-bold text-gray-900 mb-1 flex items-center gap-2">
+            <Lightbulb className="w-5 h-5 text-amber-500"/> {isHi ? 'सरकारी सौर योजनाएं एवं सब्सिडी' : 'Government Solar Schemes & Subsidies'}
           </h2>
-          <DemoBadge className="mb-4"/>
-          <ResponsiveContainer width="100%" height={220}>
-            <BarChart data={areaCompare} margin={{ left: -10 }}>
-              <XAxis dataKey="name" tick={{ fontSize: 11 }}/>
-              <YAxis tick={{ fontSize: 11 }}/>
-              <Tooltip formatter={(v: number) => [`${v.toFixed(0)} kWh`, '']}/>
-              <Bar dataKey="Current Gen" fill="#f59e0b" radius={[3,3,0,0]}/>
-              <Bar dataKey="Potential"   fill="#16a34a" opacity={0.6} radius={[3,3,0,0]}/>
-            </BarChart>
-          </ResponsiveContainer>
+          <p className="text-sm text-gray-500 mb-4">
+            {isHi ? 'भारत सरकार की सौर ऊर्जा सब्सिडी और ग्राम पंचायत योजनाएं — विवरण के लिए किसी भी योजना पर क्लिक करें।' : 'Indian government subsidies and panchayat programmes for solar adoption — click any scheme to expand eligibility & details.'}
+          </p>
+          <div className="space-y-3">
+            {SOLAR_SCHEMES.map(scheme => (
+              <SolarSchemeCard key={scheme.id} scheme={scheme}/>
+            ))}
+          </div>
         </div>
+
       </div>
     </SolarBackground>
   );

@@ -1,10 +1,14 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Building2, Home, ArrowRight, Zap, Leaf, Mail, Lock, Eye, EyeOff, X, Globe } from 'lucide-react';
+import {
+  Building2, Home, ArrowRight, Zap, Leaf, Mail, Lock,
+  Eye, EyeOff, X, Globe, ShieldCheck, MapPin, Sun, ChevronRight
+} from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useLanguage } from '../context/LanguageContext';
+import { getAllAreaAnalyses } from '../services/energyService';
 
-type Screen = 'roles' | 'household-auth';
+type Screen = 'roles' | 'official-villages' | 'household-auth';
 type AuthMode = 'login' | 'signup';
 
 export default function LoginPage() {
@@ -21,9 +25,15 @@ export default function LoginPage() {
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
 
-  function enterOfficial() {
+  const allAnalyses = getAllAreaAnalyses();
+
+  function handleOfficialVillageLogin(villageId: string) {
     setRole('official');
-    navigate('/overview');
+    if (villageId === 'all') {
+      navigate('/village');
+    } else {
+      navigate(`/village?village=${villageId}`);
+    }
   }
 
   async function handleHouseholdAuth(e: React.FormEvent) {
@@ -54,7 +64,7 @@ export default function LoginPage() {
 
   return (
     <div
-      className="min-h-screen flex flex-col items-center justify-center relative overflow-hidden py-10"
+      className="min-h-screen flex flex-col items-center justify-center relative overflow-hidden py-10 px-4 sm:px-6"
       style={{
         backgroundImage: 'linear-gradient(160deg, rgba(10,15,30,0.85) 0%, rgba(5,46,22,0.80) 30%, rgba(10,46,28,0.84) 65%, rgba(3,13,7,0.92) 100%), url("/images/landing_hero_bg.jpg")',
         backgroundSize: 'cover',
@@ -88,11 +98,11 @@ export default function LoginPage() {
         </button>
       </div>
 
-      <div className="relative z-10 w-full max-w-4xl px-6">
+      <div className={`relative z-10 w-full ${screen === 'official-villages' ? 'max-w-6xl' : 'max-w-4xl'} transition-all duration-300`}>
 
         {/* ── Logo ── */}
-        <div className="text-center mb-10">
-          <div className="inline-flex items-center gap-3 mb-3">
+        <div className="text-center mb-8">
+          <div className="inline-flex items-center gap-3 mb-2">
             <div className="p-3 bg-emerald-500 rounded-2xl shadow-lg shadow-emerald-900/60">
               <Zap className="w-7 h-7 text-white" />
             </div>
@@ -101,7 +111,7 @@ export default function LoginPage() {
               <div className="text-emerald-400 text-xs font-medium tracking-widest uppercase">{t('brandTagline')}</div>
             </div>
           </div>
-          <p className="text-white/50 text-sm max-w-sm mx-auto">
+          <p className="text-white/50 text-xs sm:text-sm max-w-sm mx-auto">
             {isHindi ? 'स्वच्छ ऊर्जा · बायोमास एवं सौर · शून्य अपशिष्ट' : 'Clean Energy · Biomass & Solar · Zero Waste'}
           </p>
         </div>
@@ -113,72 +123,130 @@ export default function LoginPage() {
               {t('chooseRole')}
             </p>
 
-            <div className="grid md:grid-cols-2 gap-5 mb-6">
+            <div className="grid md:grid-cols-2 gap-6 mb-6">
 
               {/* ── Village Official ── */}
-              <button
-                onClick={enterOfficial}
-                className="group relative bg-white/[0.06] backdrop-blur-md border border-white/[0.12] rounded-2xl p-8 text-left
-                  hover:bg-white/[0.12] hover:border-emerald-400/50 transition-all duration-300
-                  hover:-translate-y-1 hover:shadow-2xl hover:shadow-emerald-900/40"
+              <div
+                className="relative bg-white/[0.07] backdrop-blur-md border border-white/[0.14] rounded-2xl p-7 flex flex-col justify-between
+                  hover:bg-white/[0.11] hover:border-emerald-400/50 transition-all duration-300 shadow-xl shadow-emerald-950/30 group"
               >
-                <div className="flex items-center gap-4 mb-5">
-                  <div className="p-4 bg-emerald-500/15 border border-emerald-400/25 rounded-xl group-hover:bg-emerald-500/25 transition-colors">
-                    <Building2 className="w-8 h-8 text-emerald-300" />
+                <div>
+                  <div className="flex items-center gap-4 mb-4">
+                    <div className="p-3.5 bg-emerald-500/20 border border-emerald-400/30 rounded-xl group-hover:bg-emerald-500/30 transition-colors">
+                      <Building2 className="w-7 h-7 text-emerald-300" />
+                    </div>
+                    <div>
+                      <div className="text-[10px] text-emerald-400 font-bold uppercase tracking-widest mb-0.5">{t('govAccess')}</div>
+                      <h2 className="text-xl font-bold text-white">{t('roleOfficial')}</h2>
+                      <div className="text-xs text-emerald-200/70">{t('panchayatOfficer')}</div>
+                    </div>
                   </div>
-                  <div>
-                    <div className="text-[10px] text-emerald-400 font-bold uppercase tracking-widest mb-1">{t('govAccess')}</div>
-                    <h2 className="text-xl font-bold text-white">{t('roleOfficial')}</h2>
-                    <div className="text-xs text-emerald-200/70">{t('panchayatOfficer')}</div>
+
+                  <p className="text-white/60 text-xs sm:text-sm leading-relaxed mb-4">
+                    {t('officialDesc')}
+                  </p>
+
+                  <div className="flex flex-wrap gap-1.5 mb-5">
+                    {[(isHindi ? '5 निगरानी ग्राम' : '5 Monitored Villages'), (isHindi ? 'ऊर्जा विश्लेषण' : 'Energy Analytics'), (isHindi ? 'सौर एवं बायोगैस' : 'Solar & Biogas')].map(tag => (
+                      <span key={tag} className="text-[11px] bg-emerald-500/15 border border-emerald-400/25 text-emerald-300 rounded-full px-2.5 py-0.5">{tag}</span>
+                    ))}
+                  </div>
+
+                  {/* 1-Click Village Login Quick Selectors */}
+                  <div className="bg-black/25 rounded-xl p-3 border border-emerald-500/20 mb-5">
+                    <div className="text-[11px] font-semibold text-emerald-300 mb-2 flex items-center gap-1.5">
+                      <MapPin className="w-3 h-3 text-emerald-400" />
+                      <span>{t('quickVillageSelect')}</span>
+                    </div>
+                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-1.5">
+                      {allAnalyses.map(item => (
+                        <button
+                          key={item.area.id}
+                          type="button"
+                          onClick={() => handleOfficialVillageLogin(item.area.id)}
+                          className="bg-emerald-900/40 hover:bg-emerald-600 hover:text-white border border-emerald-400/30 text-emerald-200 text-xs font-semibold py-1.5 px-2.5 rounded-lg transition-all text-center truncate flex items-center justify-center gap-1"
+                          title={`${item.area.name} Official Login`}
+                        >
+                          <ShieldCheck className="w-3 h-3 text-emerald-400 flex-shrink-0" />
+                          <span className="truncate">{item.area.name}</span>
+                        </button>
+                      ))}
+                    </div>
                   </div>
                 </div>
-                <p className="text-white/55 text-sm leading-relaxed mb-5">
-                  {t('officialDesc')}
-                </p>
-                <div className="flex flex-wrap gap-1.5 mb-5">
-                  {[(isHindi ? 'ग्राम डैशबोर्ड' : 'Village Dashboard'), (isHindi ? 'ऊर्जा विश्लेषण' : 'Energy Analytics'), (isHindi ? 'सौर एवं बायोगैस' : 'Solar & Biogas')].map(tag => (
-                    <span key={tag} className="text-[11px] bg-emerald-500/15 border border-emerald-400/25 text-emerald-300 rounded-full px-2.5 py-0.5">{tag}</span>
-                  ))}
+
+                {/* Primary Official Actions */}
+                <div className="space-y-2 pt-2 border-t border-white/10">
+                  <button
+                    onClick={() => setScreen('official-villages')}
+                    className="w-full bg-emerald-500 hover:bg-emerald-400 active:bg-emerald-600 text-emerald-950 font-bold py-3 px-4 rounded-xl transition-all duration-200 flex items-center justify-center gap-2 shadow-lg shadow-emerald-900/50 text-sm"
+                  >
+                    <Building2 className="w-4 h-4" />
+                    <span>{isHindi ? '5 ग्राम अधिकारी लॉगिन पोर्टल देखें' : 'View 5 Village Official Portals'}</span>
+                    <ArrowRight className="w-4 h-4" />
+                  </button>
+
+                  <button
+                    onClick={() => handleOfficialVillageLogin('all')}
+                    className="w-full bg-white/10 hover:bg-white/15 border border-emerald-400/30 text-emerald-200 text-xs font-semibold py-2 px-3 rounded-xl transition-colors flex items-center justify-center gap-1.5"
+                  >
+                    <span>{t('enterAllVillages')}</span>
+                    <ChevronRight className="w-3.5 h-3.5" />
+                  </button>
                 </div>
-                <div className="flex items-center gap-2 text-emerald-300 text-sm font-semibold group-hover:gap-3 transition-all">
-                  {t('enterVillageDashboard')} <ArrowRight className="w-4 h-4" />
-                </div>
-              </button>
+              </div>
 
               {/* ── Household Member ── */}
               <div
-                className="relative bg-white/[0.06] backdrop-blur-md border border-white/[0.12] rounded-2xl p-8
-                  border-blue-400/20"
+                className="relative bg-white/[0.07] backdrop-blur-md border border-white/[0.14] rounded-2xl p-7 flex flex-col justify-between
+                  hover:bg-white/[0.11] hover:border-blue-400/50 transition-all duration-300 shadow-xl shadow-blue-950/30 group"
               >
-                <div className="flex items-center gap-4 mb-5">
-                  <div className="p-4 bg-blue-500/15 border border-blue-400/25 rounded-xl">
-                    <Home className="w-8 h-8 text-blue-300" />
+                <div>
+                  <div className="flex items-center gap-4 mb-4">
+                    <div className="p-3.5 bg-blue-500/20 border border-blue-400/30 rounded-xl group-hover:bg-blue-500/30 transition-colors">
+                      <Home className="w-7 h-7 text-blue-300" />
+                    </div>
+                    <div>
+                      <div className="text-[10px] text-blue-400 font-bold uppercase tracking-widest mb-0.5">{t('householdAccess')}</div>
+                      <h2 className="text-xl font-bold text-white">{t('roleCitizen')}</h2>
+                      <div className="text-xs text-blue-200/70">{t('residentCitizen')}</div>
+                    </div>
                   </div>
-                  <div>
-                    <div className="text-[10px] text-blue-400 font-bold uppercase tracking-widest mb-1">{t('householdAccess')}</div>
-                    <h2 className="text-xl font-bold text-white">{t('roleCitizen')}</h2>
-                    <div className="text-xs text-blue-200/70">{t('residentCitizen')}</div>
+
+                  <p className="text-white/60 text-xs sm:text-sm leading-relaxed mb-4">
+                    {t('householdDesc')}
+                  </p>
+
+                  <div className="flex flex-wrap gap-1.5 mb-5">
+                    {[(isHindi ? 'मेरे उपकरण' : 'My Appliances'), (isHindi ? 'लागत ट्रैकर' : 'Cost Tracker'), (isHindi ? 'सौर कैलकुलेटर' : 'Solar Advisor')].map(tag => (
+                      <span key={tag} className="text-[11px] bg-blue-500/15 border border-blue-400/25 text-blue-300 rounded-full px-2.5 py-0.5">{tag}</span>
+                    ))}
+                  </div>
+
+                  <div className="bg-black/25 rounded-xl p-3 border border-blue-500/20 mb-5 text-xs text-blue-200/80">
+                    <div className="font-semibold text-blue-300 mb-1 flex items-center gap-1.5">
+                      <Zap className="w-3.5 h-3.5 text-blue-400" />
+                      <span>{isHindi ? 'घरेलू ऊर्जा बचत मंच' : 'Household Energy Calculator'}</span>
+                    </div>
+                    <p className="text-[11px] text-white/50">
+                      {isHindi
+                        ? 'अपने बिजली उपकरणों की खपत जानें, सौर बचत का अनुमान लगाएं और मासिक बिल कम करें।'
+                        : 'Simulate appliance power usage, estimate solar rooftop savings and optimize electricity bills.'}
+                    </p>
                   </div>
                 </div>
-                <p className="text-white/55 text-sm leading-relaxed mb-5">
-                  {t('householdDesc')}
-                </p>
-                <div className="flex flex-wrap gap-1.5 mb-5">
-                  {[(isHindi ? 'मेरे उपकरण' : 'My Appliances'), (isHindi ? 'लागत ट्रैकर' : 'Cost Tracker'), (isHindi ? 'सौर कैलकुलेटर' : 'Solar Advisor')].map(tag => (
-                    <span key={tag} className="text-[11px] bg-blue-500/15 border border-blue-400/25 text-blue-300 rounded-full px-2.5 py-0.5">{tag}</span>
-                  ))}
-                </div>
+
                 {/* Auth action buttons */}
-                <div className="flex gap-3">
+                <div className="flex gap-3 pt-2 border-t border-white/10">
                   <button
                     onClick={() => { setAuthMode('login'); setScreen('household-auth'); }}
-                    className="flex-1 bg-blue-500 hover:bg-blue-400 text-white text-sm font-bold py-2.5 px-4 rounded-xl transition-colors"
+                    className="flex-1 bg-blue-500 hover:bg-blue-400 active:bg-blue-600 text-white text-sm font-bold py-3 px-4 rounded-xl transition-colors shadow-lg shadow-blue-900/50"
                   >
                     {t('logIn')}
                   </button>
                   <button
                     onClick={() => { setAuthMode('signup'); setScreen('household-auth'); }}
-                    className="flex-1 bg-white/10 hover:bg-white/20 border border-blue-400/40 text-blue-200 text-sm font-bold py-2.5 px-4 rounded-xl transition-colors"
+                    className="flex-1 bg-white/10 hover:bg-white/20 border border-blue-400/40 text-blue-200 text-sm font-bold py-3 px-4 rounded-xl transition-colors"
                   >
                     {t('signUp')}
                   </button>
@@ -196,6 +264,152 @@ export default function LoginPage() {
               </button>
             </div>
           </>
+        )}
+
+        {/* ══ SCREEN: 5 Monitored Village Official Portals ═══════════════════ */}
+        {screen === 'official-villages' && (
+          <div>
+            <div className="flex items-center justify-between mb-6 flex-wrap gap-3">
+              <button
+                onClick={() => setScreen('roles')}
+                className="flex items-center gap-1.5 text-white/70 hover:text-white text-sm transition-colors bg-white/10 px-3 py-1.5 rounded-lg border border-white/15"
+              >
+                <X className="w-4 h-4" /> {t('backToRoleSelection')}
+              </button>
+
+              <button
+                onClick={() => handleOfficialVillageLogin('all')}
+                className="inline-flex items-center gap-2 bg-emerald-500 hover:bg-emerald-400 text-emerald-950 font-bold px-4 py-2 rounded-xl text-xs sm:text-sm transition-colors shadow-md"
+              >
+                <Building2 className="w-4 h-4" />
+                <span>{t('enterAllVillages')}</span>
+                <ArrowRight className="w-4 h-4" />
+              </button>
+            </div>
+
+            <div className="text-center mb-8">
+              <div className="inline-flex items-center gap-2 bg-emerald-500/20 text-emerald-300 rounded-full px-4 py-1 text-xs font-bold uppercase tracking-widest mb-2 border border-emerald-400/30">
+                <Building2 className="w-3.5 h-3.5" />
+                {isHindi ? 'ग्राम पंचायत प्रशासनिक पोर्टल' : 'Panchayat Administrative Portals'}
+              </div>
+              <h2 className="text-2xl sm:text-3xl font-extrabold text-white mb-2">
+                {isHindi ? '5 ग्रामों के आधिकारिक लॉगिन पोर्टल' : 'Login as Official of 5 Monitored Villages'}
+              </h2>
+              <p className="text-white/60 max-w-2xl mx-auto text-xs sm:text-sm">
+                {isHindi
+                  ? 'प्रत्येक ग्राम के पंचायत अधिकारी, वार्ड सदस्य एवं प्रशासक अपने गांव के समर्पित कमांड सेंटर में सीधे प्रवेश कर सकते हैं:'
+                  : 'Direct official dashboard login for Panchayat members, Ward officers, and local administrators across each of the 5 project villages:'}
+              </p>
+            </div>
+
+            {/* 5 Distinct Village Official Sections Grid */}
+            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-5">
+              {allAnalyses.map((item, idx) => {
+                const { area, solarPotential, wasteAnalysis, renewablePercent, monthlyCostINR } = item;
+                const totalDailyWasteKg = area.cowDungKgPerDay + area.foodWasteKgPerDay + area.agriWasteKgPerDay;
+
+                return (
+                  <div
+                    key={area.id}
+                    className="bg-white rounded-2xl border border-gray-200 shadow-lg hover:shadow-2xl hover:border-emerald-500 transition-all duration-300 flex flex-col justify-between overflow-hidden group text-gray-900"
+                  >
+                    {/* Top decorative gradient bar */}
+                    <div className="h-2 bg-gradient-to-r from-emerald-500 via-teal-500 to-amber-400" />
+
+                    <div className="p-5 sm:p-6">
+                      {/* Village Header */}
+                      <div className="flex items-start justify-between mb-4">
+                        <div className="flex items-center gap-3">
+                          <div className="w-10 h-10 rounded-xl bg-emerald-50 border border-emerald-200 flex items-center justify-center text-emerald-700 group-hover:bg-emerald-600 group-hover:text-white transition-colors">
+                            <Building2 className="w-5 h-5" />
+                          </div>
+                          <div>
+                            <div className="flex items-center gap-1">
+                              <MapPin className="w-3 h-3 text-emerald-600" />
+                              <span className="text-[11px] font-semibold text-emerald-700 uppercase tracking-wide">
+                                {isHindi ? `ग्राम पंचायत #${idx + 1}` : `Gram Panchayat #${idx + 1}`}
+                              </span>
+                            </div>
+                            <h3 className="text-lg font-black text-gray-900 leading-tight">{area.name}</h3>
+                          </div>
+                        </div>
+
+                        <div className="bg-emerald-50 border border-emerald-200 rounded-lg px-2 py-0.5 text-right">
+                          <div className="text-[9px] font-bold text-emerald-800 uppercase tracking-wider">{isHindi ? 'नवीकरणीय' : 'Clean'}</div>
+                          <div className="text-xs font-black text-emerald-700">{renewablePercent.toFixed(0)}%</div>
+                        </div>
+                      </div>
+
+                      {/* Village Overview Meta */}
+                      <div className="bg-gray-50 rounded-xl p-3 border border-gray-100 mb-4 space-y-1.5 text-xs">
+                        <div className="flex justify-between items-center text-gray-600">
+                          <span className="flex items-center gap-1 font-medium">
+                            <Leaf className="w-3 h-3 text-emerald-600" />
+                            {isHindi ? 'दैनिक अपशिष्ट:' : 'Daily Waste:'}
+                          </span>
+                          <strong className="text-gray-900 bg-white px-1.5 py-0.5 rounded border border-gray-200 font-bold text-[11px]">
+                            {totalDailyWasteKg.toLocaleString()} kg/{isHindi ? 'दिन' : 'day'}
+                          </strong>
+                        </div>
+
+                        <div className="flex justify-between items-center text-gray-600">
+                          <span className="flex items-center gap-1 font-medium">
+                            <Zap className="w-3 h-3 text-amber-500" />
+                            {isHindi ? 'मासिक विद्युत:' : 'Monthly Power:'}
+                          </span>
+                          <strong className="text-gray-900 bg-white px-1.5 py-0.5 rounded border border-gray-200 font-bold text-[11px]">
+                            {(area.monthlyElectricity / 1000).toFixed(1)}k kWh
+                          </strong>
+                        </div>
+
+                        <div className="flex justify-between items-center text-gray-600">
+                          <span className="flex items-center gap-1 font-medium">
+                            <Sun className="w-3 h-3 text-amber-500" />
+                            {isHindi ? 'सौर क्षमता:' : 'Feasible Solar:'}
+                          </span>
+                          <strong className="text-emerald-700 bg-white px-1.5 py-0.5 rounded border border-gray-200 font-bold text-[11px]">
+                            {solarPotential.feasibleCapacityKW.toFixed(0)} kW
+                          </strong>
+                        </div>
+
+                        <div className="flex justify-between items-center text-gray-600 pt-1 border-t border-gray-200/60 text-[11px]">
+                          <span className="flex items-center gap-1">
+                            <Home className="w-3 h-3 text-gray-400" />
+                            {area.households} {isHindi ? 'परिवार' : 'HH'}
+                          </span>
+                          <span className="text-gray-500">
+                            {area.infrastructure.streetlights.count} LEDs · {area.infrastructure.waterPumps.count} Pumps
+                          </span>
+                        </div>
+                      </div>
+
+                      {/* Highlights Pill */}
+                      <div className="flex flex-wrap gap-1 mb-2">
+                        <span className="text-[10px] bg-emerald-50 text-emerald-700 font-semibold px-2 py-0.5 rounded-full border border-emerald-200">
+                          {isHindi ? `बायोगैस: ${wasteAnalysis.biogasM3PerDay.toFixed(0)} m³/दिन` : `Biogas: ${wasteAnalysis.biogasM3PerDay.toFixed(0)} m³/day`}
+                        </span>
+                        <span className="text-[10px] bg-amber-50 text-amber-700 font-semibold px-2 py-0.5 rounded-full border border-amber-200">
+                          {isHindi ? `लागत: ₹${(monthlyCostINR / 1000).toFixed(1)}k/माह` : `Bill: ₹${(monthlyCostINR / 1000).toFixed(1)}k/mo`}
+                        </span>
+                      </div>
+                    </div>
+
+                    {/* Login Action Button for This Village */}
+                    <div className="p-3.5 bg-gray-50 border-t border-gray-100 mt-auto">
+                      <button
+                        onClick={() => handleOfficialVillageLogin(area.id)}
+                        className="w-full bg-emerald-600 hover:bg-emerald-700 active:bg-emerald-800 text-white font-bold py-2.5 px-3 rounded-xl transition-all duration-200 flex items-center justify-center gap-2 shadow-sm group-hover:shadow-md text-xs sm:text-sm"
+                      >
+                        <ShieldCheck className="w-4 h-4" />
+                        <span>{isHindi ? `${area.name} अधिकारी लॉगिन` : `Login as Official (${area.name})`}</span>
+                        <ArrowRight className="w-3.5 h-3.5 transition-transform group-hover:translate-x-1" />
+                      </button>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
         )}
 
         {/* ══ SCREEN: Household Auth Form ═══════════════════════════════════ */}
@@ -340,3 +554,4 @@ export default function LoginPage() {
     </div>
   );
 }
+

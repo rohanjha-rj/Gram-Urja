@@ -39,9 +39,14 @@ export const TRANSLATIONS = {
   // Login & Auth
   chooseRole: { en: 'Choose your role to continue', hi: 'आगे बढ़ने के लिए अपनी भूमिका चुनें' },
   enterVillageDashboard: { en: 'Enter Village Overview', hi: 'ग्राम अवलोकन में प्रवेश करें' },
+  selectVillagePortal: { en: 'Choose Monitored Village', hi: 'निगरानी ग्राम चुनें' },
+  villageOfficialPortals: { en: '5 Monitored Village Official Portals', hi: '5 निगरानी ग्राम अधिकारी पोर्टल' },
+  enterAllVillages: { en: 'Enter All-Village Command Center', hi: 'समस्त ग्राम कमांड सेंटर में प्रवेश करें' },
+  quickVillageSelect: { en: 'Quick Login by Village:', hi: 'त्वरित ग्राम लॉगिन:' },
+  loginAsOfficialFor: { en: 'Login as Official', hi: 'अधिकारी लॉगिन' },
   officialDesc: {
-    en: 'For Panchayat members, Ward officers, and local administrators. Community Command Centre with multi-village insights and infrastructure monitoring.',
-    hi: 'पंचायत सदस्यों, वार्ड अधिकारियों और प्रशासकों के लिए। बहु-ग्राम विश्लेषण और बुनियादी ढांचा निगरानी।'
+    en: 'For Panchayat members, Ward officers, and local administrators. Direct access to 5 monitored village command centers and infrastructure data.',
+    hi: 'पंचायत सदस्यों, वार्ड अधिकारियों और प्रशासकों के लिए। 5 निगरानी ग्रामों के कमांड सेंटर और बुनियादी ढांचा डेटा तक सीधी पहुंच।'
   },
   householdDesc: {
     en: 'Track your appliances, calculate energy costs, and get personalized recommendations to save money and energy.',
