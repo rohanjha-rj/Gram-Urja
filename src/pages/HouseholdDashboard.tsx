@@ -8,21 +8,12 @@ import {
   RotateCcw, Users, Activity, ShieldCheck, ArrowUpRight
 } from 'lucide-react';
 import { APPLIANCE_DATABASE } from '../data/demoData';
-import { calculateHouseholdEnergy, calculateElectricityCost, calculateCO2, calculateBiogas, calculateWaterDemand, ASSUMPTIONS } from '../calculations/engine';
+import { calculateElectricityCost, calculateCO2, calculateBiogas, calculateWaterDemand, ASSUMPTIONS } from '../calculations/engine';
 import { SectionCard, KpiCard, DemoBadge, AssumptionBox, StatRow } from '../components/ui';
 import { getProductCategory } from '../data/productData';
+import { useHousehold, DEFAULT_APPLIANCES } from '../context/HouseholdContext';
 import type { HouseholdAppliance } from '../types';
 import type { ApplianceCategory } from '../data/productData';
-
-const DEFAULT_APPLIANCES: HouseholdAppliance[] = [
-  { spec: APPLIANCE_DATABASE[0], quantity: 4, hoursPerDay: 6, daysPerMonth: 30, enabled: true },  // LED
-  { spec: APPLIANCE_DATABASE[2], quantity: 3, hoursPerDay: 8, daysPerMonth: 30, enabled: true },  // Fan old
-  { spec: APPLIANCE_DATABASE[5], quantity: 1, hoursPerDay: 4, daysPerMonth: 30, enabled: true },  // TV
-  { spec: APPLIANCE_DATABASE[6], quantity: 1, hoursPerDay: 5, daysPerMonth: 25, enabled: true },  // Laptop
-  { spec: APPLIANCE_DATABASE[13], quantity: 1, hoursPerDay: 0, daysPerMonth: 30, enabled: true }, // Fridge 2-star kWh/day
-  { spec: APPLIANCE_DATABASE[16], quantity: 1, hoursPerDay: 0.25, daysPerMonth: 25, enabled: true }, // Mixer
-  { spec: APPLIANCE_DATABASE[8], quantity: 1, hoursPerDay: 1, daysPerMonth: 30, enabled: true },  // Pump 0.5HP
-];
 
 const CATEGORY_COLORS: Record<string, string> = {
   lighting: '#f59e0b',
@@ -90,14 +81,12 @@ function getApplianceIcon(specId: string, category: string) {
 }
 
 export default function HouseholdDashboard() {
-  const [appliances, setAppliances] = useState<HouseholdAppliance[]>(DEFAULT_APPLIANCES);
-  const [members, setMembers] = useState(4);
+  const { appliances, setAppliances, members, setMembers, totalKWh } = useHousehold();
   const [addingAppliance, setAddingAppliance] = useState(false);
   const [selectedSpec, setSelectedSpec] = useState(APPLIANCE_DATABASE[0].id);
   const [expandedCategory, setExpandedCategory] = useState<string | null>(null);
 
   // Calculations that recompute reactively whenever appliances change
-  const totalKWh = useMemo(() => calculateHouseholdEnergy(appliances), [appliances]);
   const totalCost = calculateElectricityCost(totalKWh);
   const totalCO2 = calculateCO2(totalKWh);
   const perMemberKWh = totalKWh / Math.max(1, members);
