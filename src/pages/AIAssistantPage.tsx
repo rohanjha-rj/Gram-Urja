@@ -2,9 +2,12 @@ import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Bot, Send, Mic, MicOff, ExternalLink, Globe, Volume2, VolumeX, ArrowLeft } from 'lucide-react';
 import { generateAIResponse } from '../ai/chatEngine';
+import { useAuth } from '../context/AuthContext';
 import type { ChatMessage } from '../types';
 
-const QUICK_PROMPTS_EN = [
+// ── Quick prompts by role + language ────────────────────────────────────────
+
+const QUICK_PROMPTS_VILLAGE_EN = [
   'Which area has the highest energy consumption?',
   "What is Motipur's solar potential?",
   "Show me Amra's water analysis",
@@ -13,7 +16,7 @@ const QUICK_PROMPTS_EN = [
   'Which area has the best sustainability score?',
 ];
 
-const QUICK_PROMPTS_HI = [
+const QUICK_PROMPTS_VILLAGE_HI = [
   'किस क्षेत्र में सबसे अधिक बिजली खपत है?',
   'मोतीपुर की सौर क्षमता क्या है?',
   'अमरा का जल विश्लेषण दिखाएं',
@@ -22,25 +25,89 @@ const QUICK_PROMPTS_HI = [
   'सर्वश्रेष्ठ स्थिरता स्कोर किस क्षेत्र का है?',
 ];
 
-const INITIAL_MESSAGE: ChatMessage = {
-  id: 'init',
-  role: 'assistant',
-  content: `**नमस्ते! Hello! मैं Kiran हूँ।**
+const QUICK_PROMPTS_HOUSEHOLD_EN = [
+  'How can I reduce my electricity bill?',
+  'Which appliance uses the most power?',
+  'How much can I save with solar panels?',
+  'What is my household sustainability score?',
+  'How do I save water at home?',
+  'What is biogas and how does it help?',
+];
+
+const QUICK_PROMPTS_HOUSEHOLD_HI = [
+  'मैं बिजली का बिल कैसे कम करूं?',
+  'कौन सा उपकरण सबसे ज़्यादा बिजली खाता है?',
+  'सोलर पैनल से कितनी बचत होगी?',
+  'मेरा घरेलू स्थिरता स्कोर क्या है?',
+  'घर में पानी कैसे बचाएं?',
+  'बायोगैस क्या है और यह कैसे मदद करता है?',
+];
+
+// ── Initial messages by language + role ──────────────────────────────────────
+
+function buildInitialMessage(language: 'en' | 'hi', role: string): ChatMessage {
+  const isHousehold = role === 'citizen';
+  const content =
+    language === 'hi'
+      ? isHousehold
+        ? `**नमस्ते! मैं किरण हूँ।** 🌿
+
+मैं आपकी **घरेलू ऊर्जा AI सहायक** हूँ। मैं इन विषयों पर मदद कर सकती हूँ:
+
+• ⚡ **बिजली बिल** — खपत घटाने के उपाय
+• ☀️ **सोलर पैनल** — बचत और payback गणना
+• 💡 **उपकरण** — कौन सा ज़्यादा बिजली खाता है
+• 💧 **पानी बचत** — घर में जल प्रबंधन
+• 🌿 **बायोगैस** — जैविक कचरे से ऊर्जा
+• 🏆 **स्थिरता स्कोर** — अपना स्कोर सुधारें
+
+नीचे दिए त्वरित प्रश्न आज़माएं या अपना सवाल टाइप करें!`
+        : `**नमस्ते! मैं किरण हूँ।** 🌿
 
 मैं **Bihar Village Sustainability Region** के लिए आपकी AI सहायक हूँ। मैं इन विषयों पर मदद कर सकती हूँ:
 
-• ⚡ **ऊर्जा / Energy** — खपत, लागत, प्रति-घर विश्लेषण
-• ☀️ **सौर / Solar** — क्षमता, पैनल, बचत, payback
-• 💧 **पानी / Water** — मांग, वर्षा जल, पंप ऊर्जा
-• 🌿 **कचरा / Waste** — बायोगैस क्षमता
-• 🏆 **स्कोर / Scores** — स्थिरता रेटिंग
-• 💡 **सुझाव / Recommendations** — प्राथमिकता कार्य
+• ⚡ **ऊर्जा** — खपत, लागत, प्रति-घर विश्लेषण
+• ☀️ **सौर** — क्षमता, पैनल, बचत, payback
+• 💧 **पानी** — मांग, वर्षा जल, पंप ऊर्जा
+• 🌿 **कचरा** — बायोगैस क्षमता
+• 🏆 **स्कोर** — स्थिरता रेटिंग
+• 💡 **सुझाव** — प्राथमिकता कार्य
 
-भाषा बदलने के लिए ऊपर **EN / हिं** बटन दबाएँ।
-नीचे दिए गए त्वरित प्रश्न आज़माएं या अपना प्रश्न टाइप करें!`,
-  timestamp: new Date().toISOString(),
-  language: 'en',
-};
+नीचे दिए त्वरित प्रश्न आज़माएं या अपना प्रश्न टाइप करें!`
+      : isHousehold
+      ? `**Hello! I'm Kiran.** 🌿
+
+I'm your **Household Energy AI Assistant**. Here's how I can help:
+
+• ⚡ **Electricity Bill** — tips to cut your monthly cost
+• ☀️ **Solar Panels** — savings & payback estimates for your home
+• 💡 **Appliances** — find out which ones drain the most power
+• 💧 **Water Saving** — smart water management at home
+• 🌿 **Biogas** — turn kitchen waste into clean energy
+• 🏆 **Sustainability Score** — understand and improve your rating
+
+Try the quick questions below or type your own!`
+      : `**Hello! I'm Kiran.** 🌿
+
+I'm the AI assistant for the **Bihar Village Sustainability Region**. I can help with:
+
+• ⚡ **Energy** — consumption, cost, per-household analysis
+• ☀️ **Solar** — potential, panels, savings, payback
+• 💧 **Water** — demand, rainwater harvesting, pump energy
+• 🌿 **Waste** — biogas potential from organic matter
+• 🏆 **Scores** — sustainability ratings across all areas
+• 💡 **Recommendations** — priority actions for each area
+
+Try the quick questions below or type your own!`;
+
+  return {
+    id: `init-${language}-${role}`,
+    role: 'assistant',
+    content,
+    timestamp: new Date().toISOString(),
+    language,
+  };
+}
 
 // Declare browser SpeechRecognition vendor prefix
 declare global {
@@ -51,6 +118,42 @@ declare global {
     webkitSpeechRecognition: any;
   }
 }
+
+// ── Better TTS voice selector ─────────────────────────────────────────────────
+
+function getBestVoice(lang: 'en' | 'hi'): SpeechSynthesisVoice | null {
+  const voices = window.speechSynthesis.getVoices();
+  if (lang === 'hi') {
+    return (
+      voices.find((v) => v.lang === 'hi-IN') ??
+      voices.find((v) => v.lang.startsWith('hi')) ??
+      null
+    );
+  }
+  // English — prefer natural / neural voices, avoid robotic ones
+  const preferred = [
+    'Google UK English Female',
+    'Google US English',
+    'Microsoft Aria Online (Natural)',
+    'Microsoft Jenny Online (Natural)',
+    'Samantha',
+    'Karen',
+    'Moira',
+    'Tessa',
+  ];
+  for (const name of preferred) {
+    const found = voices.find((v) => v.name === name);
+    if (found) return found;
+  }
+  return (
+    voices.find((v) => v.lang === 'en-GB' && !v.localService) ??
+    voices.find((v) => v.lang === 'en-US' && !v.localService) ??
+    voices.find((v) => v.lang.startsWith('en')) ??
+    null
+  );
+}
+
+// ── Message bubble ────────────────────────────────────────────────────────────
 
 function MessageBubble({
   msg,
@@ -69,11 +172,41 @@ function MessageBubble({
       setSpeaking(false);
       return;
     }
-    const utterance = new SpeechSynthesisUtterance(
-      msg.content.replace(/\*\*([^*]+)\*\*/g, '$1').replace(/\*([^*]+)\*/g, '$1')
-    );
-    utterance.lang = msg.language === 'hi' ? 'hi-IN' : 'en-US';
-    utterance.rate = 0.95;
+
+    const cleanText = msg.content
+      .replace(/\*\*([^*]+)\*\*/g, '$1')
+      .replace(/\*([^*]+)\*/g, '$1')
+      .replace(/•/g, '')
+      .replace(/\|[-:]+\|/g, '')
+      .replace(/\|/g, ' ');
+
+    const utterance = new SpeechSynthesisUtterance(cleanText);
+    utterance.lang = msg.language === 'hi' ? 'hi-IN' : 'en-GB';
+
+    if (msg.language === 'hi') {
+      utterance.rate = 0.88;
+      utterance.pitch = 1.05;
+    } else {
+      // Natural, clear English — slightly slower than default, warmer pitch
+      utterance.rate = 0.82;
+      utterance.pitch = 1.1;
+    }
+
+    // Try to load a better voice; voices may not be ready immediately
+    const trySetVoice = () => {
+      const voice = getBestVoice(msg.language ?? 'en');
+      if (voice) utterance.voice = voice;
+    };
+
+    if (window.speechSynthesis.getVoices().length > 0) {
+      trySetVoice();
+    } else {
+      window.speechSynthesis.onvoiceschanged = () => {
+        trySetVoice();
+        window.speechSynthesis.onvoiceschanged = null;
+      };
+    }
+
     utterance.onend = () => setSpeaking(false);
     utterance.onerror = () => setSpeaking(false);
     setSpeaking(true);
@@ -119,6 +252,7 @@ function MessageBubble({
   }
 
   const hasTableContent = msg.content.includes('|---|');
+  const isHindi = msg.language === 'hi';
 
   return (
     <div className={`flex ${isUser ? 'justify-end' : 'justify-start'} mb-4`}>
@@ -134,7 +268,7 @@ function MessageBubble({
             : 'bg-white border border-gray-200 text-gray-800 rounded-tl-sm shadow-sm'
         }`}
       >
-        {!isUser && msg.language === 'hi' && (
+        {!isUser && isHindi && (
           <div className="flex items-center gap-1 text-xs text-blue-500 mb-1">
             <Globe className="w-3 h-3" /> हिंदी
           </div>
@@ -153,7 +287,7 @@ function MessageBubble({
             className="mt-2 flex items-center gap-1 text-xs text-gray-400 hover:text-green-600 transition-colors"
           >
             {speaking ? <VolumeX className="w-3 h-3" /> : <Volume2 className="w-3 h-3" />}
-            {speaking ? 'Stop' : 'Listen'}
+            {speaking ? (isHindi ? 'रोकें' : 'Stop') : (isHindi ? 'सुनें' : 'Listen')}
           </button>
         )}
         {msg.navigationSuggestion && !isUser && (
@@ -162,7 +296,7 @@ function MessageBubble({
             className="mt-1 flex items-center gap-1 text-xs text-green-600 hover:text-green-800 font-medium"
           >
             <ExternalLink className="w-3 h-3" />
-            Open related page
+            {isHindi ? 'संबंधित पृष्ठ खोलें' : 'Open related page'}
           </button>
         )}
       </div>
@@ -175,22 +309,37 @@ function MessageBubble({
   );
 }
 
+// ── Main page ─────────────────────────────────────────────────────────────────
+
 export default function AIAssistantPage() {
-  const [messages, setMessages] = useState<ChatMessage[]>([INITIAL_MESSAGE]);
+  const { role } = useAuth();
+  const [language, setLanguage] = useState<'en' | 'hi'>('en');
+  const [messages, setMessages] = useState<ChatMessage[]>(() => [
+    buildInitialMessage('en', role),
+  ]);
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
-  const [language, setLanguage] = useState<'en' | 'hi'>('en');
   const [listening, setListening] = useState(false);
   const bottomRef = useRef<HTMLDivElement>(null);
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const recognitionRef = useRef<any>(null);
   const navigate = useNavigate();
 
+  // Scroll to bottom on new messages
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
 
-  // Cleanup speech recognition on unmount
+  // When language toggle changes, replace the initial intro message only
+  useEffect(() => {
+    setMessages((prev) => {
+      const rest = prev.filter((m) => !m.id.startsWith('init-'));
+      return [buildInitialMessage(language, role), ...rest];
+    });
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [language, role]);
+
+  // Cleanup on unmount
   useEffect(() => {
     return () => {
       recognitionRef.current?.abort();
@@ -214,7 +363,7 @@ export default function AIAssistantPage() {
     setLoading(true);
 
     await new Promise((res) => setTimeout(res, 400));
-    const response = generateAIResponse(text, language);
+    const response = generateAIResponse(text, language, role);
     setMessages((prev) => [...prev, response]);
     setLoading(false);
   }
@@ -236,7 +385,7 @@ export default function AIAssistantPage() {
 
     const recognition = new SpeechRecognitionAPI();
     recognitionRef.current = recognition;
-    recognition.lang = language === 'hi' ? 'hi-IN' : 'en-US';
+    recognition.lang = language === 'hi' ? 'hi-IN' : 'en-GB';
     recognition.interimResults = false;
     recognition.maxAlternatives = 1;
     recognition.continuous = false;
@@ -256,7 +405,15 @@ export default function AIAssistantPage() {
     recognition.start();
   }, [listening, language]);
 
-  const quickPrompts = language === 'hi' ? QUICK_PROMPTS_HI : QUICK_PROMPTS_EN;
+  const isHousehold = role === 'citizen';
+  const quickPrompts =
+    language === 'hi'
+      ? isHousehold
+        ? QUICK_PROMPTS_HOUSEHOLD_HI
+        : QUICK_PROMPTS_VILLAGE_HI
+      : isHousehold
+      ? QUICK_PROMPTS_HOUSEHOLD_EN
+      : QUICK_PROMPTS_VILLAGE_EN;
 
   return (
     <div
@@ -305,7 +462,16 @@ export default function AIAssistantPage() {
             </div>
             <div>
               <h1 className="text-xl font-bold text-white">Kiran</h1>
-              <p className="text-xs text-gray-400">GreenGrid AI · English & हिंदी</p>
+              <p className="text-xs text-gray-400">
+                GreenGrid AI ·{' '}
+                {isHousehold
+                  ? language === 'hi'
+                    ? 'घरेलू सहायक'
+                    : 'Household Assistant'
+                  : language === 'hi'
+                  ? 'ग्राम प्रशासन सहायक'
+                  : 'Village Admin Assistant'}
+              </p>
             </div>
           </div>
 
@@ -368,7 +534,11 @@ export default function AIAssistantPage() {
             onKeyDown={(e) => e.key === 'Enter' && !e.shiftKey && sendMessage(input)}
             placeholder={
               language === 'en'
-                ? 'Ask Kiran about energy, solar, water, waste…'
+                ? isHousehold
+                  ? 'Ask about your bill, appliances, solar, water…'
+                  : 'Ask Kiran about energy, solar, water, waste…'
+                : isHousehold
+                ? 'बिल, उपकरण, सोलर, पानी के बारे में पूछें…'
                 : 'किरण से ऊर्जा, सौर, पानी, कचरे के बारे में पूछें…'
             }
             className="flex-1 border border-gray-600 bg-gray-800 text-white rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 placeholder-gray-500"
@@ -401,7 +571,9 @@ export default function AIAssistantPage() {
         )}
 
         <div className="text-xs text-center text-gray-500 mt-2">
-          Rule-based AI · Estimated data only · Not connected to live APIs
+          {language === 'hi'
+            ? 'नियम-आधारित AI · केवल अनुमानित डेटा · लाइव API से जुड़ा नहीं'
+            : 'Rule-based AI · Estimated data only · Not connected to live APIs'}
         </div>
       </div>
     </div>
