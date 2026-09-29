@@ -137,7 +137,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
             </button>
           </div>
           <div className="text-[11px] text-emerald-700 font-semibold tracking-wide">
-            Suryapur Sustainability Region
+            Bihar Village Sustainability Region
           </div>
         </div>
 

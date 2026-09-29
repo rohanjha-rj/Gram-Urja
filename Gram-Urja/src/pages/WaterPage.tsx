@@ -20,11 +20,11 @@ const RAINFALL_MONTHS = [
 ];
 
 export default function WaterPage() {
-  const [selectedAreaId, setSelectedAreaId] = useState('suryapur');
-  const [population, setPopulation] = useState(1200);
+  const [selectedAreaId, setSelectedAreaId] = useState('motipur');
+  const [population, setPopulation] = useState(8959);
   const [lpcd, setLpcd] = useState<number>(ASSUMPTIONS.waterLpcdRural);
-  const [catchmentAreaM2, setCatchmentAreaM2] = useState(500);
-  const [rainfallMmPerYear, setRainfallMmPerYear] = useState(800);
+  const [catchmentAreaM2, setCatchmentAreaM2] = useState(800);
+  const [rainfallMmPerYear, setRainfallMmPerYear] = useState(1100);
   const [runoffCoeff, setRunoffCoeff] = useState<number>(ASSUMPTIONS.rainwaterRunoffCoeff * 100);
   const [pumpCountInput, setPumpCount] = useState(4);
   const [pumpPowerKW, setPumpPowerKW] = useState(1.5);
@@ -208,7 +208,7 @@ export default function WaterPage() {
       </div>
 
       {/* Monthly rainfall harvest chart */}
-      <SectionCard title="Monthly Rainwater Harvest Potential" subtitle="Based on Suryapur region rainfall pattern" className="mb-6">
+      <SectionCard title="Monthly Rainwater Harvest Potential" subtitle="Based on Bihar region rainfall pattern" className="mb-6">
         <DemoBadge className="mb-4" />
         <ResponsiveContainer width="100%" height={200}>
           <BarChart data={monthlyRainfall} margin={{ left: -10 }}>

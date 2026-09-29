@@ -74,7 +74,7 @@ export default function HouseholdDashboard() {
   // Score (simple)
   const hhScore = Math.round(Math.max(0, Math.min(100, 100 - (totalKWh - 50) * 0.8)));
 
-  const [myVillageId, setMyVillageId] = useState('suryapur');
+  const [myVillageId, setMyVillageId] = useState('motipur');
   const [expandedCategory, setExpandedCategory] = useState<string | null>(null);
 
   // Find inefficient appliances that have upgrade options
