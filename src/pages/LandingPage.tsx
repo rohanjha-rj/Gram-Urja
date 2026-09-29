@@ -1,12 +1,14 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import {
   Sun, Leaf, Zap,
   TrendingUp, Wind, ChevronRight, ArrowRight,
+  Building2, MapPin, ShieldCheck, CheckCircle2, Home, Activity
 } from 'lucide-react';
 import { getAllAreaAnalyses } from '../services/energyService';
 import { ASSUMPTIONS } from '../calculations/engine';
 import { useLanguage } from '../context/LanguageContext';
+import { useAuth } from '../context/AuthContext';
 
 // ─── Derived live-impact metrics ─────────────────────────────────────────────
 function getLiveImpact() {
@@ -291,8 +293,16 @@ function ConservationFlow({ impact, isHindi }: { impact: ReturnType<typeof getLi
 // ─── Main Page ────────────────────────────────────────────────────────────────
 export default function LandingPage() {
   const { t, isHindi } = useLanguage();
+  const { setRole } = useAuth();
+  const navigate = useNavigate();
   const [impactRef, impactInView] = useInView(0.15);
   const impact = getLiveImpact();
+  const allAnalyses = getAllAreaAnalyses();
+
+  const handleOfficialVillageLogin = (villageId: string) => {
+    setRole('official');
+    navigate(`/village?village=${villageId}`);
+  };
 
   const impactCards: ImpactCardProps[] = [
     {
@@ -354,13 +364,16 @@ export default function LandingPage() {
     <div className="min-h-screen" style={{ background: 'linear-gradient(180deg,#f0fdf4 0%,#f7fdf9 100%)' }}>
 
       {/* ═══════════════════════════════════════════════════════════════════════
-          HERO + MISSION
+          HERO + MISSION WITH GENERATED BACKGROUND
       ══════════════════════════════════════════════════════════════════════ */}
       <section
         className="relative flex flex-col overflow-hidden"
         style={{
           minHeight: '100vh',
-          background: 'linear-gradient(160deg,#030d07 0%,#052e16 25%,#14532d 55%,#0d2e1e 80%,#020a05 100%)',
+          backgroundImage: 'linear-gradient(160deg, rgba(3,13,7,0.85) 0%, rgba(5,46,22,0.80) 25%, rgba(20,83,45,0.76) 55%, rgba(13,46,30,0.86) 80%, rgba(2,10,5,0.94) 100%), url("/images/landing_hero_bg.jpg")',
+          backgroundSize: 'cover',
+          backgroundPosition: 'center',
+          backgroundAttachment: 'fixed',
         }}
       >
         {/* Grain overlay */}
@@ -374,9 +387,9 @@ export default function LandingPage() {
 
         {/* Radial glow */}
         <div className="absolute top-0 right-0 w-[600px] h-[600px] pointer-events-none"
-          style={{ background: 'radial-gradient(circle at 80% 20%,rgba(250,204,21,0.10) 0%,transparent 65%)' }} />
+          style={{ background: 'radial-gradient(circle at 80% 20%,rgba(250,204,21,0.12) 0%,transparent 65%)' }} />
         <div className="absolute bottom-0 left-0 w-[500px] h-[500px] pointer-events-none"
-          style={{ background: 'radial-gradient(circle at 20% 80%,rgba(16,185,129,0.08) 0%,transparent 60%)' }} />
+          style={{ background: 'radial-gradient(circle at 20% 80%,rgba(16,185,129,0.10) 0%,transparent 60%)' }} />
 
         {/* Leaf particles */}
         <div className="absolute inset-0 pointer-events-none overflow-hidden" aria-hidden="true">
@@ -394,12 +407,12 @@ export default function LandingPage() {
 
               {/* Left: copy */}
               <div className="gu-hero-text space-y-5">
-                <div className="inline-flex items-center gap-2 border border-green-400/30 bg-green-400/10 rounded-full px-3 py-1 text-xs font-semibold text-green-300 uppercase tracking-widest">
+                <div className="inline-flex items-center gap-2 border border-green-400/30 bg-green-400/10 rounded-full px-3 py-1 text-xs font-semibold text-green-300 uppercase tracking-widest backdrop-blur-md">
                   <span className="w-2 h-2 bg-green-400 rounded-full animate-pulse" />
                   {t('heroLiveRegion')}
                 </div>
 
-                <h1 className="text-3xl sm:text-4xl lg:text-[2.75rem] font-extrabold leading-[1.15] text-white">
+                <h1 className="text-3xl sm:text-4xl lg:text-[2.75rem] font-extrabold leading-[1.15] text-white drop-shadow-md">
                   {isHindi ? (
                     <>
                       ग्राम सशक्तीकरण<br />
@@ -423,17 +436,23 @@ export default function LandingPage() {
                   )}
                 </h1>
 
-                <p className="text-green-100/80 text-base leading-relaxed max-w-xl">
+                <p className="text-green-100/90 text-base leading-relaxed max-w-xl">
                   {t('heroSubtitle')}
                 </p>
 
-                <div>
+                <div className="flex flex-wrap items-center gap-3 pt-2">
                   <Link to="/login"
-                    className="group inline-flex items-center gap-2 bg-green-400 hover:bg-green-300 text-green-950 font-bold px-6 py-3.5 rounded-xl transition-all duration-200 shadow-lg shadow-green-900/40 hover:shadow-green-900/60 hover:-translate-y-0.5 text-sm">
+                    className="group inline-flex items-center gap-2 bg-emerald-400 hover:bg-emerald-300 text-emerald-950 font-bold px-6 py-3.5 rounded-xl transition-all duration-200 shadow-lg shadow-emerald-900/40 hover:shadow-emerald-900/60 hover:-translate-y-0.5 text-sm">
                     <Zap className="w-4 h-4" />
                     {t('getStarted')}
                     <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-1" />
                   </Link>
+
+                  <a href="#village-officials"
+                    className="inline-flex items-center gap-2 bg-white/10 hover:bg-white/20 border border-white/20 text-white font-semibold px-5 py-3.5 rounded-xl transition-all duration-200 backdrop-blur-md text-sm">
+                    <Building2 className="w-4 h-4 text-emerald-300" />
+                    {isHindi ? '5 ग्राम अधिकारी लॉगिन पोर्टल' : '5 Village Official Portals'}
+                  </a>
                 </div>
               </div>
 
@@ -442,7 +461,7 @@ export default function LandingPage() {
                 <VillageScene isHindi={isHindi} />
                 <div className="flex justify-center mt-3 gap-5 flex-wrap">
                   {[{ dot: 'bg-amber-400', labelEn: 'Solar Energy', labelHi: 'सौर ऊर्जा' }, { dot: 'bg-emerald-400', labelEn: 'Biogas', labelHi: 'बायोगैस' }, { dot: 'bg-cyan-400', labelEn: 'Clean Water', labelHi: 'स्वच्छ जल' }].map(l => (
-                    <div key={l.labelEn} className="flex items-center gap-1.5 text-xs text-green-300/80 font-medium">
+                    <div key={l.labelEn} className="flex items-center gap-1.5 text-xs text-green-300/90 font-medium">
                       <span className={`w-2 h-2 rounded-full ${l.dot}`} />{isHindi ? l.labelHi : l.labelEn}
                     </div>
                   ))}
@@ -459,7 +478,7 @@ export default function LandingPage() {
                 <h2 className="text-xl font-extrabold text-white leading-snug mb-2">
                   {t('missionHeading')}
                 </h2>
-                <p className="text-green-100/70 text-xs leading-relaxed mb-3">
+                <p className="text-green-100/80 text-xs leading-relaxed mb-3">
                   {t('missionText')}
                 </p>
                 <div className="flex flex-wrap gap-2">
@@ -469,7 +488,7 @@ export default function LandingPage() {
                     { n: '2', label: t('cleanEnergyPillars') },
                     { n: '₹0', label: t('zeroToStart') }
                   ].map(s => (
-                    <div key={s.label} className="bg-white/8 border border-white/12 rounded-xl px-3 py-2 text-center">
+                    <div key={s.label} className="bg-white/10 border border-white/15 backdrop-blur-md rounded-xl px-3 py-2 text-center">
                       <div className="text-base font-extrabold text-white">{s.n}</div>
                       <div className="text-[10px] text-green-300 font-medium">{s.label}</div>
                     </div>
@@ -482,11 +501,11 @@ export default function LandingPage() {
                   { icon: <Leaf className="w-4 h-4 text-emerald-400" />, title: t('wasteProblemPower'), desc: t('wasteProblemPowerDesc'), accent: 'border-emerald-400/30' },
                   { icon: <Zap className="w-4 h-4 text-green-400" />, title: t('energyEfficiencyGrid'), desc: t('energyEfficiencyGridDesc'), accent: 'border-green-400/30' },
                 ].map(card => (
-                  <div key={card.title} className={`bg-white/6 border ${card.accent} backdrop-blur-sm rounded-xl p-3 flex gap-3 hover:bg-white/10 transition-colors`}>
+                  <div key={card.title} className={`bg-white/10 border ${card.accent} backdrop-blur-md rounded-xl p-3 flex gap-3 hover:bg-white/15 transition-colors`}>
                     <div className="flex-shrink-0 p-1.5 bg-white/10 rounded-lg h-fit">{card.icon}</div>
                     <div>
                       <div className="font-bold text-white text-xs mb-0.5">{card.title}</div>
-                      <div className="text-green-200/70 text-[11px] leading-relaxed">{card.desc}</div>
+                      <div className="text-green-200/80 text-[11px] leading-relaxed">{card.desc}</div>
                     </div>
                   </div>
                 ))}
@@ -501,6 +520,132 @@ export default function LandingPage() {
           <svg viewBox="0 0 1440 60" preserveAspectRatio="none" className="w-full h-10">
             <path d="M0,40 C360,70 1080,10 1440,40 L1440,60 L0,60 Z" fill="#f0fdf4" />
           </svg>
+        </div>
+      </section>
+
+      {/* ═══ 5 VILLAGE OFFICIAL SECTIONS / LOGIN PORTALS ═════════════════════ */}
+      <section id="village-officials" className="max-w-7xl mx-auto px-6 py-16">
+        <div className="text-center mb-12">
+          <div className="inline-flex items-center gap-2 bg-emerald-100 text-emerald-800 rounded-full px-4 py-1.5 text-xs font-bold uppercase tracking-widest mb-3 border border-emerald-200">
+            <Building2 className="w-4 h-4 text-emerald-600" />
+            {isHindi ? 'ग्राम पंचायत प्रशासनिक पोर्टल' : 'Panchayat Administrative Portals'}
+          </div>
+          <h2 className="text-3xl sm:text-4xl font-extrabold text-gray-900 mb-3">
+            {isHindi ? '5 ग्रामों के आधिकारिक लॉगिन सेक्शन' : 'Login as Official of 5 Monitored Villages'}
+          </h2>
+          <p className="text-gray-600 max-w-2xl mx-auto text-sm">
+            {isHindi
+              ? 'प्रत्येक ग्राम के पंचायत अधिकारी, वार्ड सदस्य एवं प्रशासक अपने गांव के समर्पित कमांड सेंटर में सीधे प्रवेश कर सकते हैं:'
+              : 'Direct official dashboard login for Panchayat members, Ward officers, and local administrators across each of the 5 project villages:'}
+          </p>
+        </div>
+
+        {/* 5 Distinct Village Official Sections Grid */}
+        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {allAnalyses.map((item, idx) => {
+            const { area, solarPotential, wasteAnalysis, renewablePercent, monthlyCostINR } = item;
+            const totalDailyWasteKg = area.cowDungKgPerDay + area.foodWasteKgPerDay + area.agriWasteKgPerDay;
+
+            return (
+              <div
+                key={area.id}
+                className="bg-white rounded-2xl border border-gray-200 shadow-sm hover:shadow-xl hover:border-emerald-500 transition-all duration-300 flex flex-col justify-between overflow-hidden group relative"
+              >
+                {/* Top decorative gradient bar */}
+                <div className="h-2 bg-gradient-to-r from-emerald-500 via-teal-500 to-amber-400" />
+
+                <div className="p-6">
+                  {/* Village Header */}
+                  <div className="flex items-start justify-between mb-4">
+                    <div className="flex items-center gap-3">
+                      <div className="w-11 h-11 rounded-xl bg-emerald-50 border border-emerald-200 flex items-center justify-center text-emerald-700 group-hover:bg-emerald-600 group-hover:text-white transition-colors">
+                        <Building2 className="w-6 h-6" />
+                      </div>
+                      <div>
+                        <div className="flex items-center gap-1.5">
+                          <MapPin className="w-3.5 h-3.5 text-emerald-600" />
+                          <span className="text-xs font-semibold text-emerald-700 uppercase tracking-wide">
+                            {isHindi ? `ग्राम पंचायत #${idx + 1}` : `Gram Panchayat #${idx + 1}`}
+                          </span>
+                        </div>
+                        <h3 className="text-xl font-black text-gray-900 leading-tight">{area.name}</h3>
+                      </div>
+                    </div>
+
+                    <div className="bg-emerald-50 border border-emerald-200 rounded-lg px-2.5 py-1 text-right">
+                      <div className="text-[10px] font-bold text-emerald-800 uppercase tracking-wider">{isHindi ? 'नवीकरणीय' : 'Clean'}</div>
+                      <div className="text-sm font-black text-emerald-700">{renewablePercent.toFixed(0)}%</div>
+                    </div>
+                  </div>
+
+                  {/* Village Overview Meta */}
+                  <div className="bg-gray-50 rounded-xl p-3.5 border border-gray-100 mb-5 space-y-2 text-xs">
+                    <div className="flex justify-between items-center text-gray-600">
+                      <span className="flex items-center gap-1.5 font-medium">
+                        <Leaf className="w-3.5 h-3.5 text-emerald-600" />
+                        {isHindi ? 'दैनिक अपशिष्ट उत्पादन:' : 'Daily Waste Production:'}
+                      </span>
+                      <strong className="text-gray-900 bg-white px-2 py-0.5 rounded border border-gray-200 font-bold">
+                        {totalDailyWasteKg.toLocaleString()} kg/{isHindi ? 'दिन' : 'day'}
+                      </strong>
+                    </div>
+
+                    <div className="flex justify-between items-center text-gray-600">
+                      <span className="flex items-center gap-1.5 font-medium">
+                        <Zap className="w-3.5 h-3.5 text-amber-500" />
+                        {isHindi ? 'मासिक विद्युत खपत:' : 'Monthly Electricity:'}
+                      </span>
+                      <strong className="text-gray-900 bg-white px-2 py-0.5 rounded border border-gray-200 font-bold">
+                        {(area.monthlyElectricity / 1000).toFixed(1)}k kWh
+                      </strong>
+                    </div>
+
+                    <div className="flex justify-between items-center text-gray-600">
+                      <span className="flex items-center gap-1.5 font-medium">
+                        <Sun className="w-3.5 h-3.5 text-amber-500" />
+                        {isHindi ? 'सौर साध्य क्षमता:' : 'Feasible Solar:'}
+                      </span>
+                      <strong className="text-emerald-700 bg-white px-2 py-0.5 rounded border border-gray-200 font-bold">
+                        {solarPotential.feasibleCapacityKW.toFixed(0)} kW
+                      </strong>
+                    </div>
+
+                    <div className="flex justify-between items-center text-gray-600 pt-1 border-t border-gray-200/60">
+                      <span className="flex items-center gap-1.5">
+                        <Home className="w-3.5 h-3.5 text-gray-400" />
+                        {area.households} {isHindi ? 'परिवार' : 'Households'}
+                      </span>
+                      <span className="text-gray-500">
+                        {area.infrastructure.streetlights.count} {isHindi ? 'स्ट्रीटलाइट' : 'LEDs'} · {area.infrastructure.waterPumps.count} {isHindi ? 'पंप' : 'Pumps'}
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Highlights Pill */}
+                  <div className="flex flex-wrap gap-1.5 mb-5">
+                    <span className="text-[11px] bg-emerald-50 text-emerald-700 font-semibold px-2.5 py-0.5 rounded-full border border-emerald-200">
+                      {isHindi ? `बायोगैस: ${wasteAnalysis.biogasM3PerDay.toFixed(0)} m³/दिन` : `Biogas: ${wasteAnalysis.biogasM3PerDay.toFixed(0)} m³/day`}
+                    </span>
+                    <span className="text-[11px] bg-amber-50 text-amber-700 font-semibold px-2.5 py-0.5 rounded-full border border-amber-200">
+                      {isHindi ? `लागत: ₹${(monthlyCostINR / 1000).toFixed(1)}k/माह` : `Bill: ₹${(monthlyCostINR / 1000).toFixed(1)}k/mo`}
+                    </span>
+                  </div>
+                </div>
+
+                {/* Login Action Button for This Village */}
+                <div className="p-4 bg-gray-50/90 border-t border-gray-100 mt-auto">
+                  <button
+                    onClick={() => handleOfficialVillageLogin(area.id)}
+                    className="w-full bg-emerald-600 hover:bg-emerald-700 active:bg-emerald-800 text-white font-bold py-3 px-4 rounded-xl transition-all duration-200 flex items-center justify-center gap-2 shadow-sm group-hover:shadow-md group-hover:gap-3 text-sm"
+                  >
+                    <ShieldCheck className="w-4 h-4" />
+                    <span>{isHindi ? `${area.name} अधिकारी लॉगिन` : `Login as Official (${area.name})`}</span>
+                    <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-1" />
+                  </button>
+                </div>
+              </div>
+            );
+          })}
         </div>
       </section>
 

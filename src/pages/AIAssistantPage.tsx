@@ -118,6 +118,8 @@ declare global {
 
 // ── Better TTS voice selector ─────────────────────────────────────────────────
 
+// ── Indian English & Regional TTS voice selector ──────────────────────────────
+
 function getBestVoice(lang: 'en' | 'hi'): SpeechSynthesisVoice | null {
   const voices = window.speechSynthesis.getVoices();
   if (lang === 'hi') {
@@ -127,24 +129,38 @@ function getBestVoice(lang: 'en' | 'hi'): SpeechSynthesisVoice | null {
       null
     );
   }
-  // English — prefer natural / neural voices, avoid robotic ones
-  const preferred = [
-    'Google UK English Female',
-    'Google US English',
-    'Microsoft Aria Online (Natural)',
-    'Microsoft Jenny Online (Natural)',
-    'Samantha',
-    'Karen',
-    'Moira',
-    'Tessa',
+  // English — prioritize Indian English (en-IN) voices for Indian subcontinent users
+  const preferredIndianVoices = [
+    'Microsoft Neerja Online (Natural) - English (India)',
+    'Microsoft Prabhat Online (Natural) - English (India)',
+    'Google English (India)',
+    'Google हिन्दी',
+    'Microsoft Heera - English (India)',
+    'Microsoft Ravi - English (India)',
+    'Microsoft Priya Online (Natural)',
+    'Microsoft Mohan Online (Natural)',
+    'Veena',
+    'Rishi',
+    'Kangana',
+    'en-IN',
   ];
-  for (const name of preferred) {
-    const found = voices.find((v) => v.name === name);
+  for (const name of preferredIndianVoices) {
+    const found = voices.find((v) => v.name.includes(name) || v.name === name);
     if (found) return found;
   }
+  
+  // Find any voice explicitly tagged with en-IN or India
+  const indianTagged = voices.find(
+    (v) =>
+      v.lang === 'en-IN' ||
+      v.lang.toLowerCase().includes('en-in') ||
+      v.name.toLowerCase().includes('india') ||
+      v.name.toLowerCase().includes('hindi')
+  );
+  if (indianTagged) return indianTagged;
+
+  // Fallback to natural English voices
   return (
-    voices.find((v) => v.lang === 'en-GB' && !v.localService) ??
-    voices.find((v) => v.lang === 'en-US' && !v.localService) ??
     voices.find((v) => v.lang.startsWith('en')) ??
     null
   );
@@ -170,7 +186,7 @@ function MessageBubble({
       return;
     }
 
-    // Strip emojis completely so TTS engine does NOT read out emoji names (e.g. "herb", "sun", etc.)
+    // Strip emojis completely so TTS engine does NOT read out emoji names
     const cleanText = msg.content
       .replace(/\*\*([^*]+)\*\*/g, '$1')
       .replace(/\*([^*]+)\*/g, '$1')
@@ -183,14 +199,15 @@ function MessageBubble({
       .trim();
 
     const utterance = new SpeechSynthesisUtterance(cleanText);
-    utterance.lang = msg.language === 'hi' ? 'hi-IN' : 'en-GB';
+    utterance.lang = msg.language === 'hi' ? 'hi-IN' : 'en-IN';
 
     if (msg.language === 'hi') {
       utterance.rate = 0.88;
       utterance.pitch = 1.05;
     } else {
-      utterance.rate = 0.84;
-      utterance.pitch = 1.05;
+      // Natural Indian English cadence
+      utterance.rate = 0.90;
+      utterance.pitch = 1.02;
     }
 
     const trySetVoice = () => {
@@ -385,7 +402,7 @@ export default function AIAssistantPage() {
 
     const recognition = new SpeechRecognitionAPI();
     recognitionRef.current = recognition;
-    recognition.lang = language === 'hi' ? 'hi-IN' : 'en-GB';
+    recognition.lang = language === 'hi' ? 'hi-IN' : 'en-IN';
     recognition.interimResults = false;
     recognition.maxAlternatives = 1;
     recognition.continuous = false;

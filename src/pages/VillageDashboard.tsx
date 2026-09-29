@@ -43,7 +43,10 @@ function AreaCard({ analysis, onClick, isHindi }: { analysis: AreaAnalysis; onCl
             </span>
           </div>
           <div className="flex items-center gap-3 mt-1.5 text-xs text-gray-500">
-            <span><Users className="inline w-3.5 h-3.5 mr-1 text-gray-400" />{area.population.toLocaleString()} {isHindi ? 'निवासी' : 'residents'}</span>
+            <span title={isHindi ? 'दैनिक अपशिष्ट उत्पादन' : 'Daily Waste Production'}>
+              <Leaf className="inline w-3.5 h-3.5 mr-1 text-emerald-600" />
+              {(area.cowDungKgPerDay + area.foodWasteKgPerDay + area.agriWasteKgPerDay).toLocaleString()} kg/{isHindi ? 'दिन अपशिष्ट' : 'day waste'}
+            </span>
             <span><Home className="inline w-3.5 h-3.5 mr-1 text-gray-400" />{area.households} {isHindi ? 'घर' : 'HH'}</span>
           </div>
         </div>
@@ -124,10 +127,18 @@ function AreaDetailView({ analysis, onBack }: { analysis: AreaAnalysis; onBack: 
               <DemoBadge className="bg-white/10 text-white border-white/20" />
             </div>
             <h1 className="text-3xl font-extrabold mb-1">{area.name}</h1>
-            <div className="flex gap-4 text-emerald-100 text-sm">
-              <span>{area.population.toLocaleString()} {isHindi ? 'निवासी' : 'residents'}</span>
+            <div className="flex flex-wrap items-center gap-3 text-emerald-100 text-sm mt-2">
+              <span className="inline-flex items-center gap-1.5 bg-emerald-950/40 border border-emerald-400/30 px-3 py-1 rounded-lg">
+                <Leaf className="w-4 h-4 text-emerald-300" />
+                <span>
+                  <strong className="text-white">{(area.cowDungKgPerDay + area.foodWasteKgPerDay + area.agriWasteKgPerDay).toLocaleString()} kg/{isHindi ? 'दिन' : 'day'}</strong> {isHindi ? 'दैनिक अपशिष्ट उत्पादन' : 'waste production'}
+                </span>
+              </span>
               <span>·</span>
-              <span>{area.households} {isHindi ? 'परिवार' : 'households'}</span>
+              <span className="inline-flex items-center gap-1.5 bg-emerald-950/40 border border-emerald-400/30 px-3 py-1 rounded-lg">
+                <Home className="w-4 h-4 text-emerald-300" />
+                <span><strong className="text-white">{area.households}</strong> {isHindi ? 'परिवार' : 'households'}</span>
+              </span>
             </div>
           </div>
           <div className="flex gap-3">
@@ -351,7 +362,14 @@ function AreaDetailView({ analysis, onBack }: { analysis: AreaAnalysis; onBack: 
 export default function VillageDashboard() {
   const analyses = getAllAreaAnalyses();
   const { t, isHindi } = useLanguage();
-  const [selected, setSelected] = useState<string | null>(null);
+  const [selected, setSelected] = useState<string | null>(() => {
+    const params = new URLSearchParams(window.location.search);
+    const v = params.get('village') || params.get('area');
+    if (v && analyses.some(a => a.area.id === v.toLowerCase())) {
+      return v.toLowerCase();
+    }
+    return null;
+  });
   const [searchQuery, setSearchQuery] = useState('');
   const [showFilters, setShowFilters] = useState(false);
   const [filterState, setFilterState] = useState({
