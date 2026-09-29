@@ -3,7 +3,7 @@ import {
   BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, Legend
 } from 'recharts';
 import {
-  Zap, Droplets, Leaf, Sun, TrendingUp, ArrowLeft, MapPin, Users, Home, Lightbulb, Search, Filter
+  Zap, Droplets, Leaf, Sun, TrendingUp, ArrowLeft, MapPin, Users, Home, Lightbulb, Search, Filter, Flame
 } from 'lucide-react';
 import { getAllAreaAnalyses, getAreaAnalysisById } from '../services/energyService';
 import { KpiCard, SectionCard, DemoBadge, PriorityBadge, AssumptionBox, ScoreRing, StatRow, ProgressBar } from '../components/ui';
@@ -45,24 +45,7 @@ function AreaCard({ analysis, onClick }: { analysis: AreaAnalysis; onClick: () =
         </div>
       </div>
 
-      <div className="grid grid-cols-2 gap-2 mb-3">
-        <div className="bg-blue-50 rounded-lg p-2">
-          <div className="text-xs text-blue-500 font-medium">Consumption</div>
-          <div className="text-sm font-bold text-blue-800">{(area.monthlyElectricity / 1000).toFixed(1)}k kWh</div>
-        </div>
-        <div className="bg-amber-50 rounded-lg p-2">
-          <div className="text-xs text-amber-500 font-medium">Monthly Cost</div>
-          <div className="text-sm font-bold text-amber-800">₹{(monthlyCostINR / 1000).toFixed(1)}k</div>
-        </div>
-        <div className="bg-red-50 rounded-lg p-2">
-          <div className="text-xs text-red-500 font-medium">CO₂</div>
-          <div className="text-sm font-bold text-red-800">{(co2KgPerMonth / 1000).toFixed(1)} t</div>
-        </div>
-        <div className="bg-green-50 rounded-lg p-2">
-          <div className="text-xs text-green-500 font-medium">Renewable</div>
-          <div className="text-sm font-bold text-green-800">{renewablePercent.toFixed(1)}%</div>
-        </div>
-      </div>
+
 
       <div className="flex items-center justify-between">
         <PriorityBadge priority={priorityIndex >= 60 ? 'critical' : priorityIndex >= 40 ? 'high' : priorityIndex >= 25 ? 'medium' : 'low'} />
@@ -79,6 +62,14 @@ function AreaCard({ analysis, onClick }: { analysis: AreaAnalysis; onClick: () =
 function AreaDetailView({ analysis, onBack }: { analysis: AreaAnalysis; onBack: () => void }) {
   const { area, energyBreakdown, solarPotential, waterAnalysis, wasteAnalysis, monthlyCostINR, co2KgPerMonth, renewablePercent, sustainabilityScore } = analysis;
   const scoreBreakdown = calculateSustainabilityScoreBreakdown(area, solarPotential, wasteAnalysis, waterAnalysis);
+
+  const potentialGeneration = solarPotential.monthlyGenerationKWh + (wasteAnalysis.electricityKWhPerDay * 30);
+  const potentialCo2Avoided = solarPotential.co2AvoidedKgPerMonth + wasteAnalysis.co2OffsetKgPerMonth;
+  const potentialSavingsINR = potentialGeneration * ASSUMPTIONS.tariffINRPerKWh;
+  
+  const optimizedCost = Math.max(0, monthlyCostINR - potentialSavingsINR);
+  const optimizedCo2 = Math.max(0, co2KgPerMonth - potentialCo2Avoided);
+  const optimizedRenewable = Math.min(100, renewablePercent + (potentialGeneration / area.monthlyElectricity) * 100);
 
   const donutData = [
     { name: 'Households', value: energyBreakdown.households },
@@ -118,54 +109,40 @@ function AreaDetailView({ analysis, onBack }: { analysis: AreaAnalysis; onBack: 
         </div>
       </div>
 
-      {/* KPI Row */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-        <KpiCard
-          title="Monthly Consumption"
-          value={(area.monthlyElectricity / 1000).toFixed(1) + 'k'}
-          unit="kWh"
-          icon={<Zap className="w-5 h-5 text-blue-600" />}
-          iconBg="bg-blue-100"
-          formula="Sum of all household + infrastructure consumption"
-          source="Estimated data"
-          dataType="Live"
-        />
-        <KpiCard
-          title="Monthly Cost"
-          value={'₹' + (monthlyCostINR / 1000).toFixed(1) + 'k'}
-          icon={<Zap className="w-5 h-5 text-amber-600" />}
-          iconBg="bg-amber-100"
-          formula={`Cost = kWh × ₹${ASSUMPTIONS.tariffINRPerKWh}/kWh`}
-          source="Standard tariff"
-          dataType="Estimated"
-        />
-        <KpiCard
-          title="CO₂ Emissions"
-          value={(co2KgPerMonth / 1000).toFixed(2)}
-          unit="t/month"
-          icon={<Leaf className="w-5 h-5 text-green-600" />}
-          iconBg="bg-green-100"
-          formula={`CO₂ = kWh × ${ASSUMPTIONS.gridEmissionFactor} kg/kWh (CEA)`}
-          source="CEA 2023"
-          dataType="Estimated"
-        />
-        <KpiCard
-          title="Renewable %"
-          value={renewablePercent.toFixed(1)}
-          unit="%"
-          icon={<Sun className="w-5 h-5 text-amber-500" />}
-          iconBg="bg-yellow-100"
-          formula="Existing solar generation / total consumption × 100"
-          source="Live"
-          dataType="Live"
-        />
-      </div>
+      {/* Top Row: Comparison & Energy Breakdown */}
+      <div className="grid lg:grid-cols-3 gap-6 mb-6">
+        {/* Comparison Cards (Takes 2/3) */}
+        <div className="lg:col-span-2 grid sm:grid-cols-2 gap-6">
+          {/* Current State */}
+          <div className="bg-white rounded-xl border border-gray-200 p-6 shadow-sm">
+          <h3 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
+            <span className="w-3 h-3 rounded-full bg-gray-400" /> Current Monthly Status
+          </h3>
+          <StatRow label="Consumption" value={(area.monthlyElectricity / 1000).toFixed(1)} unit="k kWh" />
+          <StatRow label="Electricity Cost" value={'₹' + (monthlyCostINR / 1000).toFixed(1) + 'k'} />
+          <StatRow label="CO₂ Emissions" value={(co2KgPerMonth / 1000).toFixed(1)} unit="t/mo" />
+          <StatRow label="Renewable Energy" value={renewablePercent.toFixed(1)} unit="%" />
+        </div>
 
-      <div className="grid lg:grid-cols-2 gap-6 mb-6">
-        {/* Energy Breakdown Donut */}
-        <SectionCard title="Energy Breakdown" subtitle="Monthly consumption by category" icon={<Zap className="w-4 h-4" />}>
-          <DemoBadge className="mb-4" />
-          <ResponsiveContainer width="100%" height={220}>
+        {/* Optimized State */}
+        <div className="bg-green-50 rounded-xl border border-green-200 p-6 shadow-sm relative overflow-hidden">
+          <div className="absolute top-0 right-0 p-4 opacity-10">
+            <TrendingUp className="w-24 h-24 text-green-600" />
+          </div>
+          <h3 className="text-lg font-bold text-green-900 mb-4 flex items-center gap-2 relative z-10">
+            <span className="w-3 h-3 rounded-full bg-green-500 animate-pulse" /> Potential Optimized Status
+          </h3>
+          <StatRow label="Grid Consumption" value={(Math.max(0, area.monthlyElectricity - potentialGeneration) / 1000).toFixed(1)} unit="k kWh" highlight />
+          <StatRow label="Electricity Cost" value={'₹' + (optimizedCost / 1000).toFixed(1) + 'k'} highlight />
+          <StatRow label="CO₂ Emissions" value={(optimizedCo2 / 1000).toFixed(1)} unit="t/mo" highlight />
+          <StatRow label="Renewable Energy" value={optimizedRenewable.toFixed(1)} unit="%" highlight />
+        </div>
+        </div>
+        
+        {/* Energy Breakdown (Takes 1/3) */}
+        <div className="lg:col-span-1">
+          <SectionCard title="Energy Breakdown" subtitle="Monthly consumption by category" icon={<Zap className="w-4 h-4" />}>
+            <ResponsiveContainer width="100%" height={240}>
             <PieChart>
               <Pie data={donutData} cx="50%" cy="50%" innerRadius={60} outerRadius={90} paddingAngle={3} dataKey="value">
                 {donutData.map((_, i) => <Cell key={i} fill={DONUT_COLORS[i % DONUT_COLORS.length]} />)}
@@ -179,77 +156,116 @@ function AreaDetailView({ analysis, onBack }: { analysis: AreaAnalysis; onBack: 
             { label: 'Hospital/month', value: `${ASSUMPTIONS.hospitalMonthlyKWh} kWh` },
             { label: 'Panchayat/month', value: `${ASSUMPTIONS.panchayatMonthlyKWh} kWh` },
           ]} />
-        </SectionCard>
-
-        {/* Solar Potential */}
-        <SectionCard title="Solar Potential" subtitle="Feasible installation analysis" icon={<Sun className="w-4 h-4" />}>
-          <DemoBadge className="mb-4" />
-          <StatRow label="Feasible Capacity" value={solarPotential.feasibleCapacityKW} unit="kW" highlight />
-          <StatRow label="Monthly Generation" value={solarPotential.monthlyGenerationKWh.toLocaleString()} unit="kWh" />
-          <StatRow label="Consumption Offset" value={solarPotential.offsetPercent + '%'} highlight />
-          <StatRow label="CO₂ Avoided" value={(solarPotential.co2AvoidedKgPerMonth / 1000).toFixed(2)} unit="t/month" />
-          <StatRow label="Est. Investment" value={'₹' + (solarPotential.estimatedCostINR / 100000).toFixed(1) + 'L'} />
-          <StatRow label="Payback Period" value={solarPotential.paybackYears} unit="years" />
-          <AssumptionBox items={[
-            { label: '1 kW needs', value: '9.29 m²' },
-            { label: 'Daily yield', value: '4.5 kWh/kW/day' },
-            { label: 'Cost/kW', value: '₹60,000' },
-            { label: 'Usable area', value: '70% roof, 80% land' },
-          ]} />
-        </SectionCard>
+          </SectionCard>
+        </div>
       </div>
 
       <div className="grid lg:grid-cols-2 gap-6 mb-6">
-        {/* Water */}
-        <SectionCard title="Water Analysis" subtitle="Demand, pumping, rainwater" icon={<Droplets className="w-4 h-4" />}>
-          <DemoBadge className="mb-4" />
-          <StatRow label="Daily Demand" value={waterAnalysis.dailyDemandLitres.toLocaleString()} unit="litres" />
-          <StatRow label="Monthly Demand" value={(waterAnalysis.monthlyDemandLitres / 1000).toFixed(1)} unit="kL" />
-          <StatRow label="Pump Energy" value={waterAnalysis.pumpEnergyKWhPerMonth} unit="kWh/month" />
-          <StatRow label="Rainwater Potential" value={(waterAnalysis.rainwaterPotentialLitresPerYear / 1000).toFixed(0)} unit="kL/year" highlight />
-          <StatRow label="Rainwater Offset" value={waterAnalysis.rainwaterOffsetPercent + '%'} />
-          <AssumptionBox items={[
-            { label: 'LPCD (rural)', value: '55 L/person/day' },
-            { label: 'LPCD (urban)', value: '70 L/person/day' },
-            { label: 'Runoff coeff', value: '80%' },
-          ]} />
-        </SectionCard>
-
-        {/* Waste */}
-        <SectionCard title="Waste & Biogas" subtitle="Organic waste energy potential" icon={<Leaf className="w-4 h-4" />}>
-          <DemoBadge className="mb-4" />
-          <StatRow label="Cow Dung Input" value={area.cowDungKgPerDay} unit="kg/day" />
-          <StatRow label="Food Waste Input" value={area.foodWasteKgPerDay} unit="kg/day" />
-          <StatRow label="Biogas Potential" value={wasteAnalysis.biogasM3PerDay.toFixed(1)} unit="m³/day" highlight />
-          <StatRow label="Thermal Energy" value={wasteAnalysis.thermalEnergyKWhPerDay.toFixed(1)} unit="kWh/day" />
-          <StatRow label="Electricity Potential" value={wasteAnalysis.electricityKWhPerDay.toFixed(1)} unit="kWh/day" />
-          <StatRow label="CO₂ Offset" value={(wasteAnalysis.co2OffsetKgPerMonth / 1000).toFixed(2)} unit="t/month" />
-          <AssumptionBox items={[
-            { label: 'Cow dung', value: '0.04 m³/kg' },
-            { label: 'Food waste', value: '0.06 m³/kg' },
-            { label: 'Agri waste', value: '0.02 m³/kg' },
-            { label: 'Biogas→elec', value: '2 kWh/m³' },
-          ]} />
-        </SectionCard>
-      </div>
-
-      {/* Score breakdown */}
-      <SectionCard title="Sustainability Score Breakdown" subtitle="Weighted category analysis" icon={<TrendingUp className="w-4 h-4" />}>
-        <DemoBadge className="mb-4" />
-        <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
-          {scoreBreakdown.categories.map((cat) => (
-            <div key={cat.name} className="bg-gray-50 rounded-lg p-3">
-              <div className="flex items-center justify-between mb-1">
-                <span className="text-sm font-medium text-gray-700">{cat.name}</span>
-                <span className="text-sm font-bold text-gray-900">{cat.score}/100</span>
+        {/* Solar Opportunity Redesigned */}
+        <div className="bg-gradient-to-br from-amber-50 to-orange-50 rounded-2xl border border-amber-100 overflow-hidden shadow-sm hover:shadow-md transition-shadow">
+          <div className="p-6">
+            <div className="flex items-center gap-3 mb-6">
+              <div className="p-3 bg-amber-500 rounded-xl text-white shadow-sm">
+                <Sun className="w-6 h-6" />
               </div>
-              <ProgressBar value={cat.score} color={cat.score >= 60 ? 'bg-green-500' : cat.score >= 40 ? 'bg-amber-500' : 'bg-red-500'} />
-              <div className="text-xs text-gray-400 mt-1">Weight: {(cat.weight * 100).toFixed(0)}%</div>
-              <div className="text-xs text-gray-500 mt-0.5">{cat.rationale}</div>
+              <div>
+                <h3 className="text-lg font-bold text-gray-900">Solar Opportunity</h3>
+                <p className="text-sm text-gray-600">Turn empty rooftops into a power plant</p>
+              </div>
             </div>
-          ))}
+
+            <div className="bg-white rounded-xl p-5 mb-6 border border-amber-100/50 shadow-sm">
+              <div className="text-sm font-semibold text-gray-500 uppercase tracking-wider mb-1">Max Feasible Capacity</div>
+              <div className="text-4xl font-extrabold text-amber-600 mb-2">{solarPotential.feasibleCapacityKW.toFixed(1)} <span className="text-xl text-amber-600/70">kW</span></div>
+              <p className="text-sm text-gray-500">Based on {area.infrastructure.solar.roofAreaSqFt} sq.ft of available space.</p>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4 mb-6">
+              <div className="bg-white p-4 rounded-xl border border-amber-100/50">
+                <div className="flex items-center gap-2 text-amber-600 mb-2">
+                  <Zap className="w-4 h-4" />
+                  <span className="font-bold text-sm">Free Power</span>
+                </div>
+                <div className="text-lg font-bold text-gray-900">{solarPotential.monthlyGenerationKWh.toLocaleString()} <span className="text-xs text-gray-500">kWh/mo</span></div>
+                <div className="text-xs font-medium text-green-600 mt-1">Offsets {solarPotential.offsetPercent.toFixed(1)}% of usage</div>
+              </div>
+              
+              <div className="bg-white p-4 rounded-xl border border-amber-100/50">
+                <div className="flex items-center gap-2 text-green-600 mb-2">
+                  <Leaf className="w-4 h-4" />
+                  <span className="font-bold text-sm">Environment</span>
+                </div>
+                <div className="text-lg font-bold text-gray-900">{(solarPotential.co2AvoidedKgPerMonth / 1000).toFixed(1)} <span className="text-xs text-gray-500">tons CO₂</span></div>
+                <div className="text-xs font-medium text-gray-500 mt-1">Saved every month</div>
+              </div>
+            </div>
+
+            <div className="bg-gray-900 text-white rounded-xl p-5 flex items-center justify-between">
+              <div>
+                <div className="text-sm text-gray-400 mb-1">Estimated Investment</div>
+                <div className="text-xl font-bold">₹{(solarPotential.estimatedCostINR / 100000).toFixed(1)} Lakhs</div>
+              </div>
+              <div className="text-right">
+                <div className="text-sm text-gray-400 mb-1">Pays for itself in</div>
+                <div className="text-xl font-bold text-green-400">{solarPotential.paybackYears.toFixed(1)} Years</div>
+              </div>
+            </div>
+          </div>
         </div>
-      </SectionCard>
+
+        {/* Biogas Opportunity Redesigned */}
+        <div className="bg-gradient-to-br from-green-50 to-emerald-50 rounded-2xl border border-green-100 overflow-hidden shadow-sm hover:shadow-md transition-shadow">
+          <div className="p-6">
+            <div className="flex items-center gap-3 mb-6">
+              <div className="p-3 bg-green-500 rounded-xl text-white shadow-sm">
+                <Leaf className="w-6 h-6" />
+              </div>
+              <div>
+                <h3 className="text-lg font-bold text-gray-900">Biogas Opportunity</h3>
+                <p className="text-sm text-gray-600">Convert daily waste into valuable energy</p>
+              </div>
+            </div>
+
+            <div className="bg-white rounded-xl p-5 mb-6 border border-green-100/50 shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+              <div>
+                <div className="text-sm font-semibold text-gray-500 uppercase tracking-wider mb-1">Daily Gas Production</div>
+                <div className="text-4xl font-extrabold text-green-600 mb-2">{wasteAnalysis.biogasM3PerDay.toFixed(1)} <span className="text-xl text-green-600/70">m³</span></div>
+              </div>
+              <div className="flex flex-col gap-2 border-l border-gray-100 pl-4">
+                 <div className="text-sm text-gray-600 flex items-center gap-2"><span className="w-2 h-2 rounded-full bg-amber-700"></span> {area.cowDungKgPerDay} kg Dung</div>
+                 <div className="text-sm text-gray-600 flex items-center gap-2"><span className="w-2 h-2 rounded-full bg-orange-400"></span> {area.foodWasteKgPerDay} kg Food Waste</div>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4 mb-6">
+              <div className="bg-white p-4 rounded-xl border border-green-100/50">
+                <div className="flex items-center gap-2 text-orange-500 mb-2">
+                  <Flame className="w-4 h-4" />
+                  <span className="font-bold text-sm">Thermal Energy</span>
+                </div>
+                <div className="text-lg font-bold text-gray-900">{wasteAnalysis.thermalEnergyKWhPerDay.toFixed(0)} <span className="text-xs text-gray-500">kWh/day</span></div>
+                <div className="text-xs font-medium text-gray-500 mt-1">Useful for cooking</div>
+              </div>
+              
+              <div className="bg-white p-4 rounded-xl border border-green-100/50">
+                <div className="flex items-center gap-2 text-blue-500 mb-2">
+                  <Zap className="w-4 h-4" />
+                  <span className="font-bold text-sm">Electricity</span>
+                </div>
+                <div className="text-lg font-bold text-gray-900">{wasteAnalysis.electricityKWhPerDay.toFixed(0)} <span className="text-xs text-gray-500">kWh/day</span></div>
+                <div className="text-xs font-medium text-green-600 mt-1">Alternative to thermal</div>
+              </div>
+            </div>
+            
+            <div className="bg-gray-900 text-white rounded-xl p-5 flex items-center justify-between">
+               <div>
+                 <div className="text-sm text-gray-400 mb-1">Environmental Impact</div>
+                 <div className="text-xl font-bold text-green-400">{(wasteAnalysis.co2OffsetKgPerMonth / 1000).toFixed(1)} tons CO₂ avoided/mo</div>
+               </div>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
   );
 }
