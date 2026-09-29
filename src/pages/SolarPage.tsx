@@ -374,253 +374,574 @@ function PanelSimulator({
   );
 }
 
-// ─── Before/After ─────────────────────────────────────────────────────────────
+// ─── Before/After Solar Transformation Animation ──────────────────────────────
 function BeforeAfterSection({ before, after, savedPct, savedKWh, savedINR, savedCO2 }: {
   before: number; after: number; savedPct: number; savedKWh: number; savedINR: number; savedCO2: number;
 }) {
   const { isHindi: isHi } = useLanguage();
+  type Phase = 'before' | 'generating' | 'arrived' | 'after';
+  const [phase, setPhase]           = useState<Phase>('before');
+  const [manualMode, setManualMode] = useState<'auto' | 'before' | 'after'>('auto');
+  const [bubbles, setBubbles]       = useState([false, false, false, false]);
+  const timers = useRef<ReturnType<typeof setTimeout>[]>([]);
+
+  const clearAll = () => { timers.current.forEach(clearTimeout); timers.current = []; };
+  const afterTimer = (ms: number, fn: () => void) => {
+    const t = setTimeout(fn, ms); timers.current.push(t); return t;
+  };
+
+  const runCycle = React.useCallback(() => {
+    if (manualMode !== 'auto') return;
+    clearAll();
+
+    // ── Phase 1: 100% Grid Reliance (Before Solar) — 1.8s ──
+    setPhase('before');
+    setBubbles([false, false, false, false]);
+
+    // ── Phase 2: Sunbeams Strike Rooftop & Solar Activation — 2.4s ──
+    afterTimer(1800, () => {
+      setPhase('generating');
+    });
+
+    // ── Phase 3: Solar Generation Peak & Sequential 4 Metric Bubbles Pop — 4.8s ──
+    afterTimer(4200, () => {
+      setPhase('arrived');
+    });
+    // Bubble 0: Clean Solar Energy
+    afterTimer(4450, () => {
+      setBubbles([true, false, false, false]);
+    });
+    // Bubble 1: Grid Demand Cut (%)
+    afterTimer(5000, () => {
+      setBubbles([true, true, false, false]);
+    });
+    // Bubble 2: Monthly Financial Savings (₹)
+    afterTimer(5550, () => {
+      setBubbles([true, true, true, false]);
+    });
+    // Bubble 3: Carbon CO2 Avoided (tons)
+    afterTimer(6100, () => {
+      setBubbles([true, true, true, true]);
+    });
+
+    // All 4 bubbles stay fully active and visible together from 6100ms to 9200ms (3.1s)
+
+    // ── Phase 4: Net Metering / Clean Grid Balance — 2.8s ──
+    afterTimer(9200, () => {
+      setBubbles([false, false, false, false]);
+      setPhase('after');
+    });
+
+    // ── Loop back to Phase 1 for the next journey cycle ──
+    afterTimer(12000, () => {
+      runCycle();
+    });
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [manualMode]);
+
+  useEffect(() => {
+    if (manualMode === 'auto') {
+      const t = setTimeout(runCycle, 300);
+      return () => { clearTimeout(t); clearAll(); };
+    } else if (manualMode === 'before') {
+      clearAll();
+      setPhase('before');
+      setBubbles([false, false, false, false]);
+    } else if (manualMode === 'after') {
+      clearAll();
+      setPhase('after');
+      setBubbles([true, true, true, true]);
+    }
+  }, [manualMode, runCycle]);
+
+  // Real-time formatted metrics synced with calculated data
+  const fmtKWh = savedKWh >= 1000
+    ? `${(savedKWh / 1000).toFixed(1)}k kWh/m`
+    : `${Math.round(savedKWh)} kWh/m`;
+
+  const fmtINR = savedINR >= 100000
+    ? `₹${(savedINR / 100000).toFixed(1)}L/mo`
+    : savedINR >= 1000
+      ? `₹${(savedINR / 1000).toFixed(1)}k/mo`
+      : `₹${Math.round(savedINR)}/mo`;
+
+  const fmtCO2 = savedCO2 >= 1000
+    ? `${(savedCO2 / 1000).toFixed(2)} t/mo`
+    : `${Math.round(savedCO2)} kg/mo`;
+
+  const bubbleData = [
+    {
+      label: isHi ? 'सौर ऊर्जा' : 'Solar Energy',
+      value: fmtKWh,
+      sub: isHi ? 'मासिक उत्पादन' : 'Monthly Gen',
+      color: '#059669',
+    },
+    {
+      label: isHi ? 'ग्रिड कटौती' : 'Grid Reduction',
+      value: `–${savedPct}%`,
+      sub: isHi ? 'मांग में कमी' : 'Demand Cut',
+      color: '#2563eb',
+    },
+    {
+      label: isHi ? 'मासिक बचत' : 'Bill Savings',
+      value: fmtINR,
+      sub: isHi ? 'अनुमानित बचत' : 'Est. Savings',
+      color: '#d97706',
+    },
+    {
+      label: isHi ? 'CO₂ निवारण' : 'CO₂ Avoided',
+      value: fmtCO2,
+      sub: isHi ? 'हरित प्रभाव' : 'Clean Air',
+      color: '#7c3aed',
+    },
+  ];
+
+  // 4 arched bubble coordinates above the right side of the canvas
+  const bPos = [
+    { x: 440, y: 74, r: 38 },
+    { x: 506, y: 46, r: 38 },
+    { x: 574, y: 46, r: 38 },
+    { x: 640, y: 74, r: 38 },
+  ];
+
+  const isSolarActive = phase === 'generating' || phase === 'arrived' || phase === 'after';
+
+  // Animated counters for the comparison cards below
   const animBefore = useCountUp(before / 1000);
-  const animAfter  = useCountUp(after  / 1000);
+  const animAfter  = useCountUp(after / 1000);
   const animSaved  = useCountUp(savedINR / 1000);
   const animCO2    = useCountUp(savedCO2 / 1000);
 
   return (
-    <div className="grid sm:grid-cols-3 gap-4 items-center">
-      {/* ── BEFORE card ── */}
-      <div className="bg-red-50 border-2 border-red-200 rounded-2xl p-5 text-center">
-        <div className="text-xs font-bold text-red-500 uppercase tracking-widest mb-3">{isHi ? 'सोलर से पहले' : 'BEFORE Solar'}</div>
+    <div className="space-y-6">
+      {/* ── Visual Animated Stage (ViewBox 700x230) ── */}
+      <div className="rounded-2xl p-4 sm:p-5 border border-emerald-900/20 shadow-inner overflow-hidden"
+        style={{ background: 'linear-gradient(175deg, #0f172a 0%, #064e3b 50%, #022c22 100%)' }}>
 
-        {/* Plain house SVG – no background, animated */}
-        <div className="flex justify-center mb-3">
-          <svg viewBox="0 0 120 110" width="120" height="104" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-            <style>{`
-              @keyframes hb-float {
-                0%,100% { transform: translateY(0px); }
-                50%      { transform: translateY(-4px); }
-              }
-              @keyframes hb-smoke1 {
-                0%   { transform: translate(0,0)    scale(0.4); opacity:0.7; }
-                100% { transform: translate(-6px,-22px) scale(1.2); opacity:0; }
-              }
-              @keyframes hb-smoke2 {
-                0%   { transform: translate(0,0)    scale(0.3); opacity:0.6; }
-                100% { transform: translate(4px,-20px)  scale(1.1); opacity:0; }
-              }
-              @keyframes hb-smoke3 {
-                0%   { transform: translate(0,0)    scale(0.35); opacity:0.65; }
-                100% { transform: translate(-2px,-18px) scale(1.0); opacity:0; }
-              }
-              @keyframes hb-cloud {
-                0%   { transform: translateX(0px); }
-                100% { transform: translateX(30px); }
-              }
-              @keyframes hb-wink {
-                0%,90%,100% { opacity:1; }
-                95%          { opacity:0.2; }
-              }
-              .hb-house  { animation: hb-float 3.2s ease-in-out infinite; }
-              .hb-s1     { animation: hb-smoke1 2.2s ease-out infinite; }
-              .hb-s2     { animation: hb-smoke2 2.2s ease-out infinite 0.7s; }
-              .hb-s3     { animation: hb-smoke3 2.2s ease-out infinite 1.4s; }
-              .hb-cloud1 { animation: hb-cloud 9s linear infinite; }
-              .hb-cloud2 { animation: hb-cloud 13s linear infinite 3s; }
-              .hb-win    { animation: hb-wink 4s ease-in-out infinite; }
-            `}</style>
-
-            {/* drifting clouds */}
-            <g className="hb-cloud1" opacity="0.55">
-              <ellipse cx="10" cy="18" rx="12" ry="7" fill="#cbd5e1"/>
-              <ellipse cx="20" cy="15" rx="9"  ry="6" fill="#cbd5e1"/>
-            </g>
-            <g className="hb-cloud2" opacity="0.4">
-              <ellipse cx="-8" cy="10" rx="10" ry="6" fill="#94a3b8"/>
-              <ellipse cx="0"  cy="8"  rx="7"  ry="5" fill="#94a3b8"/>
-            </g>
-
-            {/* smoke puffs from chimney */}
-            <circle className="hb-s1" cx="80" cy="28" r="4" fill="#94a3b8" opacity="0.7"/>
-            <circle className="hb-s2" cx="80" cy="28" r="3" fill="#94a3b8" opacity="0.6"/>
-            <circle className="hb-s3" cx="80" cy="28" r="3.5" fill="#cbd5e1" opacity="0.65"/>
-
-            {/* house body – floats */}
-            <g className="hb-house">
-              {/* walls */}
-              <rect x="25" y="58" width="70" height="42" rx="3" fill="#fca5a5"/>
-              {/* roof */}
-              <polygon points="60,22 8,60 112,60" fill="#ef4444"/>
-              {/* roof outline */}
-              <polygon points="60,22 8,60 112,60" fill="none" stroke="#dc2626" strokeWidth="1.2"/>
-              {/* chimney */}
-              <rect x="75" y="28" width="10" height="22" rx="1" fill="#dc2626"/>
-              {/* door */}
-              <rect x="51" y="75" width="18" height="25" rx="3" fill="#7f1d1d"/>
-              {/* door knob */}
-              <circle cx="65" cy="88" r="1.5" fill="#fca5a5"/>
-              {/* windows – blinking */}
-              <rect x="30" y="65" width="15" height="12" rx="2" fill="#fef9c3" className="hb-win"/>
-              <rect x="75" y="65" width="15" height="12" rx="2" fill="#fef9c3" className="hb-win"/>
-              {/* window cross bars */}
-              <line x1="37.5" y1="65" x2="37.5" y2="77" stroke="#fde68a" strokeWidth="0.8"/>
-              <line x1="30"   y1="71" x2="45"   y2="71" stroke="#fde68a" strokeWidth="0.8"/>
-              <line x1="82.5" y1="65" x2="82.5" y2="77" stroke="#fde68a" strokeWidth="0.8"/>
-              <line x1="75"   y1="71" x2="90"   y2="71" stroke="#fde68a" strokeWidth="0.8"/>
-              {/* ground */}
-              <line x1="5" y1="101" x2="115" y2="101" stroke="#fca5a5" strokeWidth="1.5" strokeDasharray="4 3"/>
-            </g>
-          </svg>
-        </div>
-
-        <div className="text-4xl font-extrabold text-red-700 mb-1">{animBefore.toFixed(1)}k</div>
-        <div className="text-sm text-red-500">kWh/{isHi ? 'माह' : 'month'}</div>
-        <div className="text-xs text-red-400 mt-1">₹{(calculateElectricityCost(before) / 1000).toFixed(1)}k/{isHi ? 'माह' : 'month'}</div>
-      </div>
-
-      {/* ── Arrow / savings summary ── */}
-      <div className="text-center">
-        <div className="inline-flex flex-col items-center gap-2">
-          <div className="text-4xl font-extrabold text-green-600">–{savedPct}%</div>
-          <div className="flex items-center gap-2 text-green-600">
-            <div className="h-0.5 w-16 bg-green-400"/>
-            <ArrowRight className="w-5 h-5"/>
+        {/* Animation status header & mode toggles */}
+        <div className="flex flex-wrap items-center justify-between gap-3 mb-3 pb-2.5 border-b border-white/10 text-white">
+          <div className="flex items-center gap-2">
+            <span className="text-xl">☀️</span>
+            <span className="font-bold text-sm tracking-wide text-emerald-300">
+              {isHi ? 'सौर परिवर्तन यात्रा' : 'Solar Transformation Journey'}
+            </span>
           </div>
-          <div className="text-sm font-semibold text-green-700">{(savedKWh / 1000).toFixed(1)}k kWh {isHi ? 'बचत' : 'saved'}</div>
-          <div className="text-sm text-emerald-600">₹{animSaved.toFixed(1)}k {isHi ? 'बचत/माह' : 'saved/mo'}</div>
-          <div className="text-xs text-gray-500">{animCO2.toFixed(2)} t CO₂ {isHi ? 'निवारण' : 'avoided'}</div>
+
+          <div className="flex items-center gap-2">
+            {/* Live narrative phase status */}
+            <span className="text-xs text-emerald-200/80 italic font-medium">
+              {phase === 'before'     && (isHi ? '🔌 ग्रिड निर्भरता (सोलर से पहले)…'   : '🔌 100% Grid Reliance (Before Solar)…')}
+              {phase === 'generating' && (isHi ? '☀️ सौर किरणें सक्रिय, उत्पादन शुरू…' : '☀️ Sunbeams strike panels, generating DC…')}
+              {phase === 'arrived'    && (isHi ? '⚡ 4 बचत मेट्रिक्स उत्पन्न!'        : '⚡ 4 Clean energy metrics generated!')}
+              {phase === 'after'      && (isHi ? '🌿 हरित स्वावलंबन एवं शुद्ध मीटरिंग…' : '🌿 Self-sufficiency & net-metering…')}
+            </span>
+
+            {/* Mode selection pills */}
+            <div className="flex items-center bg-slate-800/80 p-0.5 rounded-lg border border-white/10 text-[11px] ml-2">
+              <button
+                type="button"
+                onClick={() => setManualMode('before')}
+                className={`px-2.5 py-1 rounded-md font-semibold transition-all ${manualMode === 'before' ? 'bg-red-500 text-white shadow-sm' : 'text-slate-300 hover:text-white'}`}
+              >
+                {isHi ? 'पहले' : 'Before'}
+              </button>
+              <button
+                type="button"
+                onClick={() => setManualMode('after')}
+                className={`px-2.5 py-1 rounded-md font-semibold transition-all ${manualMode === 'after' ? 'bg-emerald-600 text-white shadow-sm' : 'text-slate-300 hover:text-white'}`}
+              >
+                {isHi ? 'बाद में' : 'After'}
+              </button>
+              <button
+                type="button"
+                onClick={() => setManualMode('auto')}
+                className={`px-2.5 py-1 rounded-md font-semibold transition-all ${manualMode === 'auto' ? 'bg-amber-500 text-slate-900 shadow-sm' : 'text-slate-300 hover:text-white'}`}
+              >
+                {isHi ? 'ऑटो' : 'Auto'}
+              </button>
+            </div>
+          </div>
         </div>
-      </div>
 
-      {/* ── AFTER card ── */}
-      <div className="bg-green-50 border-2 border-green-200 rounded-2xl p-5 text-center">
-        <div className="text-xs font-bold text-green-600 uppercase tracking-widest mb-3">{isHi ? 'सोलर के बाद' : 'AFTER Solar'}</div>
+        {/* ── SVG Scenic Canvas ── */}
+        <div className="relative w-full" style={{ height: 230 }}>
+          <svg viewBox="0 0 700 230" width="100%" height="230"
+            xmlns="http://www.w3.org/2000/svg" style={{ display: 'block', overflow: 'visible' }}>
 
-        {/* House with solar panels – no background, animated */}
-        <div className="flex justify-center mb-3">
-          <svg viewBox="0 0 120 110" width="120" height="104" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
             <defs>
-              <linearGradient id="panelGrad2" x1="0" y1="0" x2="1" y2="1">
-                <stop offset="0%" stopColor="#ffffff" stopOpacity="0.9"/>
+              <linearGradient id="sol-gnd" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stopColor="#15803d"/>
+                <stop offset="100%" stopColor="#064e3b"/>
+              </linearGradient>
+              <linearGradient id="sol-roof" x1="0" y1="0" x2="1" y2="1">
+                <stop offset="0%" stopColor="#1e3a8a"/>
+                <stop offset="100%" stopColor="#0f172a"/>
+              </linearGradient>
+              <linearGradient id="sol-panel" x1="0" y1="0" x2="1" y2="1">
+                <stop offset="0%" stopColor="#2563eb"/>
+                <stop offset="100%" stopColor="#1d4ed8"/>
+              </linearGradient>
+              <linearGradient id="sol-shimmer" x1="0" y1="0" x2="1" y2="0">
+                <stop offset="0%" stopColor="#ffffff" stopOpacity="0"/>
+                <stop offset="50%" stopColor="#ffffff" stopOpacity="0.85"/>
                 <stop offset="100%" stopColor="#ffffff" stopOpacity="0"/>
               </linearGradient>
-              <radialGradient id="sunGlow" cx="50%" cy="50%" r="50%">
-                <stop offset="0%"   stopColor="#fef08a" stopOpacity="1"/>
-                <stop offset="100%" stopColor="#fbbf24" stopOpacity="0"/>
+              <radialGradient id="sol-sunglow" cx="50%" cy="50%" r="50%">
+                <stop offset="0%" stopColor="#fef08a" stopOpacity="1"/>
+                <stop offset="60%" stopColor="#f59e0b" stopOpacity="0.4"/>
+                <stop offset="100%" stopColor="#f59e0b" stopOpacity="0"/>
+              </radialGradient>
+              <radialGradient id="sol-pulse-glow" cx="50%" cy="50%" r="50%">
+                <stop offset="0%" stopColor="#22c55e" stopOpacity="0.8"/>
+                <stop offset="100%" stopColor="#22c55e" stopOpacity="0"/>
               </radialGradient>
             </defs>
+
+            {/* Animation Keyframe Styles */}
             <style>{`
-              @keyframes ha-float {
-                0%,100% { transform: translateY(0px); }
-                50%      { transform: translateY(-5px); }
-              }
-              @keyframes ha-spin {
+              @keyframes sol-sunspin {
                 from { transform: rotate(0deg); }
                 to   { transform: rotate(360deg); }
               }
-              @keyframes ha-pulse {
-                0%,100% { r: 9;  opacity: 0.95; }
-                50%      { r: 11; opacity: 1;    }
+              @keyframes sol-sunpulse {
+                0%, 100% { transform: scale(1); opacity: 0.9; }
+                50%      { transform: scale(1.1); opacity: 1; }
               }
-              @keyframes ha-glow {
-                0%,100% { opacity: 0.2; transform: scale(1);   }
-                50%      { opacity: 0.5; transform: scale(1.35); }
+              @keyframes sol-beamflow {
+                0%   { stroke-dashoffset: 48; opacity: 0.2; }
+                50%  { opacity: 0.95; }
+                100% { stroke-dashoffset: 0;  opacity: 0.2; }
               }
-              @keyframes ha-beam {
-                0%   { stroke-dashoffset: 36; opacity: 0;   }
-                35%  { opacity: 1; }
-                100% { stroke-dashoffset: 0;  opacity: 0;   }
+              @keyframes sol-gridpulse-red {
+                0%   { stroke-dashoffset: 36; }
+                100% { stroke-dashoffset: 0; }
               }
-              @keyframes ha-shimmer {
-                0%   { transform: translateX(-30px); opacity: 0;   }
-                40%  { opacity: 0.7; }
-                100% { transform: translateX(44px);  opacity: 0;   }
+              @keyframes sol-gridpulse-green {
+                0%   { stroke-dashoffset: 0; }
+                100% { stroke-dashoffset: 36; }
               }
-              @keyframes ha-spark {
-                0%,100% { opacity: 0; transform: scale(0.5); }
-                50%      { opacity: 1; transform: scale(1.2); }
+              @keyframes sol-shimmerstreak {
+                0%   { transform: translateX(-40px); opacity: 0; }
+                40%  { opacity: 0.75; }
+                100% { transform: translateX(110px); opacity: 0; }
               }
-              .ha-house   { animation: ha-float 3s ease-in-out infinite; }
-              .ha-sunring { animation: ha-spin  10s linear infinite; transform-origin: 22px 15px; }
-              .ha-sundisc { animation: ha-pulse 2s ease-in-out infinite; transform-origin: 22px 15px; }
-              .ha-glow    { animation: ha-glow  2s ease-in-out infinite; transform-origin: 22px 15px; }
-              .ha-b1 { stroke-dasharray:36; animation: ha-beam 1.8s ease-in-out infinite 0s;    }
-              .ha-b2 { stroke-dasharray:36; animation: ha-beam 1.8s ease-in-out infinite 0.45s; }
-              .ha-b3 { stroke-dasharray:36; animation: ha-beam 1.8s ease-in-out infinite 0.9s;  }
-              .ha-b4 { stroke-dasharray:36; animation: ha-beam 1.8s ease-in-out infinite 1.35s; }
-              .ha-b5 { stroke-dasharray:36; animation: ha-beam 1.8s ease-in-out infinite 1.6s;  }
-              .ha-shimmer { animation: ha-shimmer 2.4s ease-in-out infinite; }
-              .ha-sp1 { animation: ha-spark 2s ease-in-out infinite 0s;    }
-              .ha-sp2 { animation: ha-spark 2s ease-in-out infinite 0.6s;  }
-              .ha-sp3 { animation: ha-spark 2s ease-in-out infinite 1.2s;  }
+              @keyframes sol-chimneysmoke {
+                0%   { transform: translate(0, 0) scale(0.4); opacity: 0.8; }
+                100% { transform: translate(-6px, -24px) scale(1.4); opacity: 0; }
+              }
+              @keyframes sol-spark {
+                0%, 100% { opacity: 0.2; transform: scale(0.6); }
+                50%      { opacity: 1;   transform: scale(1.3); }
+              }
+              @keyframes wj-bubblepop {
+                0%   { transform: scale(0);    opacity: 0;    }
+                40%  { transform: scale(1.18); opacity: 1;    }
+                70%  { transform: scale(0.96); opacity: 1;    }
+                100% { transform: scale(1);    opacity: 0.95; }
+              }
+              .sol-sunrays { animation: sol-sunspin 14s linear infinite; transform-origin: 135px 42px; }
+              .sol-sundisc { animation: sol-sunpulse 2.4s ease-in-out infinite; transform-origin: 135px 42px; }
+              .sol-b1 { stroke-dasharray: 48; animation: sol-beamflow 1.8s ease-in-out infinite 0s; }
+              .sol-b2 { stroke-dasharray: 48; animation: sol-beamflow 1.8s ease-in-out infinite 0.4s; }
+              .sol-b3 { stroke-dasharray: 48; animation: sol-beamflow 1.8s ease-in-out infinite 0.8s; }
+              .sol-b4 { stroke-dasharray: 48; animation: sol-beamflow 1.8s ease-in-out infinite 1.2s; }
+              .sol-shimmer { animation: sol-shimmerstreak 2.6s ease-in-out infinite; }
+              .sol-smk1 { animation: sol-chimneysmoke 2s ease-out infinite 0s; }
+              .sol-smk2 { animation: sol-chimneysmoke 2s ease-out infinite 0.6s; }
+              .sol-sp1 { animation: sol-spark 1.8s ease-in-out infinite 0s; }
+              .sol-sp2 { animation: sol-spark 1.8s ease-in-out infinite 0.6s; }
             `}</style>
 
-            {/* ── Sun glow halo ── */}
-            <circle cx="22" cy="15" r="20" fill="url(#sunGlow)" className="ha-glow"/>
+            {/* ── Ground / Landscape ── */}
+            <rect x="0" y="185" width="700" height="45" fill="url(#sol-gnd)" opacity="0.75"/>
+            {[45, 110, 175, 240, 305, 370, 435, 500, 565, 630].map(x => (
+              <rect key={x} x={x} y="192" width="40" height="5" rx="2.5" fill="#a7f3d0" opacity="0.25"/>
+            ))}
+            <line x1="0" y1="186" x2="700" y2="186" stroke="#34d399" strokeWidth="1.5" opacity="0.5"/>
 
-            {/* ── Spinning rays ── */}
-            <g className="ha-sunring">
-              {[0,40,80,120,160,200,240,280,320].map((deg, i) => {
-                const rad = (deg * Math.PI) / 180;
-                const x1 = 22 + 13 * Math.cos(rad), y1 = 15 + 13 * Math.sin(rad);
-                const x2 = 22 + 21 * Math.cos(rad), y2 = 15 + 21 * Math.sin(rad);
-                return <line key={i} x1={x1} y1={y1} x2={x2} y2={y2} stroke="#facc15" strokeWidth="2.2" strokeLinecap="round" opacity="0.9"/>;
-              })}
+            {/* ══════ LEFT — UTILITY GRID / TRANSMISSION POLE ══════ */}
+            <g>
+              {/* Electric utility wooden/steel pole */}
+              <line x1="68" y1="75" x2="68" y2="186" stroke="#94a3b8" strokeWidth="4.5" strokeLinecap="round"/>
+              <line x1="50" y1="92" x2="86" y2="92" stroke="#64748b" strokeWidth="3" strokeLinecap="round"/>
+              <line x1="54" y1="112" x2="82" y2="112" stroke="#64748b" strokeWidth="2.5" strokeLinecap="round"/>
+              {/* Insulators */}
+              <circle cx="50" cy="92" r="3" fill="#cbd5e1"/>
+              <circle cx="86" cy="92" r="3" fill="#cbd5e1"/>
+              <circle cx="54" cy="112" r="2.5" fill="#cbd5e1"/>
+              <circle cx="82" cy="112" r="2.5" fill="#cbd5e1"/>
+              {/* Transformer drum */}
+              <rect x="71" y="118" width="14" height="22" rx="3" fill="#475569"/>
+              <rect x="73" y="122" width="10" height="3" rx="1" fill="#64748b"/>
+              {/* Grid status label */}
+              <rect x="36" y="60" width="64" height="15" rx="4"
+                fill={isSolarActive ? '#064e3b' : '#7f1d1d'} opacity="0.9"/>
+              <text x="68" y="71" textAnchor="middle" fontSize="8" fontWeight="800"
+                fill={isSolarActive ? '#86efac' : '#fca5a5'}>
+                {isSolarActive ? (isHi ? 'शुद्ध ग्रिड मीटर' : 'NET-METER') : (isHi ? '100% ग्रिड भार' : '100% GRID')}
+              </text>
             </g>
 
-            {/* ── Sun disc ── */}
-            <circle cx="22" cy="15" r="9" fill="#fde047" stroke="#f59e0b" strokeWidth="1.5" className="ha-sundisc"/>
-            <circle cx="19" cy="13" r="2.5" fill="#fef9c3" opacity="0.6"/>
+            {/* ── Power Line from Utility Pole to House ── */}
+            {/* Line catenary curve from (86, 92) to house weatherhead at (234, 116) */}
+            <path
+              d="M 86 92 Q 160 118, 234 116"
+              fill="none"
+              stroke={isSolarActive ? '#22c55e' : '#ef4444'}
+              strokeWidth={isSolarActive ? '2' : '2.8'}
+              strokeDasharray={isSolarActive ? '5 5' : '6 4'}
+              style={{
+                animation: isSolarActive
+                  ? 'sol-gridpulse-green 1.4s linear infinite'
+                  : 'sol-gridpulse-red 0.8s linear infinite'
+              }}
+            />
+            {/* Grid electricity flow indicator text */}
+            <text x="160" y="106" textAnchor="middle" fontSize="8" fontWeight="700"
+              fill={isSolarActive ? '#86efac' : '#f87171'}>
+              {isSolarActive ? (isHi ? '← सौर अधिशेष निर्यात' : '← Solar Export') : (isHi ? '→ ग्रिड बिजली खपत' : '→ Grid Import')}
+            </text>
 
-            {/* ── Energy beams: sun → panels ── */}
-            <line className="ha-b1" x1="30" y1="20" x2="52" y2="46" stroke="#fbbf24" strokeWidth="2"   strokeLinecap="round"/>
-            <line className="ha-b2" x1="29" y1="22" x2="58" y2="47" stroke="#f59e0b" strokeWidth="1.8" strokeLinecap="round"/>
-            <line className="ha-b3" x1="31" y1="21" x2="64" y2="46" stroke="#fbbf24" strokeWidth="2"   strokeLinecap="round"/>
-            <line className="ha-b4" x1="28" y1="23" x2="68" y2="47" stroke="#f59e0b" strokeWidth="1.6" strokeLinecap="round"/>
-            <line className="ha-b5" x1="32" y1="20" x2="72" y2="46" stroke="#fde68a" strokeWidth="1.5" strokeLinecap="round"/>
+            {/* ══════ SUN & PHOTON RAYS ══════ */}
+            <g style={{ opacity: isSolarActive ? 1 : 0.45, transition: 'opacity 0.6s ease' }}>
+              {/* Sun ambient halo */}
+              <circle cx="135" cy="42" r="34" fill="url(#sol-sunglow)"/>
+              {/* Spinning Sun Rays */}
+              <g className="sol-sunrays">
+                {[0, 45, 90, 135, 180, 225, 270, 315].map((deg, i) => {
+                  const rad = (deg * Math.PI) / 180;
+                  const x1 = 135 + 18 * Math.cos(rad);
+                  const y1 = 42 + 18 * Math.sin(rad);
+                  const x2 = 135 + 28 * Math.cos(rad);
+                  const y2 = 42 + 28 * Math.sin(rad);
+                  return (
+                    <line key={i} x1={x1} y1={y1} x2={x2} y2={y2}
+                      stroke="#facc15" strokeWidth="2.4" strokeLinecap="round" opacity="0.95"/>
+                  );
+                })}
+              </g>
+              {/* Sun Disc */}
+              <circle cx="135" cy="42" r="14" fill="#fde047" stroke="#f59e0b" strokeWidth="2" className="sol-sundisc"/>
+              <circle cx="130" cy="38" r="4" fill="#fef9c3" opacity="0.6"/>
 
-            {/* ── House (floats) ── */}
-            <g className="ha-house">
-              {/* walls */}
-              <rect x="25" y="58" width="70" height="42" rx="3" fill="#86efac"/>
-              {/* roof */}
-              <polygon points="60,22 8,60 112,60" fill="#16a34a"/>
-              <polygon points="60,22 8,60 112,60" fill="none" stroke="#15803d" strokeWidth="1.2"/>
-              {/* door */}
-              <rect x="51" y="75" width="18" height="25" rx="3" fill="#14532d"/>
-              <circle cx="65" cy="88" r="1.5" fill="#86efac"/>
-              {/* windows */}
-              <rect x="30" y="65" width="15" height="12" rx="2" fill="#fef9c3"/>
-              <rect x="75" y="65" width="15" height="12" rx="2" fill="#fef9c3"/>
-              <line x1="37.5" y1="65" x2="37.5" y2="77" stroke="#fde68a" strokeWidth="0.8"/>
-              <line x1="30"   y1="71" x2="45"   y2="71" stroke="#fde68a" strokeWidth="0.8"/>
-              <line x1="82.5" y1="65" x2="82.5" y2="77" stroke="#fde68a" strokeWidth="0.8"/>
-              <line x1="75"   y1="71" x2="90"   y2="71" stroke="#fde68a" strokeWidth="0.8"/>
-              {/* ground */}
-              <line x1="5" y1="101" x2="115" y2="101" stroke="#86efac" strokeWidth="1.5" strokeDasharray="4 3"/>
+              {/* Streaming Sunbeams to Rooftop Panels (when active) */}
+              {isSolarActive && (
+                <g>
+                  <line className="sol-b1" x1="148" y1="52" x2="255" y2="82" stroke="#fde047" strokeWidth="2.2" strokeLinecap="round"/>
+                  <line className="sol-b2" x1="152" y1="56" x2="285" y2="85" stroke="#fbbf24" strokeWidth="2.5" strokeLinecap="round"/>
+                  <line className="sol-b3" x1="156" y1="58" x2="315" y2="87" stroke="#f59e0b" strokeWidth="2.2" strokeLinecap="round"/>
+                  <line className="sol-b4" x1="160" y1="60" x2="345" y2="90" stroke="#fde68a" strokeWidth="2"   strokeLinecap="round"/>
+                </g>
+              )}
+            </g>
 
-              {/* ── Solar panels on roof ── */}
-              <polygon points="42,45 78,45 83,54 37,54" fill="#1d4ed8"/>
-              {/* panel grid */}
-              <line x1="52" y1="45" x2="48" y2="54" stroke="#93c5fd" strokeWidth="0.9"/>
-              <line x1="62" y1="45" x2="58" y2="54" stroke="#93c5fd" strokeWidth="0.9"/>
-              <line x1="72" y1="45" x2="68" y2="54" stroke="#93c5fd" strokeWidth="0.9"/>
-              <line x1="37" y1="48.5" x2="83" y2="48.5" stroke="#93c5fd" strokeWidth="0.9"/>
-              <line x1="37" y1="52"   x2="83" y2="52"   stroke="#93c5fd" strokeWidth="0.9"/>
-              {/* moving shimmer streak across panel */}
-              <clipPath id="panelClip">
-                <polygon points="42,45 78,45 83,54 37,54"/>
+            {/* ══════ HOUSE / PANCHAYAT BUILDING ══════ */}
+            <g>
+              {/* House walls */}
+              <rect x="230" y="112" width="145" height="74" rx="4"
+                fill={isSolarActive ? '#065f46' : '#881337'}
+                stroke={isSolarActive ? '#059669' : '#9f1239'}
+                strokeWidth="1.5"
+                style={{ transition: 'fill 0.8s ease' }}
+              />
+
+              {/* Chimney (smokes in Before, clean in After) */}
+              <rect x="338" y="44" width="14" height="26" rx="2" fill="#334155"/>
+              <rect x="335" y="40" width="20" height="5"  rx="1" fill="#1e293b"/>
+              {phase === 'before' && (
+                <g>
+                  <circle className="sol-smk1" cx="345" cy="38" r="4.5" fill="#94a3b8" opacity="0.75"/>
+                  <circle className="sol-smk2" cx="345" cy="38" r="3.5" fill="#cbd5e1" opacity="0.65"/>
+                </g>
+              )}
+
+              {/* Roof slope background */}
+              <polygon points="302,48 214,114 390,114" fill="url(#sol-roof)" stroke="#334155" strokeWidth="1.5"/>
+
+              {/* Rooftop Solar PV Array */}
+              <clipPath id="sol-panel-clip">
+                <polygon points="252,65 352,65 375,108 228,108"/>
               </clipPath>
-              <rect x="37" y="45" width="12" height="9" fill="url(#panelGrad2)" opacity="0.55" clipPath="url(#panelClip)" className="ha-shimmer"/>
+              <polygon
+                points="252,65 352,65 375,108 228,108"
+                fill={isSolarActive ? 'url(#sol-panel)' : '#334155'}
+                stroke={isSolarActive ? '#60a5fa' : '#475569'}
+                strokeWidth="1.5"
+                style={{ transition: 'fill 0.6s ease' }}
+              />
 
-              {/* energy spark dots at panel edges */}
-              <circle cx="42" cy="48" r="2.2" fill="#fde047" className="ha-sp1"/>
-              <circle cx="60" cy="45" r="2"   fill="#fde047" className="ha-sp2"/>
-              <circle cx="78" cy="48" r="2.2" fill="#fde047" className="ha-sp3"/>
+              {/* Panel PV grid cells */}
+              <g clipPath="url(#sol-panel-clip)">
+                {/* Horizontal busbars */}
+                <line x1="220" y1="78" x2="380" y2="78" stroke="#93c5fd" strokeWidth="0.8" opacity="0.7"/>
+                <line x1="220" y1="92" x2="380" y2="92" stroke="#93c5fd" strokeWidth="0.8" opacity="0.7"/>
+                {/* Vertical fingers */}
+                <line x1="262" y1="65" x2="250" y2="108" stroke="#93c5fd" strokeWidth="0.8" opacity="0.7"/>
+                <line x1="288" y1="65" x2="280" y2="108" stroke="#93c5fd" strokeWidth="0.8" opacity="0.7"/>
+                <line x1="314" y1="65" x2="310" y2="108" stroke="#93c5fd" strokeWidth="0.8" opacity="0.7"/>
+                <line x1="340" y1="65" x2="340" y2="108" stroke="#93c5fd" strokeWidth="0.8" opacity="0.7"/>
+
+                {/* Animated Shimmer sweep when solar is active */}
+                {isSolarActive && (
+                  <rect x="220" y="65" width="30" height="45" fill="url(#sol-shimmer)" className="sol-shimmer"/>
+                )}
+              </g>
+
+              {/* Solar energy sparkles on roof */}
+              {isSolarActive && (
+                <g>
+                  <circle cx="265" cy="74" r="2.5" fill="#fde047" className="sol-sp1"/>
+                  <circle cx="330" cy="85" r="2.5" fill="#fde047" className="sol-sp2"/>
+                </g>
+              )}
+
+              {/* House Door */}
+              <rect x="288" y="142" width="28" height="44" rx="3" fill="#0f172a"/>
+              <circle cx="310" cy="164" r="2" fill="#fbbf24"/>
+
+              {/* Windows (warm glowing yellow) */}
+              <rect x="246" y="134" width="26" height="24" rx="3" fill="#fef08a" stroke="#ca8a04" strokeWidth="1"/>
+              <line x1="259" y1="134" x2="259" y2="158" stroke="#ca8a04" strokeWidth="1"/>
+              <line x1="246" y1="146" x2="272" y2="146" stroke="#ca8a04" strokeWidth="1"/>
+
+              <rect x="332" y="134" width="26" height="24" rx="3" fill="#fef08a" stroke="#ca8a04" strokeWidth="1"/>
+              <line x1="345" y1="134" x2="345" y2="158" stroke="#ca8a04" strokeWidth="1"/>
+              <line x1="332" y1="146" x2="358" y2="146" stroke="#ca8a04" strokeWidth="1"/>
+
+              {/* ── Solar Hybrid Inverter Unit on Wall ── */}
+              <rect x="380" y="136" width="20" height="34" rx="3" fill="#1e293b" stroke="#475569" strokeWidth="1.2"/>
+              <rect x="383" y="140" width="14" height="10" rx="1.5"
+                fill={isSolarActive ? '#064e3b' : '#450a0a'}/>
+              {/* Inverter status LED */}
+              <circle cx="390" cy="145" r="2.5"
+                fill={isSolarActive ? '#22c55e' : '#ef4444'}
+                style={{ filter: isSolarActive ? 'drop-shadow(0 0 4px #22c55e)' : 'none' }}
+              />
+              <rect x="384" y="155" width="12" height="2" rx="0.5" fill="#64748b"/>
+              <rect x="384" y="160" width="12" height="2" rx="0.5" fill="#64748b"/>
+
+              {/* Inverter clean energy pulse aura */}
+              {isSolarActive && (
+                <circle cx="390" cy="145" r="14" fill="url(#sol-pulse-glow)" opacity="0.6"/>
+              )}
+
+              {/* Building Title Plaque */}
+              <rect x="255" y="117" width="95" height="12" rx="2" fill="#0f172a" opacity="0.8"/>
+              <text x="302" y="126" textAnchor="middle" fontSize="7.5" fill="#86efac" fontWeight="800">
+                {isHi ? 'ग्राम पंचायत भवन' : 'PANCHAYAT / HOUSE'}
+              </text>
             </g>
+
+            {/* ══════ 4 FLOATING METRIC BUBBLES ══════ */}
+            {/* Pop sequentially from the rooftop solar array/inverter on every cycle */}
+            {bPos.map((bp, i) => {
+              if (!bubbles[i]) return null;
+              const b = bubbleData[i];
+              return (
+                <g key={i}
+                  style={{
+                    animation: 'wj-bubblepop 0.55s cubic-bezier(.34,1.56,.64,1) forwards',
+                    transformOrigin: `${bp.x}px ${bp.y}px`,
+                  }}>
+                  {/* Outer glow ring */}
+                  <circle cx={bp.x} cy={bp.y} r={bp.r + 3.5} fill={b.color} opacity="0.25"/>
+                  {/* Main Bubble sphere */}
+                  <circle cx={bp.x} cy={bp.y} r={bp.r} fill={b.color} opacity="0.95"/>
+                  {/* Specular Gloss Reflection */}
+                  <ellipse cx={bp.x - bp.r * 0.28} cy={bp.y - bp.r * 0.32}
+                    rx={bp.r * 0.3} ry={bp.r * 0.18} fill="#ffffff" opacity="0.45"/>
+                  {/* Energy stem line linking bubble to rooftop inverter junction at (385, 95) */}
+                  <line x1={bp.x} y1={bp.y + bp.r} x2="385" y2="95"
+                    stroke={b.color} strokeWidth="1.4" strokeDasharray="3 3" opacity="0.55"/>
+                  {/* Bubble Category Label */}
+                  <text x={bp.x} y={bp.y - 10} textAnchor="middle"
+                    fontSize="8.5" fill="#ffffff" fontWeight="700" letterSpacing="0.2px">
+                    {b.label}
+                  </text>
+                  {/* Real-time Calculated Metric Value */}
+                  <text x={bp.x} y={bp.y + 4} textAnchor="middle"
+                    fontSize="11" fill="#ffffff" fontWeight="800">
+                    {b.value}
+                  </text>
+                  {/* Subtitle / Unit descriptor */}
+                  <text x={bp.x} y={bp.y + 16} textAnchor="middle"
+                    fontSize="7.5" fill="#ffffff" opacity="0.9" fontWeight="600">
+                    {b.sub}
+                  </text>
+                </g>
+              );
+            })}
+
+            {/* Guide dashed trajectory from solar array to bubbles */}
+            <path
+              d="M 370 100 Q 430 70, 640 74"
+              fill="none"
+              stroke="#10b981"
+              strokeWidth="1.5"
+              strokeDasharray="6 4"
+              opacity="0.25"
+            />
           </svg>
         </div>
+      </div>
 
-        <div className="text-4xl font-extrabold text-green-700 mb-1">{animAfter.toFixed(1)}k</div>
-        <div className="text-sm text-green-500">kWh/{isHi ? 'माह' : 'month'}</div>
-        <div className="text-xs text-green-400 mt-1">₹{(calculateElectricityCost(after) / 1000).toFixed(1)}k/{isHi ? 'माह' : 'month'}</div>
+      {/* ── Side-by-Side Before & After Numerical Comparison Cards ── */}
+      <div className="grid sm:grid-cols-3 gap-4 items-center">
+        {/* BEFORE Solar Card */}
+        <div className="bg-red-50 border-2 border-red-200 rounded-2xl p-5 text-center shadow-sm">
+          <div className="text-xs font-bold text-red-500 uppercase tracking-widest mb-2 flex items-center justify-center gap-1.5">
+            <span className="w-2 h-2 rounded-full bg-red-500 animate-pulse"/>
+            {isHi ? 'सोलर से पहले' : 'BEFORE Solar'}
+          </div>
+          <div className="text-3xl sm:text-4xl font-extrabold text-red-700 mb-1">
+            {animBefore.toFixed(1)}k
+          </div>
+          <div className="text-xs sm:text-sm font-semibold text-red-600">
+            kWh/{isHi ? 'माह ग्रिड मांग' : 'mo grid draw'}
+          </div>
+          <div className="text-xs text-red-500/90 mt-1 font-medium bg-red-100/60 py-1 px-2 rounded-lg inline-block">
+            ₹{(calculateElectricityCost(before) / 1000).toFixed(1)}k/{isHi ? 'माह बिजली बिल' : 'mo electric bill'}
+          </div>
+        </div>
+
+        {/* Center: Reduction & ROI Pill */}
+        <div className="text-center p-3">
+          <div className="inline-flex flex-col items-center gap-2">
+            <div className="text-3xl sm:text-4xl font-black text-emerald-600 tracking-tight">
+              –{savedPct}%
+            </div>
+            <div className="flex items-center gap-2 text-emerald-600">
+              <div className="h-0.5 w-12 sm:w-16 bg-emerald-400"/>
+              <ArrowRight className="w-5 h-5"/>
+            </div>
+            <div className="text-sm font-bold text-emerald-800">
+              {(savedKWh / 1000).toFixed(1)}k kWh {isHi ? 'मासिक बचत' : 'monthly saved'}
+            </div>
+            <div className="text-sm font-semibold text-emerald-600">
+              ₹{animSaved.toFixed(1)}k {isHi ? 'बचत प्रति माह' : 'saved per month'}
+            </div>
+            <div className="text-xs text-slate-500 font-medium">
+              {animCO2.toFixed(2)} t CO₂ {isHi ? 'प्रति माह निवारण' : 'avoided / month'}
+            </div>
+          </div>
+        </div>
+
+        {/* AFTER Solar Card */}
+        <div className="bg-emerald-50 border-2 border-emerald-300 rounded-2xl p-5 text-center shadow-sm">
+          <div className="text-xs font-bold text-emerald-600 uppercase tracking-widest mb-2 flex items-center justify-center gap-1.5">
+            <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"/>
+            {isHi ? 'सोलर के बाद' : 'AFTER Solar'}
+          </div>
+          <div className="text-3xl sm:text-4xl font-extrabold text-emerald-700 mb-1">
+            {animAfter.toFixed(1)}k
+          </div>
+          <div className="text-xs sm:text-sm font-semibold text-emerald-600">
+            kWh/{isHi ? 'माह शेष ग्रिड' : 'mo net grid'}
+          </div>
+          <div className="text-xs text-emerald-600/90 mt-1 font-medium bg-emerald-100/60 py-1 px-2 rounded-lg inline-block">
+            ₹{(calculateElectricityCost(after) / 1000).toFixed(1)}k/{isHi ? 'माह नया बिल' : 'mo new bill'}
+          </div>
+        </div>
       </div>
     </div>
   );
