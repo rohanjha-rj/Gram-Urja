@@ -792,7 +792,7 @@ function HouseholdSolarView() {
     <SolarBackground>
       <div className="relative z-10 max-w-6xl mx-auto px-6 py-8 space-y-6">
 
-        {/* ── Merged Configuration + Live Roof Simulator ── */}
+        {/* ── Merged Configuration + Live Roof Simulator — side by side ── */}
         <div className="glass-card rounded-2xl p-5 fade-up">
           <div className="flex items-center justify-between mb-5">
             <h2 className="font-bold text-gray-900 flex items-center gap-2 text-sm uppercase tracking-wide">
@@ -801,9 +801,11 @@ function HouseholdSolarView() {
             <DemoBadge/>
           </div>
 
-          <div className="grid lg:grid-cols-2 gap-6 mb-6">
-            {/* Left — inputs */}
-            <div className="space-y-5 text-sm">
+          {/* Side-by-side: config left, simulator right */}
+          <div className="flex flex-col xl:flex-row gap-6">
+
+            {/* ── Left column: all inputs + metrics ── */}
+            <div className="xl:w-[380px] shrink-0 flex flex-col gap-4 text-sm">
 
               {/* Energy consumption — read-only, linked from My Dashboard */}
               <div className="rounded-xl border border-blue-200 bg-blue-50/60 p-4">
@@ -874,55 +876,45 @@ function HouseholdSolarView() {
                   </div>
                 </div>
               </div>
-            </div>
 
-            {/* Right — capacity + key metrics */}
-            <div className="flex flex-col gap-3">
-              <div className="rounded-2xl p-5 text-white" style={{ background: 'linear-gradient(135deg, #b45309, #f59e0b)' }}>
-                <div className="flex items-center gap-2 mb-2">
-                  <Sun className="w-5 h-5"/>
-                  <span className="font-semibold text-sm">Installed Capacity</span>
+              {/* Installed capacity banner */}
+              <div className="rounded-2xl p-4 text-white" style={{ background: 'linear-gradient(135deg, #b45309, #f59e0b)' }}>
+                <div className="flex items-center gap-2 mb-1">
+                  <Sun className="w-4 h-4"/>
+                  <span className="font-semibold text-xs">Installed Capacity</span>
                 </div>
-                <div className="text-5xl font-extrabold mb-1">
+                <div className="text-4xl font-extrabold mb-0.5">
                   <AnimatedNum value={totalCapacity} decimals={1}/> kW
                 </div>
-                <div className="text-sm opacity-80">{panelCount} panels × 400W each</div>
-                <div className="text-sm opacity-80">Uses {usedAreaSqFt} sq ft of {availAreaSqFt.toLocaleString()} sq ft</div>
+                <div className="text-xs opacity-80">{panelCount} panels × 400W each</div>
+                <div className="text-xs opacity-80">Uses {usedAreaSqFt} sq ft of {availAreaSqFt.toLocaleString()} sq ft</div>
               </div>
 
-              <div className="grid grid-cols-2 gap-3">
-                {[
-                  { label: 'Monthly Gen',    value: monthlyGenKWh,        unit: ' kWh', decimals: 0, color: 'text-blue-700' },
-                  { label: 'Annual Savings', value: annualSavings / 1000, unit: 'k ₹',  decimals: 1, color: 'text-purple-700', prefix: '₹' },
-                ].map(s => (
-                  <div key={s.label} className="glass-card border border-gray-200 rounded-xl p-3 text-center">
-                    <div className={`text-xl font-bold ${s.color}`}>
-                      <AnimatedNum value={s.value} decimals={s.decimals} prefix={s.prefix} suffix={s.unit}/>
-                    </div>
-                    <div className="text-xs text-gray-500">{s.label}</div>
-                  </div>
-                ))}
-              </div>
-
-              <div className="glass-card border border-gray-200 rounded-xl p-4 space-y-2">
+              {/* Key metric rows */}
+              <div className="glass-card border border-gray-200 rounded-xl p-3 space-y-2 text-sm">
+                <StatRow label="Monthly Gen"       value={`${monthlyGenKWh.toFixed(0)} kWh`}/>
+                <StatRow label="Annual Savings"    value={`₹${(annualSavings / 1000).toFixed(1)}k`}/>
                 <StatRow label="Investment"        value={`₹${(investment / 100000).toFixed(1)}L`}/>
                 <StatRow label="Payback Period"    value={payback} unit="years" highlight/>
                 <StatRow label="Annual Generation" value={`${(annualGenKWh / 1000).toFixed(1)}k kWh`}/>
                 <StatRow label="Demand Offset"     value={`${offsetPct.toFixed(1)}%`}/>
               </div>
             </div>
-          </div>
 
-          {/* Live Roof Simulator — merged inside same card, no footer stats */}
-          <PanelSimulator
-            panelCount={panelCount}
-            availAreaSqFt={availAreaSqFt}
-            totalCapacity={totalCapacity}
-            monthlyGen={monthlyGenKWh}
-            offsetPct={offsetPct}
-            irradiation={IRRADIATION}
-            showFooterStats={false}
-          />
+            {/* ── Right column: Live Roof Simulator ── */}
+            <div className="flex-1 min-w-0">
+              <PanelSimulator
+                panelCount={panelCount}
+                availAreaSqFt={availAreaSqFt}
+                totalCapacity={totalCapacity}
+                monthlyGen={monthlyGenKWh}
+                offsetPct={offsetPct}
+                irradiation={IRRADIATION}
+                showFooterStats={false}
+              />
+            </div>
+
+          </div>
         </div>
 
         {/* Before / After */}
