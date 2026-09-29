@@ -41,7 +41,7 @@ function AppRoutes() {
       <Route path="/alerts" element={<Layout><AlertsPage /></Layout>} />
       <Route path="/score" element={<Layout><ScorePage /></Layout>} />
       <Route path="/ai" element={<Layout><AIAssistantPage /></Layout>} />
-      {/* Default redirect */}
+      {/* Default redirect — send unknown paths and root "/" without a role to /login */}
       <Route path="*" element={<Navigate to="/login" replace />} />
     </Routes>
   );

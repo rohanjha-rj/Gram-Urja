@@ -2,7 +2,8 @@ import React, { useState } from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
 import {
   Zap, LayoutDashboard, Home, Sun, Droplets, Leaf,
-  Lightbulb, Bell, Award, Bot, Menu, X, Activity, LogOut
+  Lightbulb, Bell, Award, Bot, Menu, X, Activity, LogOut,
+  ChevronLeft, ChevronRight,
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 
@@ -26,15 +27,19 @@ const ROLE_LABELS: Record<string, { label: string; color: string }> = {
 };
 
 export default function Layout({ children }: { children: React.ReactNode }) {
-  const [sidebarOpen, setSidebarOpen] = useState(false);
-  const { role, setRole } = useAuth();
+  // Mobile overlay toggle
+  const [mobileOpen, setMobileOpen] = useState(false);
+  // Desktop collapsed state
+  const [collapsed, setCollapsed] = useState(false);
+
+  const { role, signOut } = useAuth();
   const navigate = useNavigate();
 
   const visibleNav = ALL_NAV_ITEMS.filter((item) => item.roles.includes(role));
   const roleInfo = ROLE_LABELS[role] ?? ROLE_LABELS['guest'];
 
-  function handleLogout() {
-    setRole('guest');
+  async function handleLogout() {
+    await signOut();
     navigate('/login');
   }
 
@@ -90,15 +95,16 @@ export default function Layout({ children }: { children: React.ReactNode }) {
       </div>
 
       {/* ══════════════════════════════════════════════════════════════════════
-          SIDEBAR — fixed, full viewport height, independent scroll
-          Glassmorphism: soft sage tint + backdrop blur
+          SIDEBAR
       ══════════════════════════════════════════════════════════════════════ */}
       <aside
         className={`
-          fixed top-0 left-0 h-screen w-64 z-40 flex flex-col
-          transition-transform duration-300 ease-in-out
-          ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'}
+          fixed top-0 left-0 h-screen z-40 flex flex-col
+          transition-all duration-300 ease-in-out
+          ${mobileOpen ? 'translate-x-0' : '-translate-x-full'}
           lg:translate-x-0 lg:relative lg:flex-shrink-0
+          ${collapsed ? 'lg:w-16' : 'lg:w-64'}
+          w-64
         `}
         style={{
           background: 'rgba(243,247,244,0.88)',
@@ -108,60 +114,84 @@ export default function Layout({ children }: { children: React.ReactNode }) {
           boxShadow: '4px 0 24px rgba(5,46,22,0.06)',
         }}
       >
-        {/* ── Logo ── */}
-        <div className="flex-shrink-0 flex items-center gap-3 px-5 py-5"
+        {/* ── Logo + collapse toggle ── */}
+        <div className="flex-shrink-0 flex items-center gap-3 px-4 py-5"
           style={{ borderBottom: '1px solid rgba(16,185,129,0.10)' }}>
-          <div className="p-2 bg-emerald-600 rounded-xl shadow-sm">
+          <div className="p-2 bg-emerald-600 rounded-xl shadow-sm flex-shrink-0">
             <Zap className="w-5 h-5 text-white" />
           </div>
-          <div>
-            <div className="font-bold text-gray-900 text-base leading-tight">GreenGrid AI</div>
-            <div className="text-[11px] text-emerald-600 font-medium">Sustainability Intelligence</div>
-          </div>
-          <button onClick={() => setSidebarOpen(false)} className="ml-auto lg:hidden text-gray-400 hover:text-gray-600 transition-colors">
+          {!collapsed && (
+            <div className="flex-1 min-w-0">
+              <div className="font-bold text-gray-900 text-base leading-tight truncate">GreenGrid AI</div>
+              <div className="text-[11px] text-emerald-600 font-medium truncate">Sustainability Intelligence</div>
+            </div>
+          )}
+          {/* Mobile close */}
+          <button onClick={() => setMobileOpen(false)} className="ml-auto lg:hidden text-gray-400 hover:text-gray-600 transition-colors">
             <X className="w-5 h-5" />
+          </button>
+          {/* Desktop collapse toggle */}
+          <button
+            onClick={() => setCollapsed(v => !v)}
+            className="hidden lg:flex items-center justify-center w-7 h-7 rounded-lg hover:bg-emerald-100 text-gray-400 hover:text-emerald-700 transition-colors ml-auto flex-shrink-0"
+            title={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+          >
+            {collapsed ? <ChevronRight className="w-4 h-4" /> : <ChevronLeft className="w-4 h-4" />}
           </button>
         </div>
 
         {/* ── Role badge ── */}
-        <div className="flex-shrink-0 px-4 py-3 space-y-1.5"
-          style={{ borderBottom: '1px solid rgba(16,185,129,0.10)' }}>
-          <div className="flex items-center justify-between">
-            <span className={`text-xs font-semibold px-2.5 py-1 rounded-full ${roleInfo.color}`}>
-              {roleInfo.label}
-            </span>
+        {!collapsed && (
+          <div className="flex-shrink-0 px-4 py-3 space-y-1.5"
+            style={{ borderBottom: '1px solid rgba(16,185,129,0.10)' }}>
+            <div className="flex items-center justify-between">
+              <span className={`text-xs font-semibold px-2.5 py-1 rounded-full ${roleInfo.color}`}>
+                {roleInfo.label}
+              </span>
+              <button onClick={handleLogout}
+                className="text-gray-400 hover:text-red-500 transition-colors p-1 rounded-lg hover:bg-red-50"
+                title="Log out">
+                <LogOut className="w-3.5 h-3.5" />
+              </button>
+            </div>
+            <div className="text-[11px] text-emerald-700 font-semibold tracking-wide">
+              Bihar Village Sustainability Region
+            </div>
+          </div>
+        )}
+
+        {/* ── Collapsed: logout icon only ── */}
+        {collapsed && (
+          <div className="flex-shrink-0 flex justify-center py-3"
+            style={{ borderBottom: '1px solid rgba(16,185,129,0.10)' }}>
             <button onClick={handleLogout}
-              className="text-gray-400 hover:text-red-500 transition-colors p-1 rounded-lg hover:bg-red-50"
-              title="Switch Role">
-              <LogOut className="w-3.5 h-3.5" />
+              className="text-gray-400 hover:text-red-500 transition-colors p-1.5 rounded-lg hover:bg-red-50"
+              title="Log out">
+              <LogOut className="w-4 h-4" />
             </button>
           </div>
-          <div className="text-[11px] text-emerald-700 font-semibold tracking-wide">
-            Bihar Village Sustainability Region
-          </div>
-        </div>
+        )}
 
         {/* ── Nav items — independent scroll ── */}
-        <nav className="flex-1 overflow-y-auto py-3 px-3 space-y-0.5">
+        <nav className="flex-1 overflow-y-auto py-3 px-2 space-y-0.5">
           {visibleNav.map((item) => (
             <NavLink
               key={item.to}
               to={item.to}
               end={item.to === '/'}
-              onClick={() => setSidebarOpen(false)}
+              onClick={() => setMobileOpen(false)}
+              title={collapsed ? item.label : undefined}
               className={({ isActive }) =>
                 isActive
-                  /* ── ACTIVE state ── */
-                  ? 'flex items-center gap-3 pl-3 pr-3 py-2.5 rounded-xl text-sm font-semibold transition-all duration-150 ' +
+                  ? `flex items-center ${collapsed ? 'justify-center' : 'gap-3'} pl-${collapsed ? '0' : '3'} pr-${collapsed ? '0' : '3'} py-2.5 rounded-xl text-sm font-semibold transition-all duration-150 ` +
                     'bg-emerald-100 text-emerald-800 border-l-4 border-emerald-500 shadow-sm'
-                  /* ── HOVER / idle state ── */
-                  : 'flex items-center gap-3 pl-3 pr-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-150 ' +
+                  : `flex items-center ${collapsed ? 'justify-center' : 'gap-3'} pl-${collapsed ? '0' : '3'} pr-${collapsed ? '0' : '3'} py-2.5 rounded-xl text-sm font-medium transition-all duration-150 ` +
                     'text-slate-600 hover:bg-[#E8F2EC] hover:text-emerald-900 border-l-4 border-transparent'
               }
             >
               <span className="flex-shrink-0">{item.icon}</span>
-              <span className="flex-1 min-w-0 truncate">{item.label}</span>
-              {item.badge && (
+              {!collapsed && <span className="flex-1 min-w-0 truncate">{item.label}</span>}
+              {!collapsed && item.badge && (
                 <span className="flex-shrink-0 ml-auto bg-red-500 text-white text-[10px] font-bold min-w-[1.25rem] px-1.5 py-0.5 rounded-full leading-none text-center mr-1">
                   {item.badge}
                 </span>
@@ -171,18 +201,20 @@ export default function Layout({ children }: { children: React.ReactNode }) {
         </nav>
 
         {/* ── Footer ── */}
-        <div className="flex-shrink-0 px-4 py-3"
-          style={{ borderTop: '1px solid rgba(16,185,129,0.10)' }}>
-          <div className="text-[11px] text-gray-400 text-center">
-            GreenGrid AI v0.1 
+        {!collapsed && (
+          <div className="flex-shrink-0 px-4 py-3"
+            style={{ borderTop: '1px solid rgba(16,185,129,0.10)' }}>
+            <div className="text-[11px] text-gray-400 text-center">
+              GreenGrid AI v0.1
+            </div>
           </div>
-        </div>
+        )}
       </aside>
 
       {/* Mobile overlay */}
-      {sidebarOpen && (
+      {mobileOpen && (
         <div className="fixed inset-0 z-30 bg-black/30 backdrop-blur-sm lg:hidden"
-          onClick={() => setSidebarOpen(false)} />
+          onClick={() => setMobileOpen(false)} />
       )}
 
       {/* ── Main content — takes remaining width, scrolls independently ── */}
@@ -197,7 +229,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
             borderBottom: '1px solid rgba(16,185,129,0.10)',
             boxShadow: '0 1px 8px rgba(5,46,22,0.05)',
           }}>
-          <button onClick={() => setSidebarOpen(true)}
+          <button onClick={() => setMobileOpen(true)}
             className="lg:hidden text-gray-500 hover:text-gray-700 flex-shrink-0 p-1 rounded-lg hover:bg-gray-100 transition-colors">
             <Menu className="w-5 h-5" />
           </button>
