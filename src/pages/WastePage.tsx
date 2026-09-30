@@ -95,7 +95,6 @@ function VillageWasteView() {
           <div className="grid sm:grid-cols-3 gap-8">
             <IconSlider
               label={isHindi ? 'गोबर' : 'Cow Dung'}
-              sublabel={isHindi ? '0.04 m³ बायोगैस प्रति किग्रा' : '0.04 m³ biogas per kg'}
               value={cowDung}
               displayValue={`${cowDung} kg/day`}
               min={0} max={2000} step={10}
@@ -108,7 +107,6 @@ function VillageWasteView() {
             />
             <IconSlider
               label={isHindi ? 'भोजन अपशिष्ट' : 'Food Waste'}
-              sublabel={isHindi ? '0.06 m³ बायोगैस प्रति किग्रा' : '0.06 m³ biogas per kg'}
               value={foodWaste}
               displayValue={`${foodWaste} kg/day`}
               min={0} max={1000} step={10}
@@ -121,7 +119,6 @@ function VillageWasteView() {
             />
             <IconSlider
               label={isHindi ? 'कृषि अपशिष्ट' : 'Agri Waste'}
-              sublabel={isHindi ? '0.02 m³ बायोगैस प्रति किग्रा' : '0.02 m³ biogas per kg'}
               value={agriWaste}
               displayValue={`${agriWaste} kg/day`}
               min={0} max={1000} step={10}
@@ -366,7 +363,6 @@ function CropIcon({ size = 28 }: { size?: number }) {
 
 interface IconSliderProps {
   label: string;
-  sublabel: string;
   value: number;
   displayValue: string;
   min: number;
@@ -380,7 +376,7 @@ interface IconSliderProps {
   hint: string;
 }
 
-function IconSlider({ label, sublabel, value, displayValue, min, max, step, onChange, accentColor, trackColor, labelColor, icon, hint }: IconSliderProps) {
+function IconSlider({ label, value, displayValue, min, max, step, onChange, accentColor, trackColor, labelColor, icon, hint }: IconSliderProps) {
   const pct = ((value - min) / (max - min)) * 100;
 
   return (
@@ -411,7 +407,6 @@ function IconSlider({ label, sublabel, value, displayValue, min, max, step, onCh
         />
       </div>
       <div className="text-xs text-gray-400 mt-1">{hint}</div>
-      {sublabel && <div className="text-xs text-gray-500">{sublabel}</div>}
     </div>
   );
 }
@@ -1170,7 +1165,6 @@ function HouseholdWasteView() {
           <div className="grid sm:grid-cols-3 gap-8">
             <IconSlider
               label={isHindi ? 'गोबर' : 'Cow Dung'}
-              sublabel={isHindi ? '0.04 m³ बायोगैस प्रति किग्रा' : '0.04 m³ biogas per kg'}
               value={cowDung}
               displayValue={`${cowDung} kg/day`}
               min={0} max={30} step={1}
@@ -1183,7 +1177,6 @@ function HouseholdWasteView() {
             />
             <IconSlider
               label={isHindi ? 'भोजन अपशिष्ट' : 'Food Waste'}
-              sublabel={isHindi ? '0.06 m³ बायोगैस प्रति किग्रा' : '0.06 m³ biogas per kg'}
               value={foodWaste}
               displayValue={`${foodWaste} kg/day`}
               min={0} max={20} step={1}
@@ -1196,7 +1189,6 @@ function HouseholdWasteView() {
             />
             <IconSlider
               label={isHindi ? 'कृषि अपशिष्ट' : 'Agri Waste'}
-              sublabel={isHindi ? '0.02 m³ बायोगैस प्रति किग्रा' : '0.02 m³ biogas per kg'}
               value={agriWaste}
               displayValue={`${agriWaste} kg/day`}
               min={0} max={15} step={1}

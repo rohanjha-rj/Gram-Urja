@@ -468,6 +468,18 @@
   animation: guFlowLine 2s linear infinite;
 }
 
+@keyframes solarPanelInstall {
+  from { opacity: 0; transform: scale(0.8); }
+  to   { opacity: 1; transform: scale(1); }
+}
+.solar-panel-install {
+  animation: solarPanelInstall 180ms ease-out both;
+}
+.solar-panel-install {
+  transform-box: fill-box;
+  transform-origin: center;
+}
+
 /* Respect reduced motion */
 @media (prefers-reduced-motion: reduce) {
   .gu-hero-text,
@@ -498,6 +510,7 @@
   .gu-section-in,
   .gu-flow-line,
   .energy-flow,
+  .solar-panel-install,
   .solar-glow,
   .sun-spin,
   .pulse-ring {

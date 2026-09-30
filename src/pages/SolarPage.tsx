@@ -1,5 +1,5 @@
-import React, { useState, useMemo, useEffect, useRef } from 'react';
-import { Sun, Zap, Leaf, TrendingDown, ArrowRight, ChevronDown, ChevronUp, Lightbulb, Clock, BatteryCharging, TreePine, Sparkles, ShieldCheck, MapPin, CheckCircle, AlertCircle } from 'lucide-react';
+import React, { useState, useMemo, useEffect, useLayoutEffect, useRef } from 'react';
+import { Sun, Zap, Leaf, TrendingDown, ArrowRight, ChevronDown, ChevronUp, Lightbulb, Clock, BatteryCharging, TreePine, Sparkles, ShieldCheck, MapPin, CheckCircle, AlertCircle, ZoomIn, ZoomOut, Move, RotateCcw } from 'lucide-react';
 import {
   calculateSolarCapacity, calculateSolarGeneration, calculateSolarOffset,
   calculateSolarCO2Avoided, calculateBeforeAfterScenario, calculateElectricityCost, ASSUMPTIONS
@@ -50,78 +50,8 @@ function AnimatedNum({ value, decimals = 0, prefix = '', suffix = '' }: {
   );
 }
 
-// ─── Realistic Panel ─────────────────────────────────────────────────────────
-function RealisticPanel({
-  x, y, w, h, active, delay,
-}: { x: number; y: number; w: number; h: number; active: boolean; delay: number }) {
-  const FRAME = 2;
-  const CELL_COLS = 6;
-  const CELL_ROWS = 4;
-  const innerW = w - FRAME * 2;
-  const innerH = h - FRAME * 2;
-  const cellW = innerW / CELL_COLS;
-  const cellH = innerH / CELL_ROWS;
-  const gap = 1;
-
-  return (
-    <g style={{
-      opacity: active ? 1 : 0.18,
-      animation: active ? `panelAppear 0.35s cubic-bezier(0.34,1.56,0.64,1) ${Math.min(delay, 2400)}ms both` : 'none',
-    }}>
-      {active && (
-        <rect x={x+3} y={y+4} width={w} height={h} fill="rgba(0,0,0,0.35)" rx="3"/>
-      )}
-      <rect x={x} y={y} width={w} height={h}
-        fill={active ? '#94a3b8' : '#334155'} rx="3"/>
-      {active && <>
-        <line x1={x+1} y1={y+1} x2={x+w-1} y2={y+1} stroke="#cbd5e1" strokeWidth="1" opacity="0.6"/>
-        <line x1={x+1} y1={y+1} x2={x+1} y2={y+h-1} stroke="#cbd5e1" strokeWidth="1" opacity="0.6"/>
-        <line x1={x+1} y1={y+h-1} x2={x+w-1} y2={y+h-1} stroke="#475569" strokeWidth="1" opacity="0.8"/>
-        <line x1={x+w-1} y1={y+1} x2={x+w-1} y2={y+h-1} stroke="#475569" strokeWidth="1" opacity="0.8"/>
-      </>}
-      <rect x={x+FRAME} y={y+FRAME} width={innerW} height={innerH}
-        fill={active ? '#1e3a8a' : '#1e293b'} rx="1"/>
-      {Array.from({ length: CELL_ROWS }, (_, row) =>
-        Array.from({ length: CELL_COLS }, (_, col) => {
-          const cx = x + FRAME + col * cellW + gap / 2;
-          const cy = y + FRAME + row * cellH + gap / 2;
-          const cw = cellW - gap;
-          const ch = cellH - gap;
-          return (
-            <g key={`${row}-${col}`}>
-              <rect x={cx} y={cy} width={cw} height={ch}
-                fill={active ? '#1d4ed8' : '#1e3a5f'} rx="0.5"/>
-              {active && <>
-                <line x1={cx+1} y1={cy+ch*0.33} x2={cx+cw-1} y2={cy+ch*0.33}
-                  stroke="#93c5fd" strokeWidth="0.5" opacity="0.55"/>
-                <line x1={cx+1} y1={cy+ch*0.66} x2={cx+cw-1} y2={cy+ch*0.66}
-                  stroke="#93c5fd" strokeWidth="0.5" opacity="0.55"/>
-                {[0.2, 0.5, 0.8].map(t => (
-                  <line key={t} x1={cx+cw*t} y1={cy+1} x2={cx+cw*t} y2={cy+ch-1}
-                    stroke="#bfdbfe" strokeWidth="0.3" opacity="0.35"/>
-                ))}
-              </>}
-            </g>
-          );
-        })
-      )}
-      {active && (
-        <rect x={x} y={y + h/2 - 1} width={w} height="2" fill="#475569" opacity="0.5"/>
-      )}
-      {active && (
-        <polygon
-          points={`${x+FRAME},${y+FRAME} ${x+FRAME+innerW*0.38},${y+FRAME} ${x+FRAME},${y+FRAME+innerH*0.42}`}
-          fill="white" opacity="0.06"/>
-      )}
-      {active && (
-        <rect x={x+w/2-3} y={y+h-FRAME-3} width="6" height="4" fill="#475569" rx="1"/>
-      )}
-    </g>
-  );
-}
-
 // ─── Panel Simulator SVG ──────────────────────────────────────────────────────
-function PanelSimulator({
+function LiveRoofSimulator({
   panelCount, availAreaSqFt, totalCapacity, monthlyGen, offsetPct, irradiation,
   showFooterStats = true,
   customSunAngle,
@@ -133,53 +63,157 @@ function PanelSimulator({
 }) {
   const { isHindi: isHi } = useLanguage();
   const PANEL_AREA_SQFT = 10;
+  const PANEL_KW = panelCount > 0 ? totalCapacity / panelCount : 0.4;
   const usedArea      = Math.min(panelCount * PANEL_AREA_SQFT, availAreaSqFt);
   const remainingArea = Math.max(0, availAreaSqFt - usedArea);
-  const maxDisplay    = Math.min(panelCount, 120);
+  const MIN_ZOOM = 1;
+  const MAX_ZOOM = 5;
+  const PANEL_ANIMATION_MS = 180;
+  const [zoom, setZoom] = useState(1);
+  const [pan, setPan] = useState({ x: 0, y: 0 });
+  const dragRef = useRef<{ pointerX: number; pointerY: number; panX: number; panY: number; currentX: number; currentY: number } | null>(null);
+  const panelGridRef = useRef<SVGGElement>(null);
+  const sunOrbitRef = useRef<SVGGElement>(null);
+  const sunIrradianceRef = useRef<SVGTextElement>(null);
+  const liveDailyYieldRef = useRef<HTMLSpanElement>(null);
+  const energyBeamRef = useRef<SVGLineElement>(null);
+  const sunModeRef = useRef(customSunAngle);
+  const monthlyGenerationRef = useRef(monthlyGen);
+  const irradiationRef = useRef(irradiation);
+  sunModeRef.current = customSunAngle;
+  monthlyGenerationRef.current = monthlyGen;
+  irradiationRef.current = irradiation;
+  const previousPanelCountRef = useRef(0);
+  const [panelTransition, setPanelTransition] = useState<{ from: number; to: number } | null>(null);
 
-  const W = 800; const H = 460; const SKY_H = 130;
+  const renderedPanelCount = panelCount;
+
+  const W = 800; const H = 520; const SKY_H = 150; const BASE_H = 42;
+  const GRID_LEFT = 70; const GRID_TOP = SKY_H + 18;
+  const GRID_W = W - 140;
+  const GRID_H = H - GRID_TOP - BASE_H - 24;
+  const PANEL_ASPECT = 1.6;
+  const GAP_X = renderedPanelCount > 1500 ? 0.7 : 1;
+  const GAP_Y = GAP_X;
+  const gridPanelCount = Math.max(0, Math.floor(renderedPanelCount));
+  const COLS = Math.max(1, Math.ceil(Math.sqrt(Math.max(1, gridPanelCount) * GRID_W / GRID_H / PANEL_ASPECT)));
+  const gridRows = Math.max(1, Math.ceil(gridPanelCount / COLS));
+  const PANEL_W = (GRID_W - (COLS - 1) * GAP_X) / COLS;
+  const PANEL_H = (GRID_H - (gridRows - 1) * GAP_Y) / gridRows;
   const ROOF_TL = { x: 70,  y: SKY_H };
-  const ROOF_TR = { x: 730, y: SKY_H };
-  const ROOF_BR = { x: 770, y: H - 42 };
-  const ROOF_BL = { x: 30,  y: H - 42 };
+  const ROOF_TR = { x: W - 70, y: SKY_H };
+  const ROOF_BR = { x: W - 30, y: H - BASE_H };
+  const ROOF_BL = { x: 30,  y: H - BASE_H };
+  const zoomTransform = `translate(${pan.x} ${pan.y}) translate(${W / 2} ${H / 2}) scale(${zoom}) translate(${-W / 2} ${-H / 2})`;
+  useLayoutEffect(() => {
+    const previousCount = previousPanelCountRef.current;
+    previousPanelCountRef.current = panelCount;
+    if (previousCount === panelCount) return;
 
-  const COLS = 10;
-  const ROWS = Math.ceil(120 / COLS);
-  const GRID_LEFT = 70;  const GRID_TOP = SKY_H + 18;
-  const GRID_W    = W - 140;
-  const GRID_H    = H - SKY_H - 64;
-  const PANEL_W   = (GRID_W - (COLS + 1) * 3) / COLS;
-  const PANEL_H   = (GRID_H - (ROWS + 1) * 5) / ROWS;
-  const GAP_X = 3; const GAP_Y = 5;
+    if (panelCount <= previousCount) {
+      setPanelTransition(null);
+      return;
+    }
 
-  const [autoSunAngle, setAutoSunAngle] = useState(45);
-  const rafRef = useRef<number>();
-  const t0 = useRef(Date.now());
+    setPanelTransition({ from: previousCount, to: panelCount });
+  }, [panelCount]);
+
   useEffect(() => {
-    if (customSunAngle !== undefined) return;
-    const tick = () => {
-      const elapsed = (Date.now() - t0.current) / 1000;
-      setAutoSunAngle(45 + Math.sin(elapsed * 0.2) * 25);
-      rafRef.current = requestAnimationFrame(tick);
+    if (!panelTransition) return;
+
+    const lastDelay = (panelTransition.to - panelTransition.from - 1) * 15;
+    const timer = window.setTimeout(() => setPanelTransition(null), lastDelay + PANEL_ANIMATION_MS);
+    return () => window.clearTimeout(timer);
+  }, [panelTransition]);
+
+  function updateZoom(nextZoom: number) {
+    const next = Math.max(MIN_ZOOM, Math.min(MAX_ZOOM, nextZoom));
+    setZoom(next);
+    if (next === MIN_ZOOM) setPan({ x: 0, y: 0 });
+  }
+
+  function handleCanvasPointerDown(event: React.PointerEvent<HTMLDivElement>) {
+    if (zoom <= MIN_ZOOM) return;
+    event.currentTarget.setPointerCapture(event.pointerId);
+    dragRef.current = { pointerX: event.clientX, pointerY: event.clientY, panX: pan.x, panY: pan.y, currentX: pan.x, currentY: pan.y };
+  }
+
+  function handleCanvasPointerMove(event: React.PointerEvent<HTMLDivElement>) {
+    if (!dragRef.current) return;
+    const bounds = event.currentTarget.getBoundingClientRect();
+    const maxPanX = W * (zoom - 1) / 2;
+    const maxPanY = H * (zoom - 1) / 2;
+    const nextX = Math.max(-maxPanX, Math.min(maxPanX, dragRef.current.panX + (event.clientX - dragRef.current.pointerX) * W / bounds.width));
+    const nextY = Math.max(-maxPanY, Math.min(maxPanY, dragRef.current.panY + (event.clientY - dragRef.current.pointerY) * H / bounds.height));
+    dragRef.current.currentX = nextX;
+    dragRef.current.currentY = nextY;
+    panelGridRef.current?.setAttribute('transform', `translate(${nextX} ${nextY}) translate(${W / 2} ${H / 2}) scale(${zoom}) translate(${-W / 2} ${-H / 2})`);
+  }
+
+  function handleCanvasPointerUp(event: React.PointerEvent<HTMLDivElement>) {
+    const finalPan = dragRef.current;
+    dragRef.current = null;
+    if (finalPan) setPan({ x: finalPan.currentX, y: finalPan.currentY });
+    if (event.currentTarget.hasPointerCapture(event.pointerId)) {
+      event.currentTarget.releasePointerCapture(event.pointerId);
+    }
+  }
+
+  const SUN_BASE_X = W / 2;
+  const SUN_BASE_Y = 80;
+
+  function updateSunVisual(angle: number) {
+    const sunProgress = Math.max(0, Math.min(1, (angle - 25) / 140));
+    const sunX = 80 + sunProgress * (W - 160);
+    const sunY = 60 + 38 * (1 - Math.sin(sunProgress * Math.PI));
+    const sunlightFactor = Math.max(0, Math.sin(angle * Math.PI / 180));
+
+    sunOrbitRef.current?.setAttribute('transform', `translate(${sunX - SUN_BASE_X} ${sunY - SUN_BASE_Y})`);
+    sunOrbitRef.current?.setAttribute('data-sun-angle', angle.toFixed(1));
+    energyBeamRef.current?.setAttribute('x1', sunX.toFixed(2));
+    energyBeamRef.current?.setAttribute('y1', sunY.toFixed(2));
+    if (sunIrradianceRef.current) {
+      sunIrradianceRef.current.textContent = `${(irradiationRef.current * sunlightFactor).toFixed(1)} kWh/kW·day`;
+    }
+    if (liveDailyYieldRef.current) {
+      liveDailyYieldRef.current.textContent = `${(monthlyGenerationRef.current / 30 * sunlightFactor).toFixed(1)}`;
+    }
+  }
+
+  useLayoutEffect(() => {
+    let startTime: number | null = null;
+    let lastFixedAngle: number | undefined;
+    const update = () => {
+      const now = performance.now();
+      const fixedAngle = sunModeRef.current;
+      if (fixedAngle !== undefined) {
+        startTime = null;
+        if (lastFixedAngle !== fixedAngle) {
+          updateSunVisual(fixedAngle);
+          lastFixedAngle = fixedAngle;
+        }
+      } else {
+        if (startTime === null) startTime = now;
+        lastFixedAngle = undefined;
+        updateSunVisual(90 + Math.sin((now - startTime) * 0.0002) * 75);
+      }
     };
-    rafRef.current = requestAnimationFrame(tick);
-    return () => { if (rafRef.current) cancelAnimationFrame(rafRef.current); };
-  }, [customSunAngle]);
 
-  const activeSunAngle = customSunAngle !== undefined ? customSunAngle : autoSunAngle;
-
-  const SUN_R  = 115;
-  const SUN_CX = 400 + SUN_R * Math.cos((activeSunAngle - 90) * Math.PI / 180);
-  const SUN_CY = SKY_H / 2 + SUN_R * Math.sin((activeSunAngle - 90) * Math.PI / 180) + 15;
+    update();
+    const intervalId = window.setInterval(update, 16);
+    return () => window.clearInterval(intervalId);
+  }, []);
 
   const sparks = useMemo(() =>
-    Array.from({ length: Math.min(maxDisplay, 14) }, (_, i) => {
-      const col = (i * 7) % COLS;
-      const row = Math.floor((i * 7) / COLS) % ROWS;
-      const bx  = GRID_LEFT + col * (PANEL_W + GAP_X) + PANEL_W / 2;
-      const by  = GRID_TOP  + row * (PANEL_H + GAP_Y) + PANEL_H / 2;
+    Array.from({ length: Math.min(gridPanelCount, 14) }, (_, i) => {
+      const col = i % COLS;
+      const row = Math.floor(i / COLS);
+      const rowPanelCount = Math.min(COLS, gridPanelCount - row * COLS);
+      const rowWidth = rowPanelCount * PANEL_W + (rowPanelCount - 1) * GAP_X;
+      const bx = GRID_LEFT + (GRID_W - rowWidth) / 2 + col * (PANEL_W + GAP_X) + PANEL_W / 2;
+      const by = GRID_TOP + row * (PANEL_H + GAP_Y) + PANEL_H / 2;
       return { x: bx, y: by, delay: (i * 0.35) % 2.5 };
-    }), [maxDisplay, PANEL_W, PANEL_H]);
+    }), [gridPanelCount, COLS, PANEL_W, PANEL_H, GAP_X, GAP_Y, GRID_W]);
 
   const fillPct = Math.min((usedArea / availAreaSqFt) * 100, 100);
 
@@ -200,12 +234,53 @@ function PanelSimulator({
           <span className="text-slate-500">|</span>
           <span className="text-green-300 font-bold bg-green-500/10 px-2 py-0.5 rounded border border-green-500/20">{monthlyGen.toFixed(0)} kWh/mo</span>
           <span className="text-slate-500">|</span>
+          <span className="text-amber-200 font-bold bg-amber-500/10 px-2 py-0.5 rounded border border-amber-500/20">
+            Sun yield <span ref={liveDailyYieldRef}>{(monthlyGen / 30).toFixed(1)}</span> kWh/day
+          </span>
+          <span className="text-slate-500">|</span>
           <span className="text-blue-300 font-bold bg-blue-500/10 px-2 py-0.5 rounded border border-blue-500/20">{offsetPct.toFixed(1)}% offset</span>
         </div>
       </div>
 
-      <div className="relative flex-1 flex items-center justify-center p-2 bg-gradient-to-b from-slate-900 via-slate-900/90 to-slate-950">
-        <svg viewBox={`0 0 ${W} ${H}`} className="w-full h-auto max-h-[500px]" style={{ display: 'block' }}>
+      <div className="flex flex-wrap items-center justify-between gap-2 px-5 py-2 border-b border-white/8 bg-slate-900/70">
+        <span className="inline-flex max-w-full flex-wrap items-center gap-x-1.5 rounded-lg border border-sky-400/20 bg-sky-400/10 px-3 py-1.5 text-xs font-semibold text-sky-100">
+          <span>Fixed 1:1 scale · 1 rectangle = 1 panel</span>
+          <span className="text-sky-300/70">|</span>
+          <span>{panelCount.toLocaleString()} individual panels</span>
+          <span className="text-sky-300/70">|</span>
+          <span>Total configured: {panelCount.toLocaleString()} panels ({totalCapacity.toFixed(1)} kW)</span>
+        </span>
+        <div className="flex items-center gap-1.5 text-xs text-slate-200" aria-label="Simulator zoom controls">
+          <button type="button" onClick={() => updateZoom(zoom - 0.5)} disabled={zoom <= MIN_ZOOM} title="Zoom out" aria-label="Zoom out"
+            className="rounded-lg border border-white/15 bg-white/5 p-2 hover:bg-white/10 disabled:opacity-40">
+            <ZoomOut className="h-4 w-4" />
+          </button>
+          <span className="w-12 text-center tabular-nums">{zoom.toFixed(1)}×</span>
+          <button type="button" onClick={() => updateZoom(zoom + 0.5)} disabled={zoom >= MAX_ZOOM} title="Zoom in" aria-label="Zoom in"
+            className="rounded-lg border border-white/15 bg-white/5 p-2 hover:bg-white/10 disabled:opacity-40">
+            <ZoomIn className="h-4 w-4" />
+          </button>
+          <button type="button" onClick={() => { setZoom(1); setPan({ x: 0, y: 0 }); }} title="Reset zoom and pan" aria-label="Reset zoom and pan"
+            className="rounded-lg border border-white/15 bg-white/5 p-2 hover:bg-white/10">
+            <RotateCcw className="h-4 w-4" />
+          </button>
+        </div>
+      </div>
+
+      <div
+        className={`relative aspect-[20/13] w-full shrink-0 overflow-hidden bg-gradient-to-b from-slate-900 via-slate-900/90 to-slate-950 ${zoom > 1 ? 'cursor-grab active:cursor-grabbing' : ''}`}
+        style={{ touchAction: zoom > 1 ? 'none' : 'pan-y' }}
+        onPointerDown={handleCanvasPointerDown}
+        onPointerMove={handleCanvasPointerMove}
+        onPointerUp={handleCanvasPointerUp}
+        onPointerCancel={handleCanvasPointerUp}
+        onWheel={(event) => {
+          if (!event.ctrlKey) return;
+          event.preventDefault();
+          updateZoom(zoom + (event.deltaY < 0 ? 0.25 : -0.25));
+        }}
+      >
+        <svg viewBox={`0 0 ${W} ${H}`} className="block w-full h-full min-w-0" preserveAspectRatio="xMidYMid meet" style={{ display: 'block' }}>
           <defs>
             <linearGradient id="ps-sky" x1="0" y1="0" x2="0" y2="1">
               <stop offset="0%"   stopColor={irradiation > 4 ? '#0ea5e9' : '#1e3a5f'}/>
@@ -240,23 +315,25 @@ function PanelSimulator({
           <rect x="0" y={SKY_H - 20} width={W} height="20" fill="url(#ps-sky)" opacity="0.5"/>
 
           {/* Sun & Light effect */}
-          <circle cx={SUN_CX} cy={SUN_CY} r="60" fill="url(#ps-sun-glow)" opacity="0.75"/>
-          <g className="sun-spin" style={{ transformOrigin: `${SUN_CX}px ${SUN_CY}px` }}>
+          <g ref={sunOrbitRef}>
+          <circle cx={SUN_BASE_X} cy={SUN_BASE_Y} r="50" fill="url(#ps-sun-glow)" opacity="0.75"/>
+          <g className="sun-spin" style={{ transformOrigin: `${SUN_BASE_X}px ${SUN_BASE_Y}px` }}>
             {[0,20,40,60,80,100,120,140,160,180,200,220,240,260,280,300,320,340].map((a, i) => (
               <line key={i}
-                x1={SUN_CX + 24 * Math.cos(a * Math.PI / 180)}
-                y1={SUN_CY + 24 * Math.sin(a * Math.PI / 180)}
-                x2={SUN_CX + 38 * Math.cos(a * Math.PI / 180)}
-                y2={SUN_CY + 38 * Math.sin(a * Math.PI / 180)}
+                x1={SUN_BASE_X + 24 * Math.cos(a * Math.PI / 180)}
+                y1={SUN_BASE_Y + 24 * Math.sin(a * Math.PI / 180)}
+                x2={SUN_BASE_X + 38 * Math.cos(a * Math.PI / 180)}
+                y2={SUN_BASE_Y + 38 * Math.sin(a * Math.PI / 180)}
                 stroke="#fbbf24" strokeWidth="1.75" strokeLinecap="round" opacity="0.75"/>
             ))}
           </g>
-          <circle cx={SUN_CX} cy={SUN_CY} r="22" fill="#fef08a" className="solar-glow"/>
-          <circle cx={SUN_CX} cy={SUN_CY} r="15" fill="#fbbf24"/>
-          <circle cx={SUN_CX} cy={SUN_CY} r="9"  fill="#f59e0b"/>
-          <text x={SUN_CX + 30} y={SUN_CY - 10} fill="#fef08a" fontSize="10" fontWeight="700" opacity="0.9">
-            {irradiation} kWh/kW·day
+          <circle cx={SUN_BASE_X} cy={SUN_BASE_Y} r="22" fill="#fef08a" className="solar-glow"/>
+          <circle cx={SUN_BASE_X} cy={SUN_BASE_Y} r="15" fill="#fbbf24"/>
+          <circle cx={SUN_BASE_X} cy={SUN_BASE_Y} r="9"  fill="#f59e0b"/>
+          <text ref={sunIrradianceRef} x={SUN_BASE_X + 30} y={SUN_BASE_Y - 10} fill="#fef08a" fontSize="10" fontWeight="700" opacity="0.9">
+            {irradiation.toFixed(1)} kWh/kW·day
           </text>
+          </g>
 
           {irradiation < 4.5 && (
             <g opacity={0.5 - (irradiation - 3) * 0.2} className="gu-cloud-1">
@@ -277,33 +354,47 @@ function PanelSimulator({
             return <line key={i} x1={leftX} y1={ty} x2={rightX} y2={ty} stroke="#7c2d12" strokeWidth="1.5" opacity="0.4"/>;
           })}
 
-          {/* Mounting rails */}
-          {Array.from({ length: ROWS }, (_, row) => {
-            const y1 = GRID_TOP + row * (PANEL_H + GAP_Y) + PANEL_H * 0.3;
-            const y2 = GRID_TOP + row * (PANEL_H + GAP_Y) + PANEL_H * 0.7;
-            return (
-              <g key={row}>
-                <line x1={GRID_LEFT - 10} y1={y1} x2={GRID_LEFT + GRID_W + 10} y2={y1} stroke="#64748b" strokeWidth="3" opacity="0.5"/>
-                <line x1={GRID_LEFT - 10} y1={y2} x2={GRID_LEFT + GRID_W + 10} y2={y2} stroke="#64748b" strokeWidth="3" opacity="0.5"/>
-              </g>
-            );
-          })}
+          <g clipPath="url(#ps-roof-clip)">
+            <g ref={panelGridRef} transform={zoomTransform}>
+              {Array.from({ length: gridPanelCount }, (_, i) => {
+                const row = Math.floor(i / COLS);
+                const col = i % COLS;
+                const rowPanelCount = Math.min(COLS, gridPanelCount - row * COLS);
+                const rowWidth = rowPanelCount * PANEL_W + (rowPanelCount - 1) * GAP_X;
+                const x = GRID_LEFT + (GRID_W - rowWidth) / 2 + col * (PANEL_W + GAP_X);
+                const y = GRID_TOP + row * (PANEL_H + GAP_Y);
+                const isEntering = panelTransition !== null && i >= panelTransition.from && i < panelTransition.to;
+                const animationDelay = isEntering ? (i - panelTransition.from) * 15 : undefined;
+                const tooltip = `Panel ${i + 1}: 1 panel · ${PANEL_AREA_SQFT} sq ft · ${PANEL_KW.toFixed(2)} kW`;
 
-          {/* Realistic Panels Grid */}
-          {Array.from({ length: Math.min(ROWS * COLS, 120) }, (_, i) => {
-            const col    = i % COLS;
-            const row    = Math.floor(i / COLS);
-            const px     = GRID_LEFT + col * (PANEL_W + GAP_X);
-            const py     = GRID_TOP  + row * (PANEL_H + GAP_Y);
-            const active = i < maxDisplay;
-            return <RealisticPanel key={i} x={px} y={py} w={PANEL_W} h={PANEL_H} active={active} delay={i * 35}/>;
-          })}
+                return (
+                  <g key={i} transform={`translate(${x} ${y})`} style={{ transition: 'transform 450ms ease' }} aria-label={tooltip}>
+                    <title>{tooltip}</title>
+                    <rect
+                      className={isEntering ? 'solar-panel-install' : undefined}
+                      style={{
+                        transition: 'width 450ms ease, height 450ms ease',
+                        ...(animationDelay === undefined ? {} : { animationDelay: `${animationDelay}ms` }),
+                      }}
+                      x="0"
+                      y="0"
+                      width={PANEL_W}
+                      height={PANEL_H}
+                      rx="1"
+                      fill={i % 2 ? '#2563eb' : '#1d4ed8'}
+                      stroke="#93c5fd"
+                      strokeWidth="0.5"
+                    />
+                  </g>
+                );
+              })}
 
-          {/* Sparks */}
-          {maxDisplay > 0 && sparks.map((sp, i) => (
-            <circle key={i} cx={sp.x} cy={sp.y} r="3.5" fill="#fbbf24" filter="url(#ps-glow)"
-              style={{ animation: `guSparkTravel 2.2s ease-in-out ${sp.delay}s infinite`, transformOrigin: `${sp.x}px ${sp.y}px` }}/>
-          ))}
+              {sparks.map((sp, i) => (
+                <circle key={i} cx={sp.x} cy={sp.y} r="2.5" fill="#fbbf24" filter="url(#ps-glow)"
+                  style={{ animation: `guSparkTravel 2.2s ease-in-out ${sp.delay}s infinite`, transformOrigin: `${sp.x}px ${sp.y}px` }} />
+              ))}
+            </g>
+          </g>
 
           {/* Inverter Unit */}
           <g transform={`translate(${W - 115}, ${H - 84})`}>
@@ -319,7 +410,7 @@ function PanelSimulator({
           <g transform={`translate(${W - 215}, ${H - 100})`}>
             <rect x="0" y="30" width="54" height="44" fill="#fefce8" stroke="#d1d5db" strokeWidth="1.5" rx="2"/>
             <polygon points="-5,30 59,30 27,4" fill="#16a34a"/>
-            {maxDisplay > 0 && (
+            {renderedPanelCount > 0 && (
               <rect x="3" y="33" width="48" height="38" fill="#fbbf24" rx="1" opacity="0.08"
                 style={{ animation: 'glow 2s ease-in-out infinite' }}/>
             )}
@@ -330,27 +421,33 @@ function PanelSimulator({
           </g>
 
           {/* Energy Beams from Sun */}
-          {maxDisplay > 0 && (
-            <line x1={SUN_CX} y1={SUN_CY} x2={GRID_LEFT + GRID_W / 2} y2={GRID_TOP + PANEL_H}
+          {renderedPanelCount > 0 && (
+            <line ref={energyBeamRef} x1={SUN_BASE_X} y1={SUN_BASE_Y} x2={GRID_LEFT + GRID_W / 2} y2={GRID_TOP + PANEL_H}
               stroke="#fbbf24" strokeWidth="2" strokeDasharray="10 6" className="energy-flow" opacity="0.4"/>
           )}
 
           {/* Roof Baseline & Coverage Bar */}
-          <rect x="0" y={H - 42} width={W} height="42" fill="#166534" opacity="0.75"/>
-          <rect x="0" y={H - 42} width={W} height="6"  fill="#15803d"/>
-          <rect x="40" y={H - 28} width={W - 80} height="9" fill="#0f172a" rx="4.5"/>
-          <rect x="40" y={H - 28}
-            width={Math.max(8, ((fillPct / 100) * (W - 80)))} height="9"
+          <rect x="0" y={H - 42} width={W} height="42" fill="#15803d"/>
+          <rect x="40" y={H - 10} width={W - 80} height="4" fill="#14532d" rx="2"/>
+          <rect x="40" y={H - 10}
+            width={Math.max(4, ((fillPct / 100) * (W - 80)))} height="4"
             fill={fillPct < 50 ? '#16a34a' : fillPct < 80 ? '#f59e0b' : '#ef4444'} rx="4.5"
             style={{ transition: 'width 0.5s ease' }}/>
-          <text x="44"     y={H - 33} fill="#94a3b8" fontSize="8.5">Roof Coverage</text>
-          <text x={W - 44} y={H - 33} textAnchor="end" fill="#94a3b8" fontSize="8.5">
-            {fillPct.toFixed(0)}% of {availAreaSqFt.toLocaleString()} sq ft ({usedArea} sq ft used)
+          <text x={W / 2} y={H - 19} textAnchor="middle" fill="#ffffff" fontSize="15" fontWeight="700">
+            Roof Coverage: {fillPct.toFixed(0)}% of {availAreaSqFt.toLocaleString()} sq ft ({usedArea.toLocaleString()} sq ft used)
           </text>
           <text x={W / 2} y={GRID_TOP - 4} textAnchor="middle" fill="#cbd5e1" fontSize="9.5" fontWeight="600">
-            {maxDisplay} / {Math.min(ROWS * COLS, 120)} panels rendered  ·  {panelCount} total configured ({totalCapacity.toFixed(1)} kW)
+            {panelCount.toLocaleString()} panels · 1:1 · {zoom.toFixed(1)}×
           </text>
         </svg>
+      </div>
+
+      <div className="flex flex-wrap items-center gap-x-5 gap-y-2 border-t border-white/10 bg-slate-900/80 px-5 py-3 text-xs text-slate-300" aria-label="Solar panel scale legend">
+        <span className="inline-flex items-center gap-2"><span className="h-3 w-3 rounded-sm border border-sky-300 bg-blue-700" />One rectangle = 1 panel</span>
+        <span>1 panel = {PANEL_AREA_SQFT} sq ft = {PANEL_KW.toFixed(1)} kW</span>
+        <span>Panels install left-to-right, row-by-row</span>
+        <span>Hover a panel for its area and capacity</span>
+        <span className="inline-flex items-center gap-1 text-slate-400"><Move className="h-3 w-3" />Drag to pan when zoomed</span>
       </div>
 
       {/* Footer stats */}
@@ -1157,7 +1254,7 @@ function VillageSolarView() {
       const cons = area.monthlyElectricity;
       const suggested = Math.ceil(cons / (IRRADIATION * 30) / PANEL_KW);
       const maxP = Math.floor(totalArea / PANEL_AREA_SQFT);
-      setPanelCount(Math.min(suggested, maxP, 250));
+      setPanelCount(Math.min(suggested, maxP));
     }
   }, [selectedAreaId]);
 
@@ -1272,9 +1369,19 @@ function VillageSolarView() {
               <div className="bg-white/60 border border-gray-200/80 rounded-xl p-4 shadow-sm">
                 <div className="flex items-center justify-between mb-2">
                   <label className="font-semibold text-gray-800">{isHi ? 'सोलर पैनलों की संख्या' : 'Number of Solar Panels'}</label>
-                  <span className="text-base font-extrabold text-amber-600 bg-amber-50 px-2.5 py-0.5 rounded-md border border-amber-200">
-                    {panelCount.toLocaleString()} panels
-                  </span>
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="number"
+                      min="1"
+                      max={maxPanelsByArea}
+                      step="1"
+                      value={panelCount}
+                      aria-label={isHi ? 'सोलर पैनलों की संख्या' : 'Number of solar panels'}
+                      onChange={e => setPanelCount(Math.min(maxPanelsByArea, Math.max(1, Number(e.target.value) || 1)))}
+                      className="w-24 rounded-md border border-amber-200 bg-amber-50 px-2 py-1 text-right text-sm font-bold text-amber-700 focus:border-amber-400 focus:outline-none"
+                    />
+                    <span className="text-xs font-semibold text-amber-700">panels</span>
+                  </div>
                 </div>
                 <input type="range" min="1" max={Math.max(maxPanelsByArea, 1)} step="1" value={panelCount}
                   onChange={e => setPanelCount(+e.target.value)} className="w-full accent-amber-500 h-2 bg-gray-200 rounded-lg cursor-pointer mb-3"/>
@@ -1352,8 +1459,8 @@ function VillageSolarView() {
             <div className="lg:col-span-7 flex flex-col gap-4">
 
               {/* Enlarged Panel Simulator */}
-              <div className="flex-1 min-h-[420px]">
-                <PanelSimulator
+              <div className="w-full min-w-0">
+                    <LiveRoofSimulator
                   panelCount={panelCount}
                   availAreaSqFt={availAreaSqFt}
                   totalCapacity={totalCapacity}
@@ -1643,9 +1750,19 @@ function HouseholdSolarView() {
               <div className="bg-white/60 border border-gray-200/80 rounded-xl p-4 shadow-sm">
                 <div className="flex items-center justify-between mb-2">
                   <label className="font-semibold text-gray-800">{isHi ? 'सोलर पैनलों की संख्या' : 'Number of Solar Panels'}</label>
-                  <span className="text-base font-extrabold text-amber-600 bg-amber-50 px-2.5 py-0.5 rounded-md border border-amber-200">
-                    {panelCount} panels
-                  </span>
+                    <div className="flex items-center gap-2">
+                      <input
+                        type="number"
+                        min="1"
+                        max={maxPanelsByArea}
+                        step="1"
+                        value={panelCount}
+                        aria-label={isHi ? 'सोलर पैनलों की संख्या' : 'Number of solar panels'}
+                        onChange={e => setPanelCount(Math.min(maxPanelsByArea, Math.max(1, Number(e.target.value) || 1)))}
+                        className="w-24 rounded-md border border-amber-200 bg-amber-50 px-2 py-1 text-right text-sm font-bold text-amber-700 focus:border-amber-400 focus:outline-none"
+                      />
+                      <span className="text-xs font-semibold text-amber-700">panels</span>
+                    </div>
                 </div>
                 <input type="range" min="1" max={Math.max(maxPanelsByArea, 1)} step="1" value={panelCount}
                   onChange={e => setPanelCount(+e.target.value)} className="w-full accent-amber-500 h-2 bg-gray-200 rounded-lg cursor-pointer mb-3"/>
@@ -1723,8 +1840,8 @@ function HouseholdSolarView() {
             <div className="lg:col-span-7 flex flex-col gap-4">
 
               {/* Enlarged Panel Simulator */}
-              <div className="flex-1 min-h-[420px]">
-                <PanelSimulator
+              <div className="w-full min-w-0">
+                    <LiveRoofSimulator
                   panelCount={panelCount}
                   availAreaSqFt={availAreaSqFt}
                   totalCapacity={totalCapacity}
