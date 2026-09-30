@@ -15,6 +15,9 @@ const QUICK_PROMPTS_VILLAGE_EN = [
   'What are the top recommendations?',
   'What is the region overview?',
   'How much biogas can we generate from waste?',
+  'Tell me about PM Surya Ghar and KUSUM scheme',
+  'Compare Motipur and Oiara',
+  'Who are you and what can you do?',
 ];
 
 const QUICK_PROMPTS_VILLAGE_HI = [
@@ -24,6 +27,9 @@ const QUICK_PROMPTS_VILLAGE_HI = [
   'शीर्ष सुझाव क्या हैं?',
   'क्षेत्र का अवलोकन दें',
   'कचरे से कितनी बायोगैस बन सकती है?',
+  'पीएम सूर्य घर और कुसुम योजना के बारे में बताएं',
+  'मोतीपुर और ओइआरा की तुलना करें',
+  'आप कौन हैं और क्या मदद कर सकते हैं?',
 ];
 
 const QUICK_PROMPTS_HOUSEHOLD_EN = [
@@ -33,6 +39,9 @@ const QUICK_PROMPTS_HOUSEHOLD_EN = [
   'How do I save water at home?',
   'What is biogas and how does it help?',
   'What are BEE 5-star energy ratings?',
+  'How much does a BLDC fan save?',
+  'What government subsidies are available for home solar?',
+  'Hello Manu! What can you do?',
 ];
 
 const QUICK_PROMPTS_HOUSEHOLD_HI = [
@@ -42,6 +51,9 @@ const QUICK_PROMPTS_HOUSEHOLD_HI = [
   'घर में पानी कैसे बचाएं?',
   'बायोगैस क्या है और यह कैसे मदद करता है?',
   'BEE 5-स्टार रेटिंग क्या होती है?',
+  'BLDC पंखे से कितनी बिजली बचती है?',
+  'सोलर पैनल के लिए सरकारी सब्सिडी कितनी मिलती है?',
+  'नमस्ते मनु! आप क्या कर सकते हैं?',
 ];
 
 // ── Initial messages by language + role ──────────────────────────────────────
@@ -274,8 +286,8 @@ function MessageBubble({
   return (
     <div className={`flex ${isUser ? 'justify-end' : 'justify-start'} mb-4`}>
       {!isUser && (
-        <div className="w-8 h-8 rounded-full bg-emerald-600 flex items-center justify-center mr-2 shrink-0 mt-1 shadow-sm">
-          <Bot className="w-4 h-4 text-white" />
+        <div className="w-8 h-8 rounded-full overflow-hidden border border-emerald-400/40 bg-emerald-950 flex items-center justify-center mr-2 shrink-0 mt-1 shadow-sm">
+          <img src="/manu_ai_logo.jpg" alt="Manu AI" className="w-full h-full object-cover" />
         </div>
       )}
       <div
@@ -474,8 +486,8 @@ export default function AIAssistantPage() {
             >
               <ArrowLeft className="w-4 h-4" />
             </button>
-            <div className="p-2.5 bg-emerald-600 rounded-xl shadow-md shadow-emerald-900/40">
-              <Bot className="w-5 h-5 text-white" />
+            <div className="w-11 h-11 rounded-2xl overflow-hidden shadow-lg shadow-emerald-950/60 border border-emerald-400/30 bg-emerald-950 flex items-center justify-center">
+              <img src="/manu_ai_logo.jpg" alt="Manu AI" className="w-full h-full object-cover" />
             </div>
             <div>
               <h1 className="text-xl font-bold text-white">Manu AI</h1>
@@ -517,8 +529,8 @@ export default function AIAssistantPage() {
           ))}
           {loading && (
             <div className="flex items-center gap-2 text-gray-400 text-sm">
-              <div className="w-8 h-8 rounded-full bg-emerald-600 flex items-center justify-center">
-                <Bot className="w-4 h-4 text-white" />
+              <div className="w-8 h-8 rounded-full overflow-hidden border border-emerald-400/40 bg-emerald-950 flex items-center justify-center">
+                <img src="/manu_ai_logo.jpg" alt="Manu AI" className="w-full h-full object-cover" />
               </div>
               <div className="bg-white border border-gray-200 rounded-2xl px-4 py-2 flex gap-1">
                 <span className="animate-bounce" style={{ animationDelay: '0ms' }}>●</span>

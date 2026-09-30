@@ -113,10 +113,10 @@ export default function Layout({ children }: { children: React.ReactNode }) {
         }}
       >
         {/* ── Logo + collapse toggle ── */}
-        <div className="flex-shrink-0 flex items-center gap-3 px-4 py-5"
+        <div className="flex-shrink-0 flex items-center gap-3 px-4 py-4"
           style={{ borderBottom: '1px solid rgba(16,185,129,0.10)' }}>
-          <div className="p-2 bg-emerald-600 rounded-xl shadow-sm flex-shrink-0">
-            <Zap className="w-5 h-5 text-white" />
+          <div className="w-10 h-10 rounded-xl overflow-hidden shadow-sm flex-shrink-0 border border-emerald-500/20 bg-emerald-950 flex items-center justify-center">
+            <img src="/gramurja_logo.jpg" alt="GramUrja Logo" className="w-full h-full object-cover" />
           </div>
           {!collapsed && (
             <div className="flex-1 min-w-0">
@@ -275,11 +275,13 @@ export default function Layout({ children }: { children: React.ReactNode }) {
       <button
         onClick={() => navigate('/ai')}
         title={t('chatWithManu')}
-        className="fixed bottom-6 right-6 z-50 flex items-center gap-2 bg-emerald-600 hover:bg-emerald-700 active:scale-95 text-white rounded-full shadow-lg transition-all duration-200 pl-4 pr-5 py-3"
-        style={{ boxShadow: '0 4px 20px rgba(16,185,129,0.45)' }}
+        className="fixed bottom-6 right-6 z-50 flex items-center gap-2.5 bg-emerald-700 hover:bg-emerald-800 active:scale-95 text-white rounded-full shadow-xl transition-all duration-200 pl-2 pr-5 py-2 border border-emerald-400/30 group"
+        style={{ boxShadow: '0 6px 24px rgba(16,185,129,0.45)' }}
       >
-        <Bot className="w-5 h-5 flex-shrink-0" />
-        <span className="text-sm font-semibold leading-none">{t('aiName')}</span>
+        <div className="w-8 h-8 rounded-full overflow-hidden border-2 border-emerald-300/60 shadow-inner shrink-0 bg-emerald-950 flex items-center justify-center group-hover:scale-105 transition-transform">
+          <img src="/manu_ai_logo.jpg" alt="Manu AI" className="w-full h-full object-cover" />
+        </div>
+        <span className="text-sm font-semibold leading-none tracking-wide">{t('aiName')}</span>
       </button>
     </div>
   );
