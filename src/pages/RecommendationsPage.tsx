@@ -1,11 +1,13 @@
 import React, { useState } from 'react';
 
-import { Lightbulb, Sun, Droplets, Leaf, Zap, Users, Clock, TrendingDown } from 'lucide-react';
+import { Lightbulb, Sun, Droplets, Leaf, Zap, Users, Clock, TrendingDown, MapPin, FlaskConical, BotMessageSquare } from 'lucide-react';
 import { DEMO_RECOMMENDATIONS, HOUSEHOLD_RECOMMENDATIONS } from '../data/recommendations';
 import { useAuth } from '../context/AuthContext';
 import { PriorityBadge, DemoBadge, SectionCard, StatRow } from '../components/ui';
 import AreaSelector from '../components/AreaSelector';
 import { useLanguage } from '../context/LanguageContext';
+import { DEMO_AREAS } from '../data/demoData';
+import { calculateSolarGeneration, calculateBiogas, ASSUMPTIONS } from '../calculations/engine';
 import type { Recommendation, RecommendationCategory } from '../types';
 
 const CATEGORY_ICONS: Record<RecommendationCategory, React.ReactNode> = {
@@ -140,6 +142,137 @@ function RecCard({ rec, expanded, onToggle, isHindi }: { rec: Recommendation; ex
 
 const PRIORITY_ORDER = { critical: 0, high: 1, medium: 2, low: 3 };
 
+// ─── Energy priority calculation helpers ─────────────────────────────────────
+
+interface VillageEnergyPriority {
+  id: string;
+  name: string;
+  solarKWh: number;
+  wasteKWh: number;
+  totalRenewable: number;
+  consumption: number;
+  deficit: number;
+  coverage: number;
+  level: 'high' | 'medium' | 'low';
+}
+
+function computeEnergyPriorities(): VillageEnergyPriority[] {
+  const results = DEMO_AREAS.map((area) => {
+    // Solar: use full feasible capacity (rooftop + land)
+    const roofSqFt = area.infrastructure.solar.roofAreaSqFt ?? 0;
+    const landSqFt = area.infrastructure.solar.openLandSqFt ?? 0;
+    const roofCap = ((roofSqFt * 0.0929) * 0.7 * 0.9) / 10;
+    const landCap = ((landSqFt * 0.0929) * 0.8 * 0.95) / 10;
+    const solarKWh = calculateSolarGeneration(roofCap + landCap, ASSUMPTIONS.solarKWhPerKWPerDay, 30);
+
+    // Waste-to-energy: electricity monthly
+    const biogasPerDay = calculateBiogas(area.cowDungKgPerDay, area.agriWasteKgPerDay, area.foodWasteKgPerDay);
+    const wasteKWh = Math.round(biogasPerDay * ASSUMPTIONS.biogasElectricKWhPerM3 * 30);
+
+    const totalRenewable = solarKWh + wasteKWh;
+    const consumption = area.monthlyElectricity;
+    const deficit = Math.max(0, consumption - totalRenewable);
+    const coverage = consumption > 0 ? Math.min(200, +((totalRenewable / consumption) * 100).toFixed(1)) : 0;
+
+    const level: 'high' | 'medium' | 'low' =
+      coverage < 60 ? 'high' : coverage < 90 ? 'medium' : 'low';
+
+    return { id: area.id, name: area.name, solarKWh, wasteKWh, totalRenewable, consumption, deficit, coverage, level };
+  });
+
+  // Sort: high first, then medium, then low; within same level sort by deficit desc
+  const levelOrder = { high: 0, medium: 1, low: 2 };
+  return results.sort((a, b) =>
+    levelOrder[a.level] !== levelOrder[b.level]
+      ? levelOrder[a.level] - levelOrder[b.level]
+      : b.deficit - a.deficit,
+  );
+}
+
+const LEVEL_META = {
+  high:   { dot: '🔴', label: 'HIGH PRIORITY',   labelHi: 'उच्च प्राथमिकता',   border: 'border-red-300',    bg: 'bg-red-50',    badge: 'bg-red-100 text-red-700 border-red-300',    bar: 'bg-red-400' },
+  medium: { dot: '🟡', label: 'MEDIUM PRIORITY', labelHi: 'मध्यम प्राथमिकता', border: 'border-amber-300',  bg: 'bg-amber-50',  badge: 'bg-amber-100 text-amber-700 border-amber-300', bar: 'bg-amber-400' },
+  low:    { dot: '🟢', label: 'LOW PRIORITY',    labelHi: 'कम प्राथमिकता',    border: 'border-emerald-300', bg: 'bg-emerald-50', badge: 'bg-emerald-100 text-emerald-700 border-emerald-300', bar: 'bg-emerald-400' },
+};
+
+function EnergyPriorityCard({ vp, isHindi }: { vp: VillageEnergyPriority; isHindi: boolean }) {
+  const meta = LEVEL_META[vp.level];
+  const coverageDisplay = vp.coverage >= 100 ? '100%+' : `${vp.coverage}%`;
+  const deficitDisplay = vp.deficit === 0 ? '0' : vp.deficit.toLocaleString();
+
+  const recommendation =
+    vp.level === 'high'
+      ? (isHindi ? 'उच्च ऊर्जा घाटे को पूरा करने के लिए सौर + बायोगैस क्षमता विस्तार की प्राथमिक अनुशंसा है।' : 'Allocate additional solar & biogas capacity — largest unmet energy demand in this region.')
+      : vp.level === 'medium'
+      ? (isHindi ? 'मध्यम घाटे के लिए नवीकरणीय ऊर्जा की मध्यम अतिरिक्त आपूर्ति की अनुशंसा।' : 'Moderate additional renewable allocation recommended to close the remaining energy gap.')
+      : (isHindi ? 'स्थानीय नवीकरणीय उत्पादन वर्तमान मांग को पूरा कर रहा है। अधिशेष निर्यात या भंडारण का अन्वेषण करें।' : 'Local renewable generation currently meets demand. Explore surplus export or storage.');
+
+  return (
+    <div className={`rounded-2xl border-2 ${meta.border} ${meta.bg} p-5 shadow-sm`}>
+      <div className="flex flex-wrap items-center gap-2 mb-3">
+        <span className={`text-xs font-bold px-2.5 py-1 rounded-full border ${meta.badge} tracking-wider`}>
+          {meta.dot} {isHindi ? meta.labelHi : meta.label}
+        </span>
+        <span className="text-base font-bold text-gray-900">{vp.name}</span>
+      </div>
+
+      <div className="grid sm:grid-cols-2 gap-x-8 gap-y-2 text-sm mb-3">
+        <div className="flex justify-between">
+          <span className="text-gray-500">{isHindi ? '⚡ ऊर्जा मांग' : '⚡ Energy Demand'}</span>
+          <span className="font-semibold text-gray-800">{vp.consumption.toLocaleString()} kWh/mo</span>
+        </div>
+        <div className="flex justify-between">
+          <span className="text-gray-500">{isHindi ? '☀️ सौर उत्पादन' : '☀️ Solar Generation'}</span>
+          <span className="font-semibold text-amber-700">{vp.solarKWh.toLocaleString()} kWh/mo</span>
+        </div>
+        <div className="flex justify-between">
+          <span className="text-gray-500">{isHindi ? '♻️ कचरा-ऊर्जा' : '♻️ Waste-to-Energy'}</span>
+          <span className="font-semibold text-green-700">{vp.wasteKWh.toLocaleString()} kWh/mo</span>
+        </div>
+        <div className="flex justify-between">
+          <span className="text-gray-500">{isHindi ? '🔋 कुल नवीकरणीय' : '🔋 Total Renewable'}</span>
+          <span className="font-semibold text-emerald-700">{vp.totalRenewable.toLocaleString()} kWh/mo</span>
+        </div>
+      </div>
+
+      <div className="flex flex-wrap gap-3 mb-3">
+        <div className="flex-1 min-w-[130px] bg-white rounded-xl border border-gray-200 p-3 text-center shadow-sm">
+          <div className="text-xs text-gray-500 mb-0.5">{isHindi ? 'ऊर्जा घाटा' : 'Energy Deficit'}</div>
+          <div className={`text-lg font-extrabold ${vp.deficit > 0 ? 'text-red-600' : 'text-emerald-600'}`}>
+            {deficitDisplay} <span className="text-xs font-medium">kWh/mo</span>
+          </div>
+        </div>
+        <div className="flex-1 min-w-[130px] bg-white rounded-xl border border-gray-200 p-3 text-center shadow-sm">
+          <div className="text-xs text-gray-500 mb-0.5">{isHindi ? 'नवीकरणीय कवरेज' : 'Renewable Coverage'}</div>
+          <div className={`text-lg font-extrabold ${vp.coverage >= 100 ? 'text-emerald-600' : vp.coverage >= 60 ? 'text-amber-600' : 'text-red-600'}`}>
+            {coverageDisplay}
+          </div>
+        </div>
+      </div>
+
+      {/* Coverage bar */}
+      <div className="mb-3">
+        <div className="flex justify-between text-xs text-gray-500 mb-1">
+          <span>{isHindi ? 'नवीकरणीय कवरेज' : 'Renewable Coverage'}</span>
+          <span>{coverageDisplay}</span>
+        </div>
+        <div className="h-2 bg-gray-200 rounded-full overflow-hidden">
+          <div
+            className={`h-full rounded-full transition-all ${meta.bar}`}
+            style={{ width: `${Math.min(100, vp.coverage)}%` }}
+          />
+        </div>
+      </div>
+
+      <div className="text-xs text-gray-600 bg-white/70 rounded-lg px-3 py-2 border border-gray-100">
+        → <span className="font-medium">{isHindi ? 'अनुशंसित:' : 'Recommended:'}</span> {recommendation}
+      </div>
+    </div>
+  );
+}
+
+const energyPriorities = computeEnergyPriorities();
+
 export default function RecommendationsPage() {
   const { t, isHindi } = useLanguage();
   const { role } = useAuth();
@@ -179,6 +312,48 @@ export default function RecommendationsPage() {
         )}
       </div>
 
+      {/* ── AI Energy Distribution Priority (official only) ── */}
+      {!isCitizen && (
+        <div className="bg-white rounded-2xl p-6 mb-6 shadow-sm border border-gray-200 fade-up">
+          <div className="flex items-center gap-3 mb-1">
+            <span className="p-2 rounded-xl bg-violet-100 text-violet-600 shadow-sm">
+              <BotMessageSquare className="w-5 h-5" />
+            </span>
+            <div>
+              <h2 className="text-lg font-bold text-gray-900">
+                {isHindi ? '🤖 AI ऊर्जा वितरण प्राथमिकता' : '🤖 AI Energy Allocation Priority'}
+              </h2>
+              <p className="text-xs text-gray-500 mt-0.5">
+                {isHindi
+                  ? 'ऊर्जा खपत, सौर उत्पादन, कचरा-ऊर्जा और ऊर्जा घाटे के आधार पर गतिशील रूप से गणना की गई।'
+                  : 'Priority is dynamically calculated from energy consumption, solar generation, waste-to-energy generation and the resulting energy deficit.'}
+              </p>
+            </div>
+          </div>
+
+          {/* Flow legend */}
+          <div className="flex flex-wrap gap-2 items-center text-xs text-gray-500 bg-gray-50 rounded-xl px-4 py-2.5 mb-5 border border-gray-100 mt-4">
+            <span className="font-semibold text-gray-700">{isHindi ? 'प्रवाह:' : 'Flow:'}</span>
+            <span>☀️ {isHindi ? 'सौर' : 'Solar'}</span>
+            <span className="text-gray-300">+</span>
+            <span>♻️ {isHindi ? 'कचरा-ऊर्जा' : 'Waste-to-Energy'}</span>
+            <span className="text-gray-300">→</span>
+            <span>🔋 {isHindi ? 'कुल नवीकरणीय' : 'Total Renewable'}</span>
+            <span className="text-gray-300">→</span>
+            <span>⚡ {isHindi ? 'मांग से तुलना' : 'Compare vs Demand'}</span>
+            <span className="text-gray-300">→</span>
+            <span>🤖 {isHindi ? 'AI प्राथमिकता इंजन' : 'AI Priority Engine'}</span>
+          </div>
+
+          <div className="space-y-4">
+            {energyPriorities
+              .filter((vp) => vp.id === selectedAreaId)
+              .map((vp) => (
+                <EnergyPriorityCard key={vp.id} vp={vp} isHindi={isHindi} />
+              ))}
+          </div>
+        </div>
+      )}
 
       {/* Recommendation cards */}
       <div className="space-y-4">

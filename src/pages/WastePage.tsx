@@ -4,7 +4,7 @@ import {
   BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell, Legend,
   PieChart, Pie,
 } from 'recharts';
-import { Leaf, Zap, ChevronDown, ChevronUp, Lightbulb } from 'lucide-react';
+import { Leaf, Zap, ChevronDown, ChevronUp, Lightbulb, MapPin, CheckCircle, FlaskConical } from 'lucide-react';
 import {
   calculateBiogas, calculateWasteEnergy, calculateCO2, calculateElectricityCost, ASSUMPTIONS,
 } from '../calculations/engine';
@@ -12,6 +12,7 @@ import { SectionCard, KpiCard, DemoBadge, AssumptionBox, StatRow } from '../comp
 import { getAllAreaAnalyses } from '../services/energyService';
 import AreaSelector from '../components/AreaSelector';
 import { DEMO_AREAS } from '../data/demoData';
+import { BIOGAS_LOCATION_RECS } from '../data/locationRecommendations';
 import { useAuth } from '../context/AuthContext';
 import { useHousehold } from '../context/HouseholdContext';
 import { useLanguage } from '../context/LanguageContext';
@@ -233,6 +234,58 @@ function VillageWasteView() {
             </div>
           </div>
         </div>
+
+        {/* ── Recommended Biogas Plant Locations ── */}
+        <div className="glass-card rounded-2xl p-6 fade-up">
+          <h2 className="font-bold text-gray-900 mb-1 flex items-center gap-2">
+            <MapPin className="w-5 h-5 text-emerald-600" />
+            {isHindi ? '📍 बायोगैस संयंत्र हेतु अनुशंसित स्थान' : '📍 Recommended Biogas Plant Location'}
+          </h2>
+          <p className="text-sm text-gray-500 mb-4">
+            {isHindi
+              ? 'सतत जैविक फीडस्टॉक और स्थानीय उपयोगकर्ताओं की उपलब्धता के आधार पर — स्थल सर्वेक्षण अनिवार्य है।'
+              : 'Selected based on continuous organic feedstock availability and nearby consumers — field feedstock survey required before plant sizing.'}
+          </p>
+          <div className="space-y-3">
+            {(() => {
+              const rec = BIOGAS_LOCATION_RECS.find((r) => r.villageId === selectedAreaId);
+              if (!rec) return (
+                <p className="text-sm text-gray-500 italic">
+                  {isHindi ? 'इस गांव के लिए बायोगैस संयंत्र हेतु कोई विशिष्ट स्थान अनुशंसा उपलब्ध नहीं है। फीडस्टॉक उपलब्धता सर्वेक्षण के बाद साइट का चयन किया जा सकता है।' : 'No specific biogas plant site recommendation available for this village yet. A feedstock availability survey is recommended before selecting a site.'}
+                </p>
+              );
+              return (
+                <div className="rounded-xl border border-emerald-200 bg-emerald-50/50 p-4">
+                  <div className="flex flex-wrap items-start gap-2 mb-2">
+                    <span className="flex items-center gap-1 text-xs font-bold text-emerald-700 bg-emerald-100 border border-emerald-300 px-2 py-0.5 rounded-full">
+                      <FlaskConical className="w-3 h-3"/> {isHindi ? 'बायोगैस संयंत्र' : 'Biogas Plant'}
+                    </span>
+                    {rec.feedstockSurveyNeeded && (
+                      <span className="flex items-center gap-1 text-xs font-bold text-amber-700 bg-amber-100 border border-amber-300 px-2 py-0.5 rounded-full">
+                        ⚠ {isHindi ? 'फीडस्टॉक सर्वेक्षण आवश्यक' : 'Feedstock Survey Needed'}
+                      </span>
+                    )}
+                    <span className="text-sm font-bold text-gray-900">{rec.villageName}</span>
+                  </div>
+                  <div className="flex items-start gap-1.5 text-xs text-gray-600 mb-2">
+                    <MapPin className="w-3.5 h-3.5 text-emerald-500 mt-0.5 shrink-0"/>
+                    <span className="font-medium">{rec.address}</span>
+                  </div>
+                  <p className="text-xs text-gray-600 leading-relaxed border-t border-emerald-200/70 pt-2">
+                    {rec.priorityReason}
+                  </p>
+                </div>
+              );
+            })()}
+          </div>
+          <div className="mt-4 p-3 bg-amber-50 border border-amber-200 rounded-lg text-xs text-amber-800">
+            <strong>{isHindi ? 'नोट:' : 'Note:'}</strong>{' '}
+            {isHindi
+              ? 'बायोगैस संयंत्र के लिए स्थान का चयन केवल स्कूल/अस्पताल की निकटता से नहीं, बल्कि निरंतर जैविक फीडस्टॉक की उपलब्धता और स्थानीय उपयोग के आधार पर होना चाहिए।'
+              : 'Biogas plant siting should not be driven by proximity to schools/hospitals alone — the key criterion is continuous organic feedstock availability and a nearby consumer for produced biogas and slurry.'}
+          </div>
+        </div>
+
       </div>
     </div>
   );

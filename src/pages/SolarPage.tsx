@@ -1,5 +1,5 @@
 import React, { useState, useMemo, useEffect, useRef } from 'react';
-import { Sun, Zap, Leaf, TrendingDown, ArrowRight, ChevronDown, ChevronUp, Lightbulb, Clock, BatteryCharging, TreePine, Sparkles, ShieldCheck } from 'lucide-react';
+import { Sun, Zap, Leaf, TrendingDown, ArrowRight, ChevronDown, ChevronUp, Lightbulb, Clock, BatteryCharging, TreePine, Sparkles, ShieldCheck, MapPin, CheckCircle, AlertCircle } from 'lucide-react';
 import {
   calculateSolarCapacity, calculateSolarGeneration, calculateSolarOffset,
   calculateSolarCO2Avoided, calculateBeforeAfterScenario, calculateElectricityCost, ASSUMPTIONS
@@ -8,6 +8,7 @@ import { SectionCard, KpiCard, DemoBadge, AssumptionBox, StatRow, ProgressBar } 
 import { getAllAreaAnalyses } from '../services/energyService';
 import AreaSelector from '../components/AreaSelector';
 import { DEMO_AREAS } from '../data/demoData';
+import { SOLAR_LOCATION_RECS } from '../data/locationRecommendations';
 import { useAuth } from '../context/AuthContext';
 import { useHousehold } from '../context/HouseholdContext';
 import { useLanguage } from '../context/LanguageContext';
@@ -1463,6 +1464,52 @@ function VillageSolarView() {
             savedPct={beforeAfter.savedPercent} savedKWh={beforeAfter.savedKWh}
             savedINR={beforeAfter.savedINR}    savedCO2={beforeAfter.savedCO2Kg}
           />
+        </div>
+
+        {/* ── Recommended Solar Installation Locations ── */}
+        <div className="glass-card rounded-2xl p-6 fade-up delay-250">
+          <h2 className="font-bold text-gray-900 mb-1 flex items-center gap-2">
+            <MapPin className="w-5 h-5 text-rose-500"/> {isHi ? '📍 सौर पैनल स्थापना हेतु अनुशंसित स्थान' : '📍 Recommended Solar Panel Installation Locations'}
+          </h2>
+          <p className="text-sm text-gray-500 mb-4">
+            {isHi
+              ? 'प्रत्येक ग्राम पंचायत के लिए सबसे उपयुक्त स्थान — स्कूल/स्वास्थ्य केंद्र की छतों को प्राथमिकता दी गई है।'
+              : 'Best-fit installation sites per Gram Panchayat — school and health-centre rooftops prioritised for visible community impact.'}
+          </p>
+          <div className="space-y-3">
+            {(() => {
+              const rec = SOLAR_LOCATION_RECS.find((r) => r.villageId === selectedAreaId);
+              if (!rec) return (
+                <p className="text-sm text-gray-500 italic">
+                  {isHi ? 'इस गांव के लिए कोई विशिष्ट साइट अनुशंसा उपलब्ध नहीं है।' : 'No specific site recommendation available for this village yet.'}
+                </p>
+              );
+              return (
+                <div
+                  className={`rounded-xl border p-4 ${rec.confidence === 'verified' ? 'border-amber-200 bg-amber-50/60' : 'border-gray-200 bg-gray-50'}`}>
+                  <div className="flex flex-wrap items-start gap-2 mb-2">
+                    {rec.confidence === 'verified' ? (
+                      <span className="flex items-center gap-1 text-xs font-bold text-amber-700 bg-amber-100 border border-amber-300 px-2 py-0.5 rounded-full">
+                        <CheckCircle className="w-3 h-3"/> {isHi ? 'सत्यापित स्थान' : 'Verified Site'}
+                      </span>
+                    ) : (
+                      <span className="flex items-center gap-1 text-xs font-bold text-gray-500 bg-gray-100 border border-gray-300 px-2 py-0.5 rounded-full">
+                        <AlertCircle className="w-3 h-3"/> {isHi ? 'उम्मीदवार स्थान' : 'Candidate Site'}
+                      </span>
+                    )}
+                    <span className="text-sm font-bold text-gray-900">{rec.villageName}</span>
+                  </div>
+                  <div className="flex items-start gap-1.5 text-xs text-gray-600 mb-2">
+                    <MapPin className="w-3.5 h-3.5 text-rose-400 mt-0.5 shrink-0"/>
+                    <span className="font-medium">{rec.address}</span>
+                  </div>
+                  <p className="text-xs text-gray-600 leading-relaxed border-t border-gray-200/70 pt-2">
+                    {rec.priorityReason}
+                  </p>
+                </div>
+              );
+            })()}
+          </div>
         </div>
 
         {/* Government Solar Schemes */}
