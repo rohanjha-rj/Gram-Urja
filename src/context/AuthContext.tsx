@@ -26,11 +26,21 @@ const AuthContext = createContext<AuthContextValue>({
   signOut: async () => {},
 });
 
+const ROLE_KEY = 'gramurja_role';
+
 export function AuthProvider({ children }: { children: React.ReactNode }) {
-  const [role, setRole] = useState<UserRole>('guest');
+  const [role, setRoleState] = useState<UserRole>(() => {
+    const saved = localStorage.getItem(ROLE_KEY) as UserRole | null;
+    return saved && ['official', 'citizen', 'guest'].includes(saved) ? saved : 'guest';
+  });
   const [session, setSession] = useState<Session | null>(null);
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
+
+  function setRole(r: UserRole) {
+    setRoleState(r);
+    localStorage.setItem(ROLE_KEY, r);
+  }
 
   useEffect(() => {
     if (!SUPABASE_CONFIGURED) {
@@ -75,7 +85,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       };
       setSession(mockSession);
       setUser(mockUser);
-      setRole('citizen');
+      setRoleState('citizen');
+      localStorage.setItem(ROLE_KEY, 'citizen');
       return { error: null };
     }
     const { data, error } = await supabase.auth.signInWithPassword({ email, password });
@@ -99,7 +110,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     if (SUPABASE_CONFIGURED) await supabase.auth.signOut();
     setSession(null);
     setUser(null);
-    setRole('guest');
+    setRoleState('guest');
+    localStorage.setItem(ROLE_KEY, 'guest');
   }
 
   return (

@@ -1,5 +1,5 @@
-import React from 'react';
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import React, { useEffect } from 'react';
+import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { HouseholdProvider } from './context/HouseholdContext';
 import { LanguageProvider } from './context/LanguageContext';
@@ -12,6 +12,15 @@ import SolarPage from './pages/SolarPage';
 import WastePage from './pages/WastePage';
 import RecommendationsPage from './pages/RecommendationsPage';
 import AIAssistantPage from './pages/AIAssistantPage';
+
+function ScrollToTop() {
+  const { pathname } = useLocation();
+  useEffect(() => {
+    const el = document.getElementById('main-scroll');
+    if (el) el.scrollTop = 0;
+  }, [pathname]);
+  return null;
+}
 
 function AppRoutes() {
   const { role, loading } = useAuth();
@@ -30,32 +39,35 @@ function AppRoutes() {
   }
 
   return (
-    <Routes>
-      {/* Root → role selector (LoginPage) */}
-      <Route path="/" element={<LoginPage />} />
-      <Route path="/login" element={<LoginPage />} />
+    <>
+      <ScrollToTop />
+      <Routes>
+        {/* Root → role selector (LoginPage) */}
+        <Route path="/" element={<LoginPage />} />
+        <Route path="/login" element={<LoginPage />} />
 
-      {/* Overview inside layout */}
-      <Route path="/overview" element={<Layout><LandingPage /></Layout>} />
-      <Route path="/village" element={
-        role === 'citizen'
-          ? <Navigate to="/household" replace />
-          : <Layout><VillageDashboard /></Layout>
-      } />
-      <Route path="/household" element={
-        role === 'official'
-          ? <Navigate to="/village" replace />
-          : <Layout><HouseholdDashboard /></Layout>
-      } />
-      <Route path="/solar" element={<Layout><SolarPage /></Layout>} />
-      <Route path="/waste" element={<Layout><WastePage /></Layout>} />
-      <Route path="/recommendations" element={<Layout><RecommendationsPage /></Layout>} />
-      <Route path="/alerts" element={<Navigate to="/overview" replace />} />
-      <Route path="/score" element={<Navigate to="/overview" replace />} />
-      <Route path="/ai" element={<AIAssistantPage />} />
-      {/* Default redirect */}
-      <Route path="*" element={<Navigate to="/login" replace />} />
-    </Routes>
+        {/* Overview inside layout */}
+        <Route path="/overview" element={<Layout><LandingPage /></Layout>} />
+        <Route path="/village" element={
+          role === 'citizen'
+            ? <Navigate to="/household" replace />
+            : <Layout><VillageDashboard /></Layout>
+        } />
+        <Route path="/household" element={
+          role === 'official'
+            ? <Navigate to="/village" replace />
+            : <Layout><HouseholdDashboard /></Layout>
+        } />
+        <Route path="/solar" element={<Layout><SolarPage /></Layout>} />
+        <Route path="/waste" element={<Layout><WastePage /></Layout>} />
+        <Route path="/recommendations" element={<Layout><RecommendationsPage /></Layout>} />
+        <Route path="/alerts" element={<Navigate to="/overview" replace />} />
+        <Route path="/score" element={<Navigate to="/overview" replace />} />
+        <Route path="/ai" element={<AIAssistantPage />} />
+        {/* Default redirect */}
+        <Route path="*" element={<Navigate to="/login" replace />} />
+      </Routes>
+    </>
   );
 }
 

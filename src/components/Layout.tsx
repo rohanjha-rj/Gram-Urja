@@ -266,7 +266,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
         </header>
 
         {/* Page content — this scrolls, sidebar stays fixed */}
-        <main className="flex-1 overflow-y-auto">
+        <main id="main-scroll" className="flex-1 overflow-y-auto">
           {children}
         </main>
       </div>
