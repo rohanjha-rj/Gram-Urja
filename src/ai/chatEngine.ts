@@ -17,53 +17,55 @@ function formatINR(n: number) {
 // ── Global Keyword Banks ───────────────────────────────────────────────────────
 const GREETINGS = ['hello', 'hi', 'namaste', 'hey', 'pranam', 'नमस्ते', 'हेलो', 'हाय', 'प्रणाम'];
 const TIME_GREETINGS = ['good morning', 'good evening', 'good afternoon', 'shubh prabhat', 'shubh sandhya', 'शुभ प्रभात', 'शुभ संध्या', 'सुप्रभात'];
-const HOW_ARE_YOU = ['how are you', 'how r u', 'how do you do', 'kya haal', 'kaise ho', 'kaisi ho', 'सब ठीक', 'कैसे हो', 'कैसी हो', 'क्या हाल'];
-const IDENTITY_KEYWORDS = ['who are you', 'what is your name', 'whats your name', 'who made you', 'who created you', 'aap kaun ho', 'tum kaun ho', 'tera naam', 'tumhara naam', 'kisne banaya', 'आप कौन हैं', 'आपका नाम', 'तुम कौन हो', 'किसने बनाया', 'परिचय'];
+const HOW_ARE_YOU = ['how are you', 'how r u', 'how do you do', 'kya haal', 'kaise ho', 'kaisi ho', 'सब ठीक', 'कैसे हो', 'कैसी हो', 'क्या हाल', 'हाल चाल'];
+const IDENTITY_KEYWORDS = ['who are you', 'what is your name', 'whats your name', 'who made you', 'who created you', 'aap kaun ho', 'tum kaun ho', 'tera naam', 'tumhara naam', 'kisne banaya', 'आप कौन हैं', 'आपका नाम', 'तुम कौन हो', 'किसने बनाया', 'परिचय', 'manu ai'];
 const THANKS_KEYWORDS = ['thank', 'thanks', 'dhanyawad', 'shukriya', 'धन्यवाद', 'शुक्रिया', 'थैंक यू', 'थैंक्स'];
 const BYE_KEYWORDS = ['bye', 'goodbye', 'see you', 'tata', 'alvida', 'phir milenge', 'अलविदा', 'बाय', 'फिर मिलेंगे', 'टाटा'];
 const JOKE_KEYWORDS = ['joke', 'chutkula', 'make me laugh', 'funny', 'जोक', 'चुटकुला', 'मजाक', 'हंसाओ'];
 
-// Domain Keyword Banks
-const SCHEME_KEYWORDS = ['scheme', 'subsidy', 'yojana', 'pm surya', 'kusum', 'gobar dhan', 'satat', 'subsidies', 'योजना', 'सब्सिडी', 'पीएम सूर्य घर', 'कुसुम', 'गोबर धन', 'सरकारी'];
-const BLDC_KEYWORDS = ['bldc', 'fan', 'ceiling fan', 'पंखा', 'सीलिंग फैन', 'bldc पंखा'];
-const SOLAR_PUMP_KEYWORDS = ['solar pump', 'irrigation', 'tubewell', 'agriculture pump', 'खेती पंप', 'सिंचाई', 'सोलर पंप', 'ट्यूबवेल', 'पंपिंग'];
-const SOLAR_MAINTENANCE_KEYWORDS = ['maintenance', 'cleaning', 'clean panel', 'dust', 'cleaning solar', 'रखरखाव', 'सफाई', 'धूल', 'सोलर सफाई', 'धोना'];
-const BATTERY_INVERTER_KEYWORDS = ['battery', 'inverter', 'backup', 'off grid', 'on grid', 'net meter', 'बैटरी', 'इन्वर्टर', 'नेट मीटरिंग', 'बैकअप', 'ऑफ ग्रिड', 'ऑन ग्रिड'];
-const SLURRY_KEYWORDS = ['slurry', 'fertilizer', 'manure', 'organic farming', 'खाद', 'स्लरी', 'जैविक खाद', 'गोबर खाद'];
-const WATER_QUALITY_KEYWORDS = ['quality', 'arsenic', 'fluoride', 'groundwater', 'pure water', 'शुद्ध पानी', 'आर्सेनिक', 'फ्लोराइड', 'भूजल', 'जल गुणवत्ता'];
-const STREETLIGHT_KEYWORDS = ['streetlight', 'street light', 'light pole', 'स्ट्रीट लाइट', 'सड़क बत्ती', 'खंभा'];
+// Help keywords — strictly for explicit help inquiries
+const HELP_KEYWORDS = ['help', 'help me', 'guide me', 'options', 'what can you do', 'how can you help', 'मदद', 'सहायता', 'गाइड', 'क्या कर सकते'];
+
+// Domain Keyword Banks (Bilingual & Transliterated)
+const SCHEME_KEYWORDS = ['scheme', 'subsidy', 'yojana', 'pm surya', 'kusum', 'gobar dhan', 'satat', 'subsidies', 'anudan', 'योजना', 'सब्सिडी', 'पीएम सूर्य घर', 'कुसुम', 'गोबर धन', 'सरकारी', 'अनुदान', 'मुफ्त बिजली'];
+const BLDC_KEYWORDS = ['bldc', 'fan', 'ceiling fan', 'pankha', 'पंखा', 'सीलिंग फैन', 'bldc पंखा', 'पंखे'];
+const SOLAR_PUMP_KEYWORDS = ['solar pump', 'irrigation', 'tubewell', 'agriculture pump', 'sinchai', 'khet', 'kisan', 'खेती पंप', 'सिंचाई', 'सोलर पंप', 'ट्यूबवेल', 'पंपिंग', 'किसान'];
+const SOLAR_MAINTENANCE_KEYWORDS = ['maintenance', 'cleaning', 'clean panel', 'dust', 'cleaning solar', 'safai', 'dhul', 'रखरखाव', 'सफाई', 'धूल', 'सोलर सफाई', 'धोना'];
+const BATTERY_INVERTER_KEYWORDS = ['battery', 'inverter', 'backup', 'off grid', 'on grid', 'net meter', 'net metering', 'बैटरी', 'इन्वर्टर', 'नेट मीटरिंग', 'बैकअप', 'ऑफ ग्रिड', 'ऑन ग्रिड'];
+const SLURRY_KEYWORDS = ['slurry', 'fertilizer', 'manure', 'organic farming', 'jaivik', 'khad', 'खाद', 'स्लरी', 'जैविक खाद', 'गोबर खाद'];
+const WATER_QUALITY_KEYWORDS = ['arsenic', 'fluoride', 'groundwater', 'pure water', 'shuddh pani', 'water quality', 'शुद्ध पानी', 'आर्सेनिक', 'फ्लोराइड', 'भूजल', 'जल गुणवत्ता', 'खराब पानी'];
+const STREETLIGHT_KEYWORDS = ['streetlight', 'street light', 'light pole', 'sadak batti', 'स्ट्रीट लाइट', 'सड़क बत्ती', 'खंभा', 'स्ट्रीटलाइट'];
 
 // General & Village Keywords
-const SOLAR_KEYWORDS = ['solar', 'panel', 'sun', 'rooftop', 'generation', 'सौर', 'पैनल', 'सूर्य', 'छत'];
-const WATER_KEYWORDS = ['water', 'rainwater', 'pump', 'demand', 'पानी', 'वर्षा', 'जल', 'पंप'];
-const WASTE_KEYWORDS = ['waste', 'biogas', 'dung', 'organic', 'कचरा', 'बायोगैस', 'गोबर', 'जैविक'];
-const ENERGY_KEYWORDS = ['energy', 'consumption', 'electricity', 'kwh', 'बिजली', 'खपत', 'ऊर्जा'];
-const COST_KEYWORDS = ['cost', 'bill', 'price', 'savings', 'लागत', 'बचत', 'बिल', 'कीमत', 'खर्च'];
-const SCORE_KEYWORDS = ['score', 'grade', 'sustainability', 'rating', 'स्कोर', 'ग्रेड', 'स्थिरता'];
-const REC_KEYWORDS = ['recommendation', 'suggest', 'improve', 'action', 'सुझाव', 'सुधार', 'कार्य'];
-const HELP_KEYWORDS = ['help', 'what can', 'how do', 'कैसे', 'मदद', 'सहायता'];
-const OVERVIEW_KEYWORDS = ['region', 'overview', 'all areas', 'summary', 'क्षेत्र', 'अवलोकन', 'सभी', 'सारांश'];
-const HIGHEST_KEYWORDS = ['highest', 'most', 'top', 'best', 'सबसे', 'सर्वश्रेष्ठ', 'अधिकतम', 'शीर्ष'];
+const SOLAR_KEYWORDS = ['solar', 'panel', 'sun', 'rooftop', 'generation', 'photovoltaic', 'सौर', 'पैनल', 'सूर्य', 'छत', 'धूप', 'सौर ऊर्जा'];
+const WATER_KEYWORDS = ['water', 'rainwater', 'pump', 'demand', 'jal', 'pani', 'पानी', 'वर्षा', 'जल', 'पंप', 'वर्षा जल', 'नल'];
+const WASTE_KEYWORDS = ['waste', 'biogas', 'dung', 'organic', 'garbage', 'kachra', 'gobar', 'कचरा', 'बायोगैस', 'गोबर', 'जैविक', 'अपशिष्ट'];
+const ENERGY_KEYWORDS = ['energy', 'consumption', 'electricity', 'kwh', 'bijli', 'khapat', 'urja', 'बिजली', 'खपत', 'ऊर्जा', 'यूनिट'];
+const COST_KEYWORDS = ['cost', 'bill', 'price', 'savings', 'kharch', 'bachat', 'kimat', 'लागत', 'बचत', 'बिल', 'कीमत', 'खर्च'];
+const SCORE_KEYWORDS = ['score', 'grade', 'sustainability', 'rating', 'sthirta', 'स्कोर', 'ग्रेड', 'स्थिरता', 'रेटिंग'];
+const REC_KEYWORDS = ['recommendation', 'suggest', 'improve', 'action', 'sujhav', 'sudhar', 'सुझाव', 'सुधार', 'कार्य'];
+const OVERVIEW_KEYWORDS = ['region', 'overview', 'all areas', 'summary', 'avlokan', 'saransh', 'क्षेत्र', 'अवलोकन', 'सभी', 'सारांश'];
+const HIGHEST_KEYWORDS = ['highest', 'most', 'top', 'best', 'sabse', 'adhiktam', 'सबसे', 'सर्वश्रेष्ठ', 'अधिकतम', 'शीर्ष'];
 
 // Household-specific keyword banks
-const HH_BILL_KEYWORDS = ['bill', 'reduce', 'cut', 'save money', 'lower', 'बिल', 'कम करना', 'बचत', 'घटाना', 'महंगा'];
-const HH_APPLIANCE_KEYWORDS = ['appliance', 'fridge', 'ac', 'fan', 'tv', 'bulb', 'pump', 'heater', 'washing', 'उपकरण', 'फ्रिज', 'एसी', 'पंखा', 'टीवी', 'बल्ब', 'वॉशिंग', 'हीटर'];
-const HH_SOLAR_HOME_KEYWORDS = ['home solar', 'rooftop solar', 'solar for home', 'install solar', 'घर सोलर', 'सोलर लगाना', 'छत सोलर'];
-const HH_WATER_HOME_KEYWORDS = ['water at home', 'save water', 'water bill', 'water usage', 'घर पानी', 'पानी बचाएं', 'पानी की बचत'];
-const HH_BIOGAS_KEYWORDS = ['biogas', 'kitchen waste', 'cow dung', 'cooking gas', 'बायोगैस', 'रसोई कचरा', 'खाना पकाना', 'गोबर गैस'];
-const HH_SCORE_HOME_KEYWORDS = ['my score', 'household score', 'home score', 'मेरा स्कोर', 'घर का स्कोर', 'मेरी रेटिंग'];
-const HH_LED_KEYWORDS = ['led', 'bulb', 'light', 'lighting', 'बल्ब', 'लाइट', 'रोशनी', 'led बल्ब'];
-const HH_AC_KEYWORDS = ['air conditioner', 'ac', 'cooling', 'air con', 'एसी', 'ठंडक', 'एयर कंडीशनर'];
+const HH_BILL_KEYWORDS = ['bill', 'bills', 'reduce', 'cut', 'save money', 'lower', 'bijli bill', 'bijli bachao', 'bijli bachaye', 'kam kare', 'kam karna', 'बिल', 'बिजली बिल', 'कम करना', 'कम करें', 'कम करू', 'बचत', 'घटाना', 'महंगा', 'खपत घटाएं'];
+const HH_APPLIANCE_KEYWORDS = ['appliance', 'appliances', 'fridge', 'ac', 'fan', 'tv', 'bulb', 'pump', 'heater', 'washing', 'geyser', 'cooler', 'upkaran', 'उपकरण', 'फ्रिज', 'एसी', 'पंखा', 'टीवी', 'बल्ब', 'वॉशिंग', 'हीटर', 'गीजर', 'कूलर'];
+const HH_SOLAR_HOME_KEYWORDS = ['home solar', 'rooftop solar', 'solar for home', 'install solar', 'solar panel', 'solar lagana', 'solar lagaye', 'solar lagwa', 'घर सोलर', 'सोलर लगाना', 'छत सोलर', 'सोलर पैनल', 'सोलर'];
+const HH_WATER_HOME_KEYWORDS = ['water at home', 'save water', 'water bill', 'water usage', 'pani bachaye', 'pani bachana', 'घर पानी', 'पानी बचाएं', 'पानी की बचत', 'पानी कैसे बचाएं'];
+const HH_BIOGAS_KEYWORDS = ['biogas', 'kitchen waste', 'cow dung', 'cooking gas', 'gobar gas', 'gobar', 'बायोगैस', 'रसोई कचरा', 'खाना पकाना', 'गोबर गैस', 'गोबर'];
+const HH_SCORE_HOME_KEYWORDS = ['my score', 'household score', 'home score', 'mera score', 'score sudhare', 'मेरा स्कोर', 'घर का स्कोर', 'मेरी रेटिंग', 'स्कोर सुधार'];
+const HH_LED_KEYWORDS = ['led', 'bulb', 'light', 'lighting', 'roshni', 'बल्ब', 'लाइट', 'रोशनी', 'led बल्ब', 'एलईडी'];
+const HH_AC_KEYWORDS = ['air conditioner', 'ac', 'cooling', 'air con', 'कूलिंग', 'एसी', 'ठंडक', 'एयर कंडीशनर'];
 const HH_FRIDGE_KEYWORDS = ['refrigerator', 'fridge', 'freeze', 'रेफ्रिजरेटर', 'फ्रिज'];
-const HH_TIPS_KEYWORDS = ['tip', 'advice', 'trick', 'easy', 'simple', 'how to save', 'सुझाव', 'टिप्स', 'आसान', 'कैसे बचाएं'];
-const HH_CO2_KEYWORDS = ['co2', 'carbon', 'emission', 'environment', 'pollution', 'कार्बन', 'उत्सर्जन', 'पर्यावरण', 'प्रदूषण'];
-const HH_WATER_HARVEST_KEYWORDS = ['rainwater', 'harvest', 'tank', 'collect rain', 'वर्षा जल', 'बारिश', 'टंकी', 'संचयन'];
+const HH_TIPS_KEYWORDS = ['tip', 'tips', 'advice', 'trick', 'easy', 'simple', 'how to save', 'sujhav', 'tarike', 'सुझाव', 'टिप्स', 'आसान', 'कैसे बचाएं', 'तरीके'];
+const HH_CO2_KEYWORDS = ['co2', 'carbon', 'emission', 'environment', 'pollution', 'paryavaran', 'pradushan', 'कार्बन', 'उत्सर्जन', 'पर्यावरण', 'प्रदूषण'];
+const HH_WATER_HARVEST_KEYWORDS = ['rainwater', 'harvest', 'tank', 'collect rain', 'varsha jal', 'sanchayan', 'वर्षा जल', 'बारिश', 'टंकी', 'संचयन'];
 
 // Village-admin extra keyword banks
-const VA_COMPARE_KEYWORDS = ['compare', 'versus', 'vs', 'better', 'worse', 'comparison', 'तुलना', 'बनाम', 'अंतर'];
-const VA_COST_ALL_KEYWORDS = ['total cost', 'region cost', 'all areas cost', 'कुल लागत', 'सभी क्षेत्र'];
-const VA_ALERT_KEYWORDS = ['alert', 'warning', 'critical', 'urgent', 'अलर्ट', 'चेतावनी', 'तत्काल', 'जरूरी'];
-const VA_CO2_REGION_KEYWORDS = ['region co2', 'total emissions', 'carbon footprint', 'क्षेत्र कार्बन', 'कुल उत्सर्जन'];
+const VA_COMPARE_KEYWORDS = ['compare', 'versus', 'vs', 'better', 'worse', 'comparison', 'tulna', 'तुलना', 'बनाम', 'अंतर'];
+const VA_COST_ALL_KEYWORDS = ['total cost', 'region cost', 'all areas cost', 'kul lagat', 'कुल लागत', 'सभी क्षेत्र'];
+const VA_ALERT_KEYWORDS = ['alert', 'warning', 'critical', 'urgent', 'chetavni', 'tatkal', 'अलर्ट', 'चेतावनी', 'तत्काल', 'जरूरी'];
+const VA_CO2_REGION_KEYWORDS = ['region co2', 'total emissions', 'carbon footprint', 'kul utsarjan', 'क्षेत्र कार्बन', 'कुल उत्सर्जन'];
 
 // ── Main Chat Generation Function ─────────────────────────────────────────────
 
@@ -127,7 +129,7 @@ Would you like help cutting your electricity bill or exploring village sustainab
 
 🎯 **मेरा उद्देश्य:**
 • भारतीय गांवों और ग्राम पंचायतों को स्वच्छ ऊर्जा, सौर ऊर्जा और बायोगैस से सशक्त बनाना।
-• ग्रामीण परिवारों का बिजली बिल कम करने और सही सरकारी सब्सिडी दिलाने में मदद करना।
+• ग्रामीण परिवारों का बिजली बिल कम करने और सही सरकारी सब्सिडी (जैसे PM Surya Ghar, KUSUM) दिलाने में मदद करना।
 • जल संरक्षण और वर्षा जल संचयन की सटीक गणना उपलब्ध कराना।
 
 आप मुझसे सौर ऊर्जा, बायोगैस, पानी की बचत, सरकारी योजनाओं या उपकरणों की बिजली खपत के बारे में कभी भी पूछ सकते हैं!`
@@ -473,32 +475,6 @@ Try asking: *"How much does a BLDC fan save?"* or *"What subsidy is available fo
       return { id: Math.random().toString(), role: 'assistant', content, timestamp: now, language };
     }
 
-    // ── Help (household) ────────────────────────────────────────────────────
-    if (HELP_KEYWORDS.some((k) => q.includes(k))) {
-      content = isHindi
-        ? `मैं इन घरेलू सवालों के जवाब दे सकता हूँ:
-
-**बिल बचत:** "बिजली बिल कैसे कम करूं?" · "आसान बचत के तरीके क्या हैं?"
-**उपकरण:** "कौन सा उपकरण सबसे ज़्यादा बिजली खाता है?" · "BLDC पंखा कितनी बचत करता है?"
-**सोलर:** "सोलर पैनल से कितनी बचत होगी?" · "पीएम सूर्य घर योजना क्या है?"
-**LED बल्ब:** "LED से कितनी बचत होती है?"
-**फ्रिज व AC:** "AC और फ्रिज की बिजली खपत कैसे घटाएं?"
-**पानी:** "घर में पानी कैसे बचाएं?" · "वर्षा जल संचयन कैसे करें?"
-**बायोगैस:** "रसोई कचरे और गोबर से गैस कैसे बनती है?"
-**स्कोर:** "मेरा स्थिरता स्कोर कैसे सुधारूं?"`
-        : `I can answer household questions like:
-
-**Bill Savings:** "How do I reduce my electricity bill?" · "What are easy ways to save power?"
-**Appliances:** "Which appliance uses the most power?" · "How much does a BLDC fan save?"
-**Solar:** "How much can I save with solar?" · "What is the PM Surya Ghar scheme?"
-**LED Bulbs:** "How much do LED bulbs save?"
-**Fridge & AC:** "How do I cut AC & refrigerator energy consumption?"
-**Water:** "How do I save water at home?" · "How to set up rainwater harvesting?"
-**Biogas:** "How to make cooking gas from kitchen waste & cow dung?"
-**Score:** "How do I improve my sustainability score?"`;
-      return { id: Math.random().toString(), role: 'assistant', content, timestamp: now, language };
-    }
-
     // ── LED bulbs ────────────────────────────────────────────────────────────
     if (HH_LED_KEYWORDS.some((k) => q.includes(k))) {
       content = isHindi
@@ -594,16 +570,16 @@ LED bulbs cost ₹80–150 each — payback in just 3–6 months.`;
       return { id: Math.random().toString(), role: 'assistant', content, timestamp: now, language, navigationSuggestion };
     }
 
-    // ── Household bill reduction ──────────────────────────────────────────────
+    // ── Household bill reduction & Tips ───────────────────────────────────────
     if (HH_BILL_KEYWORDS.some((k) => q.includes(k)) || HH_TIPS_KEYWORDS.some((k) => q.includes(k))) {
       content = isHindi
         ? `**बिजली बिल कम करने के 8 आसान तरीके**
 
 1. 💡 **LED बल्ब लगाएं** — CFL से 60% कम बिजली, ₹300+/वर्ष/बल्ब बचत
-2. 🌀 **BLDC पंखे अपनाएं** — साधारण पंखों से 60% कम बिजली
-3. ❄️ **AC 24°C पर रखें** — हर 1°C कम करने पर 6% बचत
+2. 🌀 **BLDC पंखे अपनाएं** — साधारण पंखों से 60% कम बिजली (₹1,500/वर्ष प्रति पंखा बचत)
+3. ❄️ **AC 24°C पर रखें** — हर 1°C तापमान बढ़ाने पर 6% बिजली बचत
 4. 🌅 **दिन में सोलर** इस्तेमाल करें — रात को ग्रिड से बचें
-5. 🔌 **स्टैंडबाय पावर बंद करें** — TV, charger का प्लग निकालें
+5. 🔌 **स्टैंडबाय पावर बंद करें** — TV, Set-top box, चार्जर का प्लग निकालें
 6. 🌀 **5-स्टार उपकरण** खरीदें — 3-स्टार से 20-30% कम खपत
 7. 🚿 **गीजर का कम उपयोग** — सोलर वाटर हीटर लगाएं (₹8-15k)
 8. 📊 **अपना डैशबोर्ड** देखें — सबसे ज़्यादा खपत वाला उपकरण पहचानें
@@ -613,7 +589,7 @@ LED bulbs cost ₹80–150 each — payback in just 3–6 months.`;
 
 1. 💡 **Switch to LED bulbs** — 60% less power than CFL, saves ₹300+/year per bulb
 2. 🌀 **Upgrade to BLDC fans** — 28W vs 75W saves ₹1,500/year per fan
-3. ❄️ **Set AC to 24°C** — every degree lower adds 6% to your bill
+3. ❄️ **Set AC to 24°C** — every degree higher saves 6% power
 4. 🌅 **Use solar during daylight hours** — avoid grid power at peak time
 5. 🔌 **Unplug standby devices** — TVs, chargers, set-top boxes waste power
 6. 🌀 **Buy 5-star rated appliances** — 20–30% less consumption than 3-star
@@ -626,7 +602,7 @@ LED bulbs cost ₹80–150 each — payback in just 3–6 months.`;
     }
 
     // ── Which appliance uses most power ────────────────────────────────────────
-    if (HH_APPLIANCE_KEYWORDS.some((k) => q.includes(k)) && !HH_BILL_KEYWORDS.some((k) => q.includes(k))) {
+    if (HH_APPLIANCE_KEYWORDS.some((k) => q.includes(k))) {
       content = isHindi
         ? `**घरेलू उपकरणों की बिजली खपत (अनुमानित)**
 
@@ -701,38 +677,6 @@ See the Solar page for detailed simulation →`;
       return { id: Math.random().toString(), role: 'assistant', content, timestamp: now, language, navigationSuggestion };
     }
 
-    // ── Home water saving ─────────────────────────────────────────────────────
-    if (HH_WATER_HOME_KEYWORDS.some((k) => q.includes(k))) {
-      content = isHindi
-        ? `**घर में पानी बचाने के तरीके**
-
-💧 **रोज़मर्रा की बचत:**
-- नल बंद रखें — ब्रश/शेव करते समय (5L/दिन बचत)
-- शॉर्ट शावर या बाल्टी का प्रयोग — बाल्टी से 15L बनाम शावर से 50L
-- टपकता नल तुरंत ठीक कराएं — एक टपकता नल = 15L/दिन बर्बादी
-- वाशिंग मशीन भर कर चलाएं
-
-🌧️ **वर्षा जल संचयन:**
-- 100 sqm छत → साल में ~84,000L पानी
-- एक सामान्य भूमिगत टंकी पूरे साल की ज़रूरत पूरी कर सकती है।
-
-ग्रामीण मानक: 55 लीटर प्रति व्यक्ति प्रति दिन (Jal Jeevan Mission)`
-        : `**Home Water Saving Tips**
-
-💧 **Daily savings:**
-- Turn off tap while brushing/shaving → saves 5L/day
-- Use bucket instead of long shower: Bucket (15L) vs Shower (50L)
-- Fix leaky taps — one dripping tap wastes 15L/day
-- Run washing machine only with full loads
-
-🌧️ **Rainwater harvesting:**
-- A 100 sqm roof in Bihar collects ~84,000L per year
-- Meets the entire domestic water requirement of a 4-member family.
-
-Standard: 55 litres per person per day (Jal Jeevan Mission)`;
-      return { id: Math.random().toString(), role: 'assistant', content, timestamp: now, language };
-    }
-
     // ── Rainwater harvesting (household) ──────────────────────────────────────
     if (HH_WATER_HARVEST_KEYWORDS.some((k) => q.includes(k))) {
       content = isHindi
@@ -764,6 +708,38 @@ Standard: 55 litres per person per day (Jal Jeevan Mission)`;
 4. Submersible transfer pump
 
 💰 **Cost:** ₹5,000–15,000 for standard rural home installations.`;
+      return { id: Math.random().toString(), role: 'assistant', content, timestamp: now, language };
+    }
+
+    // ── Home water saving ─────────────────────────────────────────────────────
+    if (HH_WATER_HOME_KEYWORDS.some((k) => q.includes(k)) || WATER_KEYWORDS.some((k) => q.includes(k))) {
+      content = isHindi
+        ? `**घर में पानी बचाने के तरीके**
+
+💧 **रोज़मर्रा की बचत:**
+- नल बंद रखें — ब्रश/शेव करते समय (5L/दिन बचत)
+- शॉर्ट शावर या बाल्टी का प्रयोग — बाल्टी से 15L बनाम शावर से 50L
+- टपकता नल तुरंत ठीक कराएं — एक टपकता नल = 15L/दिन बर्बादी
+- वाशिंग मशीन भर कर चलाएं
+
+🌧️ **वर्षा जल संचयन:**
+- 100 sqm छत → साल में ~84,000L पानी
+- एक सामान्य भूमिगत टंकी पूरे साल की ज़रूरत पूरी कर सकती है।
+
+ग्रामीण मानक: 55 लीटर प्रति व्यक्ति प्रति दिन (Jal Jeevan Mission)`
+        : `**Home Water Saving Tips**
+
+💧 **Daily savings:**
+- Turn off tap while brushing/shaving → saves 5L/day
+- Use bucket instead of long shower: Bucket (15L) vs Shower (50L)
+- Fix leaky taps — one dripping tap wastes 15L/day
+- Run washing machine only with full loads
+
+🌧️ **Rainwater harvesting:**
+- A 100 sqm roof in Bihar collects ~84,000L per year
+- Meets the entire domestic water requirement of a 4-member family.
+
+Standard: 55 litres per person per day (Jal Jeevan Mission)`;
       return { id: Math.random().toString(), role: 'assistant', content, timestamp: now, language };
     }
 
@@ -973,6 +949,32 @@ Open My Household Dashboard →`;
       return { id: Math.random().toString(), role: 'assistant', content, timestamp: now, language, navigationSuggestion };
     }
 
+    // ── Help (household) — only for explicit help inquiry ─────────────────────
+    if (HELP_KEYWORDS.some((k) => q === k || q.startsWith(k) || q.includes(k))) {
+      content = isHindi
+        ? `मैं इन घरेलू सवालों के जवाब दे सकता हूँ:
+
+**बिल बचत:** "बिजली बिल कैसे कम करूं?" · "आसान बचत के तरीके क्या हैं?"
+**उपकरण:** "कौन सा उपकरण सबसे ज़्यादा बिजली खाता है?" · "BLDC पंखा कितनी बचत करता है?"
+**सोलर:** "सोलर पैनल से कितनी बचत होगी?" · "पीएम सूर्य घर योजना क्या है?"
+**LED बल्ब:** "LED से कितनी बचत होती है?"
+**फ्रिज व AC:** "AC और फ्रिज की बिजली खपत कैसे घटाएं?"
+**पानी:** "घर में पानी कैसे बचाएं?" · "वर्षा जल संचयन कैसे करें?"
+**बायोगैस:** "रसोई कचरे और गोबर से गैस कैसे बनती है?"
+**स्कोर:** "मेरा स्थिरता स्कोर कैसे सुधारूं?"`
+        : `I can answer household questions like:
+
+**Bill Savings:** "How do I reduce my electricity bill?" · "What are easy ways to save power?"
+**Appliances:** "Which appliance uses the most power?" · "How much does a BLDC fan save?"
+**Solar:** "How much can I save with solar?" · "What is the PM Surya Ghar scheme?"
+**LED Bulbs:** "How much do LED bulbs save?"
+**Fridge & AC:** "How do I cut AC & refrigerator energy consumption?"
+**Water:** "How do I save water at home?" · "How to set up rainwater harvesting?"
+**Biogas:** "How to make cooking gas from kitchen waste & cow dung?"
+**Score:** "How do I improve my sustainability score?"`;
+      return { id: Math.random().toString(), role: 'assistant', content, timestamp: now, language };
+    }
+
     // ── Household fallback ────────────────────────────────────────────────────
     content = isHindi
       ? `मुझे *"${userMessage}"* के लिए सीधा उत्तर नहीं मिला। मैं इन घरेलू विषयों में आपकी सहायता कर सकता हूँ:
@@ -1025,38 +1027,6 @@ I can assist you with:
 • Sustainability score benchmarking & critical priority alerts
 
 Try asking: *"What is Motipur's solar potential?"* or *"Which village needs urgent action?"*`;
-    return { id: Math.random().toString(), role: 'assistant', content, timestamp: now, language };
-  }
-
-  // ── Help ──────────────────────────────────────────────────────────────────
-  if (HELP_KEYWORDS.some((k) => q.includes(k))) {
-    content = isHindi
-      ? `मैं इन विषयों पर सटीक जवाब दे सकता हूँ:
-
-**ऊर्जा:** "[क्षेत्र] की मासिक खपत क्या है?"
-**सौर:** "[क्षेत्र] की सौर क्षमता क्या है?" · "पीएम सूर्य घर योजना"
-**पानी:** "अमरा कितना वर्षा जल संचयन कर सकता है?"
-**कचरा:** "मोतीपुर की बायोगैस क्षमता क्या है?"
-**लागत:** "कोरहा बिजली पर कितना खर्च करता है?"
-**स्कोर:** "बरौनी का स्थिरता स्कोर क्या है?"
-**सुझाव:** "शीर्ष सुझाव क्या हैं?"
-**तुलना:** "मोतीपुर और अमरा की तुलना करें"
-**अलर्ट:** "किन क्षेत्रों में तत्काल कार्रवाई ज़रूरी है?"
-
-निगरानी क्षेत्र: Motipur, Oiara, Amra, Barouni, Korha`
-      : `I can answer village administration questions like:
-
-**Energy:** "What is [area] monthly consumption?" · "Which area consumes the most per household?"
-**Solar:** "What is [area] solar potential?" · "How many kW can fit in Motipur?"
-**Water:** "How much rainwater can Amra harvest?" · "What is Oiara's water demand?"
-**Waste:** "What is the biogas potential of Motipur?"
-**Cost:** "How much does Korha spend on electricity?"
-**Scores:** "What is Barouni's sustainability score?"
-**Recommendations:** "What are the top recommendations?"
-**Compare:** "Compare Motipur and Oiara"
-**Alerts:** "Which areas need urgent action?"
-
-Monitored villages: Motipur, Oiara, Amra, Barouni, Korha`;
     return { id: Math.random().toString(), role: 'assistant', content, timestamp: now, language };
   }
 
@@ -1407,6 +1377,38 @@ ${top3.map((r, i) => `**${i + 1}. ${r.title}**
 View all ${DEMO_RECOMMENDATIONS.length} recommendations on the Recommendations page.`;
     navigationSuggestion = '/recommendations';
     return { id: Math.random().toString(), role: 'assistant', content, timestamp: now, language, navigationSuggestion };
+  }
+
+  // ── Help (Village Admin) — only for explicit help requests ────────────────
+  if (HELP_KEYWORDS.some((k) => q === k || q.startsWith(k) || q.includes(k))) {
+    content = isHindi
+      ? `मैं इन विषयों पर सटीक जवाब दे सकता हूँ:
+
+**ऊर्जा:** "[क्षेत्र] की मासिक खपत क्या है?"
+**सौर:** "[क्षेत्र] की सौर क्षमता क्या है?" · "पीएम सूर्य घर योजना"
+**पानी:** "अमरा कितना वर्षा जल संचयन कर सकता है?"
+**कचरा:** "मोतीपुर की बायोगैस क्षमता क्या है?"
+**लागत:** "कोरहा बिजली पर कितना खर्च करता है?"
+**स्कोर:** "बरौनी का स्थिरता स्कोर क्या है?"
+**सुझाव:** "शीर्ष सुझाव क्या हैं?"
+**तुलना:** "मोतीपुर और अमरा की तुलना करें"
+**अलर्ट:** "किन क्षेत्रों में तत्काल कार्रवाई ज़रूरी है?"
+
+निगरानी क्षेत्र: Motipur, Oiara, Amra, Barouni, Korha`
+      : `I can answer village administration questions like:
+
+**Energy:** "What is [area] monthly consumption?" · "Which area consumes the most per household?"
+**Solar:** "What is [area] solar potential?" · "How many kW can fit in Motipur?"
+**Water:** "How much rainwater can Amra harvest?" · "What is Oiara's water demand?"
+**Waste:** "What is the biogas potential of Motipur?"
+**Cost:** "How much does Korha spend on electricity?"
+**Scores:** "What is Barouni's sustainability score?"
+**Recommendations:** "What are the top recommendations?"
+**Compare:** "Compare Motipur and Oiara"
+**Alerts:** "Which areas need urgent action?"
+
+Monitored villages: Motipur, Oiara, Amra, Barouni, Korha`;
+    return { id: Math.random().toString(), role: 'assistant', content, timestamp: now, language };
   }
 
   // ── Village admin fallback ────────────────────────────────────────────────
