@@ -69,7 +69,7 @@ function VillageWasteView() {
           <rect width="100%" height="100%" fill="url(#leaf-pattern)"/>
         </svg>
       </div>
-      <div className="relative z-10 max-w-6xl mx-auto px-6 py-8">
+      <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 py-8 space-y-6">
         <div className="glass-card rounded-2xl p-5 mb-6 fade-up">
           <div className="flex items-center justify-between">
             <div>
@@ -496,7 +496,7 @@ function BiogasSchemeCard({ scheme }: { scheme: typeof BIOGAS_SCHEMES[0] }) {
               <span className="font-semibold">{isHindi ? 'सब्सिडी / लाभ: ' : 'Subsidy / Benefit: '}</span>{scheme.subsidy}
             </div>
             <a href={scheme.link} target="_blank" rel="noopener noreferrer"
-              className="text-xs text-green-600 hover:underline font-medium">
+              className="text-xs inline-flex items-center gap-1 bg-green-600 hover:bg-green-700 text-white font-bold px-3 py-1.5 rounded-md transition-all shadow-sm hover:shadow-md">
               {isHindi ? 'आधिकारिक पोर्टल ↗' : 'Official Portal ↗'}
             </a>
           </div>
@@ -521,8 +521,8 @@ interface WasteJourneyProps {
 }
 
 // SVG coordinate constants — truck base X positions
-const TRUCK_START_X = 140;   // parked at waste pile
-const TRUCK_END_X   = 302;   // parked at plant inlet
+const TRUCK_START_X = 110;   // parked at waste pile
+const TRUCK_END_X   = 512;   // parked at plant inlet
 const TRUCK_WIDTH   = 156;
 
 function WasteJourneyAnimation({ biogas, thermal, electricity, savings, isHindi }: WasteJourneyProps) {
@@ -639,10 +639,10 @@ function WasteJourneyAnimation({ biogas, thermal, electricity, savings, isHindi 
 
   // Bubble positions: fan arched cleanly above the chimney (x=554, y=58)
   const bPos = [
-    { x: 450, y: 72, r: 38 },
-    { x: 516, y: 44, r: 38 },
-    { x: 586, y: 44, r: 38 },
-    { x: 650, y: 72, r: 38 },
+    { x: 430, y: 72, r: 38 },
+    { x: 512, y: 44, r: 38 },
+    { x: 596, y: 44, r: 38 },
+    { x: 678, y: 72, r: 38 },
   ];
 
   return (
@@ -662,7 +662,7 @@ function WasteJourneyAnimation({ biogas, thermal, electricity, savings, isHindi 
 
       {/* ── SVG Scene — viewBox 700×230 ── */}
       <div className="relative w-full" style={{ height: 230 }}>
-        <svg viewBox="0 0 700 230" width="100%" height="230"
+        <svg viewBox="0 0 900 230" width="100%" height="230"
           xmlns="http://www.w3.org/2000/svg" style={{ display:'block', overflow:'visible' }}>
 
           <defs>
@@ -726,14 +726,15 @@ function WasteJourneyAnimation({ biogas, thermal, electricity, savings, isHindi 
           `}</style>
 
           {/* ── Ground + road ── */}
-          <rect x="0" y="185" width="700" height="45" fill="url(#wj-gnd)" rx="0" opacity="0.55"/>
-          {[50,115,180,245,310,375,440,505,570,635].map(x => (
+          <rect x="0" y="185" width="900" height="45" fill="url(#wj-gnd)" rx="0" opacity="0.55"/>
+          {[50,115,180,245,310,375,440,505,570,635,700,765,830].map(x => (
             <rect key={x} x={x} y="192" width="42" height="6" rx="3" fill="#fff" opacity="0.4"/>
           ))}
           {/* kerb lines */}
-          <line x1="0" y1="186" x2="700" y2="186" stroke="#86efac" strokeWidth="1.5" opacity="0.6"/>
+          <line x1="0" y1="186" x2="900" y2="186" stroke="#86efac" strokeWidth="1.5" opacity="0.6"/>
 
           {/* ══════ LEFT — WASTE PILE ══════ */}
+          <g transform="translate(-30, 0)">
           <ellipse cx="95" cy="188" rx="62" ry="9" fill="#15803d" opacity="0.2"/>
 
           {/* Wheelie bin */}
@@ -779,6 +780,7 @@ function WasteJourneyAnimation({ biogas, thermal, electricity, savings, isHindi 
             {isHindi ? 'कचरा स्थल' : 'Waste Site'}
           </text>
 
+          </g>
           {/* ══════ TRUCK ══════
             • Going to plant (!flipped):   Front faces RIGHT (cab on right, cargo on left).
             • Returning to waste (flipped): Front faces LEFT (cab on left, cargo on right).
@@ -916,6 +918,7 @@ function WasteJourneyAnimation({ biogas, thermal, electricity, savings, isHindi 
           })()}
 
           {/* ══════ RIGHT — BIOGAS PLANT ══════ */}
+          <g transform="translate(210, 0)">
           {/*
             Plant centered around x=555.
             Building: 130px wide, 80px tall.  Chimney rises ~60px above.
@@ -1011,10 +1014,8 @@ function WasteJourneyAnimation({ biogas, thermal, electricity, savings, isHindi 
             );
           })}
 
-          {/* ══════ DASHED GUIDE PATH ══════ */}
-          <path d="M 152 183 C 280 175, 360 175, 488 183"
-            fill="none" stroke="#16a34a" strokeWidth="1.8"
-            strokeDasharray="7 5" opacity="0.35"/>
+          
+          </g>
 
         </svg>
       </div>
@@ -1077,7 +1078,7 @@ function HouseholdWasteView() {
         </svg>
       </div>
 
-      <div className="relative z-10 max-w-5xl mx-auto px-6 py-8">
+      <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 py-8 space-y-6">
 
         {/* Header */}
         <div className="glass-card rounded-2xl p-5 mb-6 fade-up">

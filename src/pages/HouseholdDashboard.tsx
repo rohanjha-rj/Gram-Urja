@@ -167,12 +167,14 @@ export default function HouseholdDashboard() {
   }, [appliances]);
 
   return (
-    <div className="min-h-screen relative" style={{ background: 'linear-gradient(160deg, #052e16 0%, #14532d 40%, #0a1f14 100%)' }}>
-      {/* Background ambient lighting */}
-      <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute -top-40 -right-40 w-96 h-96 bg-emerald-500/10 rounded-full blur-3xl" />
-        <div className="absolute top-1/2 -left-40 w-96 h-96 bg-teal-500/10 rounded-full blur-3xl" />
-      </div>
+    <div className="min-h-screen relative" style={{
+      backgroundImage: 'url(/dashboard-bg.jpg)',
+      backgroundSize: 'cover',
+      backgroundPosition: 'center',
+      backgroundAttachment: 'fixed'
+    }}>
+      {/* Dark overlay to ensure text readability */}
+      <div className="absolute inset-0 bg-black/30 pointer-events-none" />
 
       <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 py-6 sm:py-8">
 
@@ -217,10 +219,6 @@ export default function HouseholdDashboard() {
                     <Plus className="w-3 h-3" />
                   </button>
                 </div>
-              </div>
-              <div className="h-4 w-px bg-emerald-200 hidden sm:block" />
-              <div className="text-xs text-emerald-800 font-medium">
-                <span className="font-bold text-emerald-950">{waterDemand.toFixed(0)} L/{isHindi ? 'दिन' : 'day'}</span> {isHindi ? 'जल मांग' : 'Water Need'}
               </div>
             </div>
           </div>
@@ -647,12 +645,12 @@ export default function HouseholdDashboard() {
           <div className="mt-8">
             <div className="flex items-center gap-2 mb-3 fade-left">
               <Zap className="w-5 h-5 text-amber-500" />
-              <h2 className="text-xl font-bold text-gray-900">{isHindi ? 'ऊर्जा-कुशल उपकरण अपग्रेड सुझाव' : 'Recommended Energy Efficient Upgrades'}</h2>
+              <h2 className="text-xl font-bold text-white">{isHindi ? 'ऊर्जा-कुशल उपकरण अपग्रेड सुझाव' : 'Recommended Energy Efficient Upgrades'}</h2>
               <span className="text-xs bg-amber-100 text-amber-800 border border-amber-200 rounded-full px-2.5 py-0.5 font-bold ml-1">
                 {upgradeCategories.length} {isHindi ? 'सुझाव उपलब्ध' : 'upgrades available'}
               </span>
             </div>
-            <p className="text-xs sm:text-sm text-gray-400 mb-5 italic">
+            <p className="text-xs sm:text-sm text-gray-200 mb-5 italic">
               {isHindi ? 'अनुमानित बचत आपके सक्रिय उपकरणों और औसत ग्रामीण शुल्क के आधार पर आंकी गई है।' : 'Estimated savings are calculated against your active inventory power specifications and average rural tariff.'}
             </p>
 

@@ -80,7 +80,7 @@ const HERO_PHOTOS = [
   { url: 'https://images.unsplash.com/photo-1508514177221-188b1cf16e9d?w=900&q=80&auto=format&fit=crop', labelEn: '⚡ Renewable Energy · Villages', labelHi: '⚡ नवीकरणीय ऊर्जा · ग्राम' },
 ];
 
-function VillageScene({ isHindi }: { isHindi: boolean }) {
+function HeroBackground({ isHindi }: { isHindi: boolean }) {
   const [active, setActive] = useState(0);
   useEffect(() => {
     const id = setInterval(() => setActive(p => (p + 1) % HERO_PHOTOS.length), 4000);
@@ -88,31 +88,13 @@ function VillageScene({ isHindi }: { isHindi: boolean }) {
   }, []);
 
   return (
-    <div className="relative w-full max-w-2xl mx-auto select-none rounded-2xl overflow-hidden shadow-2xl" style={{ aspectRatio: '16/10' }}>
+    <div className="absolute inset-0 select-none overflow-hidden z-0">
       {HERO_PHOTOS.map((photo, i) => (
         <img key={photo.url} src={photo.url} alt={isHindi ? photo.labelHi : photo.labelEn} loading={i === 0 ? 'eager' : 'lazy'}
           className="absolute inset-0 w-full h-full object-cover transition-opacity duration-1000"
           style={{ opacity: i === active ? 1 : 0 }} />
       ))}
-      <div className="absolute inset-0 pointer-events-none"
-        style={{ background: 'linear-gradient(135deg,rgba(0,0,0,0.28) 0%,transparent 50%,rgba(0,0,0,0.35) 100%)' }} />
-      {[
-        { pos: 'top-3 left-3',      bg: 'bg-amber-400/90',   textEn: '☀️ Solar',  textHi: '☀️ सौर' },
-        { pos: 'top-3 right-3',     bg: 'bg-emerald-500/90', textEn: '🌿 Biogas', textHi: '🌿 बायोगैस' },
-        { pos: 'bottom-12 right-3', bg: 'bg-green-600/90',   textEn: '⚡ Power',  textHi: '⚡ ऊर्जा' },
-      ].map(b => (
-        <div key={b.pos}
-          className={`absolute ${b.pos} ${b.bg} text-white text-xs font-bold px-2.5 py-1 rounded-full gu-hero-badge`}
-          style={{ backdropFilter: 'blur(8px)', WebkitBackdropFilter: 'blur(8px)', boxShadow: '0 2px 8px rgba(0,0,0,0.35)' }}>
-          {isHindi ? b.textHi : b.textEn}
-        </div>
-      ))}
-      <div className="absolute bottom-3 left-1/2 -translate-x-1/2 flex gap-1.5">
-        {HERO_PHOTOS.map((_, i) => (
-          <button key={i} onClick={() => setActive(i)}
-            className={`h-1.5 rounded-full transition-all duration-300 ${i === active ? 'bg-white w-5' : 'bg-white/50 w-1.5'}`} />
-        ))}
-      </div>
+      <div className="absolute inset-0 bg-black/65" />
     </div>
   );
 }
@@ -358,156 +340,119 @@ export default function LandingPage() {
           HERO + MISSION
       ══════════════════════════════════════════════════════════════════════ */}
       <section
-        className="relative flex flex-col overflow-hidden"
+        className="relative flex flex-col justify-center min-h-screen py-4"
         style={{
-          minHeight: '100vh',
           background: 'linear-gradient(160deg,#030d07 0%,#052e16 25%,#14532d 55%,#0d2e1e 80%,#020a05 100%)',
         }}
       >
         {/* Grain overlay */}
-        <div className="absolute inset-0 opacity-[0.04] pointer-events-none"
+        <div className="absolute inset-0 opacity-[0.04] pointer-events-none z-0"
           style={{ backgroundImage: 'url("data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' width=\'300\' height=\'300\'%3E%3Cfilter id=\'n\'%3E%3CfeTurbulence type=\'fractalNoise\' baseFrequency=\'0.9\' numOctaves=\'4\' stitchTiles=\'stitch\'/%3E%3C/filter%3E%3Crect width=\'300\' height=\'300\' filter=\'url(%23n)\' opacity=\'1\'/%3E%3C/svg%3E")', backgroundSize: '200px' }} />
 
-        {/* Dot pattern */}
-        <div className="absolute inset-0 opacity-[0.04] pointer-events-none">
-          <svg width="100%" height="100%"><defs><pattern id="gu-dots" width="30" height="30" patternUnits="userSpaceOnUse"><circle cx="15" cy="15" r="1.5" fill="#16a34a" /></pattern></defs><rect width="100%" height="100%" fill="url(#gu-dots)" /></svg>
-        </div>
-
-        {/* Radial glow */}
-        <div className="absolute top-0 right-0 w-[600px] h-[600px] pointer-events-none"
-          style={{ background: 'radial-gradient(circle at 80% 20%,rgba(250,204,21,0.12) 0%,transparent 65%)' }} />
-        <div className="absolute bottom-0 left-0 w-[500px] h-[500px] pointer-events-none"
-          style={{ background: 'radial-gradient(circle at 20% 80%,rgba(16,185,129,0.10) 0%,transparent 60%)' }} />
-
         {/* Leaf particles */}
-        <div className="absolute inset-0 pointer-events-none overflow-hidden" aria-hidden="true">
+        <div className="absolute inset-0 pointer-events-none overflow-hidden z-0" aria-hidden="true">
           {[{ x: '8%', delay: '0s', size: 10 }, { x: '18%', delay: '2.3s', size: 8 }, { x: '75%', delay: '1.1s', size: 12 }, { x: '88%', delay: '3.5s', size: 9 }].map((p, i) => (
             <div key={i} className="absolute gu-leaf-fall" style={{ left: p.x, top: '-20px', animationDelay: p.delay, fontSize: p.size + 'px' }}>🌿</div>
           ))}
         </div>
 
         {/* ── Inner container ── */}
-        <div className="relative z-10 flex-1 min-h-0 py-10">
-          <div className="max-w-7xl mx-auto w-full px-6 flex flex-col justify-between" style={{ minHeight: '100%' }}>
-
-            {/* ── HERO COPY + VISUAL ── */}
-            <div className="grid lg:grid-cols-2 gap-8 items-center py-6">
-
-              {/* Left: copy */}
-              <div className="gu-hero-text space-y-5">
-                <div className="inline-flex items-center gap-2 border border-green-400/30 bg-green-400/10 rounded-full px-3 py-1 text-xs font-semibold text-green-300 uppercase tracking-widest backdrop-blur-md">
-                  <span className="w-2 h-2 bg-green-400 rounded-full animate-pulse" />
-                  {t('heroLiveRegion')}
-                </div>
-
-                <h1 className="text-3xl sm:text-4xl lg:text-[2.75rem] font-extrabold leading-[1.15] text-white drop-shadow-md">
-                  {isHindi ? (
-                    <>
-                      ग्राम सशक्तीकरण<br />
-                      <span className="text-amber-300">कचरा</span>
-                      <span className="text-white">, </span>
-                      <span className="text-green-300">जल</span>
-                      <span className="text-white"> एवं </span>
-                      <span className="text-yellow-300">सूर्य</span>
-                      <span className="text-white"> से</span>
-                    </>
-                  ) : (
-                    <>
-                      Powering Villages<br />
-                      with{' '}
-                      <span className="text-amber-300">Waste</span>
-                      <span className="text-white">,{' '}</span>
-                      <span className="text-green-300">Water</span>
-                      <span className="text-white">{' '}&amp;{' '}</span>
-                      <span className="text-yellow-300">Sun</span>
-                    </>
-                  )}
-                </h1>
-
-                <p className="text-green-100/90 text-base leading-relaxed max-w-xl">
-                  {t('heroSubtitle')}
-                </p>
-
-                <div className="flex flex-wrap items-center gap-3 pt-2">
-                  <Link to="/login"
-                    className="group inline-flex items-center gap-2 bg-emerald-400 hover:bg-emerald-300 text-emerald-950 font-bold px-6 py-3.5 rounded-xl transition-all duration-200 shadow-lg shadow-emerald-900/40 hover:shadow-emerald-900/60 hover:-translate-y-0.5 text-sm">
-                    <Zap className="w-4 h-4" />
-                    {t('getStarted')}
-                    <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-1" />
-                  </Link>
-
-                  <a href="#impact"
-                    className="inline-flex items-center gap-2 bg-white/10 hover:bg-white/20 border border-white/20 text-white font-semibold px-5 py-3.5 rounded-xl transition-all duration-200 backdrop-blur-md text-sm">
-                    <Activity className="w-4 h-4 text-emerald-300" />
-                    {isHindi ? 'लाइव प्रभाव देखें' : 'View Live Impact'}
-                  </a>
-                </div>
+        <div className="relative z-10 w-full max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 flex flex-col gap-5">
+          
+          {/* ── HERO IMAGE CARD ── */}
+          <div className="relative w-full rounded-3xl overflow-hidden shadow-2xl border border-white/10" style={{ minHeight: '420px' }}>
+            
+            <HeroBackground isHindi={isHindi} />
+            
+            {/* ── HERO COPY ── */}
+            <div className="relative z-10 w-full h-full p-6 sm:p-8 lg:p-10 flex flex-col justify-center max-w-3xl">
+              <div className="inline-flex items-center gap-2 border border-green-500/40 bg-green-900/40 rounded-full px-3 py-1 text-xs font-semibold text-green-300 uppercase tracking-widest backdrop-blur-md w-max mb-4">
+                <span className="w-2 h-2 bg-green-400 rounded-full animate-pulse" />
+                {t('heroLiveRegion')}
               </div>
 
-              {/* Right: photo scene */}
-              <div className="gu-hero-visual lg:pl-4">
-                <VillageScene isHindi={isHindi} />
-                <div className="flex justify-center mt-3 gap-5 flex-wrap">
-                  {[{ dot: 'bg-amber-400', labelEn: 'Solar Energy', labelHi: 'सौर ऊर्जा' }, { dot: 'bg-emerald-400', labelEn: 'Biogas', labelHi: 'बायोगैस' }, { dot: 'bg-cyan-400', labelEn: 'Clean Water', labelHi: 'स्वच्छ जल' }].map(l => (
-                    <div key={l.labelEn} className="flex items-center gap-1.5 text-xs text-green-300/90 font-medium">
-                      <span className={`w-2 h-2 rounded-full ${l.dot}`} />{isHindi ? l.labelHi : l.labelEn}
-                    </div>
-                  ))}
-                </div>
+              <h1 className="text-4xl sm:text-5xl lg:text-[3.25rem] font-extrabold leading-[1.1] text-white drop-shadow-lg mb-4 tracking-tight">
+                {isHindi ? (
+                  <>
+                    ग्राम सशक्तीकरण<br />
+                    <span className="text-amber-400">कचरा</span>
+                    <span className="text-white">, </span>
+                    <span className="text-cyan-400">जल</span>
+                    <span className="text-white"> एवं </span>
+                    <span className="text-yellow-400">सूर्य</span>
+                    <span className="text-white"> से</span>
+                  </>
+                ) : (
+                  <>
+                    Powering Villages<br />
+                    with{' '}
+                    <span className="text-amber-400">Waste</span>
+                    <span className="text-white">,{' '}</span>
+                    <span className="text-cyan-400">Water</span>
+                    <span className="text-white">{' '}&amp;{' '}</span>
+                    <span className="text-yellow-400">Sun</span>
+                  </>
+                )}
+              </h1>
+
+              <p className="text-gray-200 text-base leading-relaxed max-w-xl font-medium drop-shadow-md mb-5">
+                {isHindi ? 'ग्राम ऊर्जा स्थानीय ग्रामीण संसाधनों को स्वच्छ ऊर्जा, कुशल जल प्रणालियों और मापने योग्य सामुदायिक प्रभाव में बदलता है — एक बार में एक गांव।' : 'Gram Urja transforms local village resources into clean energy, efficient water systems and measurable community impact — one village at a time.'}
+              </p>
+
+              <div className="flex flex-wrap items-center gap-4">
+                <Link to="/login"
+                  className="group inline-flex items-center gap-2 bg-[#19c760] hover:bg-[#15ab52] text-white font-bold px-7 py-4 rounded-xl transition-all duration-200 shadow-lg shadow-green-900/40 hover:shadow-green-900/60 hover:-translate-y-0.5 text-sm">
+                  <Zap className="w-4 h-4" />
+                  {t('getStarted')}
+                  <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-1" />
+                </Link>
               </div>
             </div>
+          </div>
 
-            {/* ── MISSION STRIP ── */}
-            <div className="border-t border-white/10 pt-8 mt-6 grid lg:grid-cols-2 gap-8 items-start">
-              <div>
-                <div className="inline-flex items-center gap-2 bg-green-400/15 border border-green-400/25 text-green-300 rounded-full px-3 py-1 text-xs font-bold uppercase tracking-widest mb-3">
-                  🌱 {t('ourMission')}
-                </div>
-                <h2 className="text-xl font-extrabold text-white leading-snug mb-2">
-                  {t('missionHeading')}
-                </h2>
-                <p className="text-green-100/80 text-xs leading-relaxed mb-3">
-                  {t('missionText')}
-                </p>
-                <div className="flex flex-wrap gap-2">
-                  {[
-                    { n: '5', label: t('areasTracked') },
-                    { n: '100%', label: t('formulaTransparency') },
-                    { n: '2', label: t('cleanEnergyPillars') },
-                    { n: '₹0', label: t('zeroToStart') }
-                  ].map(s => (
-                    <div key={s.label} className="bg-white/10 border border-white/15 backdrop-blur-md rounded-xl px-3 py-2 text-center">
-                      <div className="text-base font-extrabold text-white">{s.n}</div>
-                      <div className="text-[10px] text-green-300 font-medium">{s.label}</div>
-                    </div>
-                  ))}
-                </div>
+          {/* ── MISSION STRIP ── */}
+          <div className="grid lg:grid-cols-2 gap-6 items-start">
+            <div>
+              <div className="inline-flex items-center gap-2 bg-green-400/10 border border-green-400/20 text-green-400 rounded-full px-3 py-1 text-xs font-bold uppercase tracking-widest mb-3">
+                🌱 {t('ourMission')}
               </div>
-              <div className="grid grid-cols-1 gap-2.5">
+              <h2 className="text-xl font-extrabold text-white leading-snug mb-2">
+                Small steps create <span className="text-green-400">big change</span> for our villages.
+              </h2>
+              <p className="text-gray-300 text-sm leading-relaxed mb-4">
+                Every Indian village already possesses the natural ingredients for sustainable energy — <span className="text-green-400 font-semibold">abundant sunlight, organic biomass & agricultural residue</span>, and <span className="text-green-400 font-semibold">local self-reliance</span>. Gram Urja turns this untapped potential into measurable environmental and community benefit.
+              </p>
+              <div className="flex flex-wrap gap-3">
                 {[
-                  { icon: <Sun className="w-4 h-4 text-amber-400" />, title: t('solarUntapped'), desc: t('solarUntappedDesc'), accent: 'border-amber-400/30' },
-                  { icon: <Leaf className="w-4 h-4 text-emerald-400" />, title: t('wasteProblemPower'), desc: t('wasteProblemPowerDesc'), accent: 'border-emerald-400/30' },
-                  { icon: <Zap className="w-4 h-4 text-green-400" />, title: t('energyEfficiencyGrid'), desc: t('energyEfficiencyGridDesc'), accent: 'border-green-400/30' },
-                ].map(card => (
-                  <div key={card.title} className={`bg-white/10 border ${card.accent} backdrop-blur-md rounded-xl p-3 flex gap-3 hover:bg-white/15 transition-colors`}>
-                    <div className="flex-shrink-0 p-1.5 bg-white/10 rounded-lg h-fit">{card.icon}</div>
-                    <div>
-                      <div className="font-bold text-white text-xs mb-0.5">{card.title}</div>
-                      <div className="text-green-200/80 text-[11px] leading-relaxed">{card.desc}</div>
-                    </div>
+                  { n: '5', label: t('areasTracked') },
+                  { n: '100%', label: t('formulaTransparency') },
+                  { n: '2', label: t('cleanEnergyPillars') },
+                  { n: '₹0', label: t('zeroToStart') }
+                ].map(s => (
+                  <div key={s.label} className="bg-white/5 border border-white/10 rounded-xl px-5 py-3 text-center">
+                    <div className="text-xl font-extrabold text-white">{s.n}</div>
+                    <div className="text-[10px] text-gray-400 font-medium uppercase mt-1 tracking-wider">{s.label}</div>
                   </div>
                 ))}
               </div>
             </div>
-
+            <div className="grid grid-cols-1 gap-3">
+              {[
+                { icon: <Sun className="w-5 h-5 text-amber-400" />, title: t('solarUntapped'), desc: t('solarUntappedDesc'), accent: 'border-amber-400/20' },
+                { icon: <Leaf className="w-5 h-5 text-emerald-400" />, title: t('wasteProblemPower'), desc: t('wasteProblemPowerDesc'), accent: 'border-emerald-400/20' },
+                { icon: <Zap className="w-5 h-5 text-green-400" />, title: t('energyEfficiencyGrid'), desc: t('energyEfficiencyGridDesc'), accent: 'border-green-400/20' },
+              ].map(card => (
+                <div key={card.title} className={`bg-white/5 border ${card.accent} rounded-xl p-4 flex gap-4 hover:bg-white/10 transition-colors`}>
+                  <div className="flex-shrink-0 p-2.5 bg-white/5 rounded-lg h-fit">{card.icon}</div>
+                  <div>
+                    <div className="font-bold text-white text-sm mb-1">{card.title}</div>
+                    <div className="text-gray-400 text-xs leading-relaxed">{card.desc}</div>
+                  </div>
+                </div>
+              ))}
+            </div>
           </div>
-        </div>
 
-        {/* Wave divider to next section */}
-        <div className="w-full pointer-events-none mt-auto">
-          <svg viewBox="0 0 1440 60" preserveAspectRatio="none" className="w-full h-10">
-            <path d="M0,40 C360,70 1080,10 1440,40 L1440,60 L0,60 Z" fill="#f0fdf4" />
-          </svg>
         </div>
       </section>
 

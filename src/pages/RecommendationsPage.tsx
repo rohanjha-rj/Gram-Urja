@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 
 import { Lightbulb, Sun, Droplets, Leaf, Zap, Users, Clock, TrendingDown } from 'lucide-react';
-import { DEMO_RECOMMENDATIONS } from '../data/recommendations';
+import { DEMO_RECOMMENDATIONS, HOUSEHOLD_RECOMMENDATIONS } from '../data/recommendations';
+import { useAuth } from '../context/AuthContext';
 import { PriorityBadge, DemoBadge, SectionCard, StatRow } from '../components/ui';
 import AreaSelector from '../components/AreaSelector';
 import { useLanguage } from '../context/LanguageContext';
@@ -141,10 +142,14 @@ const PRIORITY_ORDER = { critical: 0, high: 1, medium: 2, low: 3 };
 
 export default function RecommendationsPage() {
   const { t, isHindi } = useLanguage();
-  const [expandedId, setExpandedId] = useState<string | null>(DEMO_RECOMMENDATIONS[0].id);
+  const { role } = useAuth();
+  const isCitizen = role === 'citizen';
+  const [expandedId, setExpandedId] = useState<string | null>(null);
   const [selectedAreaId, setSelectedAreaId] = useState('motipur');
-  const filtered = DEMO_RECOMMENDATIONS
-    .filter((r) => r.areaId === selectedAreaId)
+  
+  const recommendationsSource = isCitizen ? HOUSEHOLD_RECOMMENDATIONS : DEMO_RECOMMENDATIONS;
+  const filtered = recommendationsSource
+    .filter((r) => isCitizen ? true : r.areaId === selectedAreaId)
     .sort((a, b) => PRIORITY_ORDER[a.priority] - PRIORITY_ORDER[b.priority]);
 
   return (
@@ -160,9 +165,18 @@ export default function RecommendationsPage() {
           </div>
           <DemoBadge />
         </div>
-        <div className="mt-4">
-          <AreaSelector selectedAreaId={selectedAreaId} onSelect={(id) => { setSelectedAreaId(id); }} />
-        </div>
+        {!isCitizen ? (
+          <div className="mt-4">
+            <AreaSelector selectedAreaId={selectedAreaId} onSelect={(id) => { setSelectedAreaId(id); }} />
+          </div>
+        ) : (
+          <div className="mt-4 flex items-center gap-2">
+             <span className="text-sm font-medium text-gray-500">{isHindi ? 'के लिए डेटा देख रहे हैं:' : 'Viewing data for:'}</span>
+             <span className="bg-emerald-50 text-emerald-700 px-3 py-1.5 rounded-lg border border-emerald-200 text-sm font-bold flex items-center gap-1.5 shadow-sm">
+                <Users className="w-4 h-4" /> {isHindi ? 'आपका परिवार' : 'Your Household'}
+             </span>
+          </div>
+        )}
       </div>
 
 

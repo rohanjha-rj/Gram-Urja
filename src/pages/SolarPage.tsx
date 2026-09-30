@@ -158,7 +158,7 @@ function PanelSimulator({
     if (customSunAngle !== undefined) return;
     const tick = () => {
       const elapsed = (Date.now() - t0.current) / 1000;
-      setAutoSunAngle(45 + Math.sin(elapsed * 0.08) * 25);
+      setAutoSunAngle(45 + Math.sin(elapsed * 0.2) * 25);
       rafRef.current = requestAnimationFrame(tick);
     };
     rafRef.current = requestAnimationFrame(tick);
@@ -1089,7 +1089,7 @@ function SolarSchemeCard({ scheme }: { scheme: typeof SOLAR_SCHEMES[0] }) {
               <span className="font-semibold">Subsidy / Benefit: </span>{scheme.subsidy}
             </div>
             <a href={scheme.link} target="_blank" rel="noopener noreferrer"
-              className="text-xs text-amber-600 hover:underline font-medium">
+              className="text-xs inline-flex items-center gap-1 bg-amber-500 hover:bg-amber-600 text-white font-bold px-3 py-1.5 rounded-md transition-all shadow-sm hover:shadow-md">
               Official Portal ↗
             </a>
           </div>
