@@ -5,6 +5,31 @@ import {
   Lightbulb, Bot, Menu, X, Activity, LogOut,
   ChevronLeft, ChevronRight, Globe,
 } from 'lucide-react';
+
+// ── Community Grid SVG icon (interconnected nodes) ───────────────────────────
+function CommunityGridIcon({ className = 'w-4 h-4' }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"
+      className={className}>
+      {/* central node */}
+      <circle cx="12" cy="12" r="2.5" />
+      {/* outer nodes */}
+      <circle cx="4"  cy="6"  r="1.75" />
+      <circle cx="20" cy="6"  r="1.75" />
+      <circle cx="4"  cy="18" r="1.75" />
+      <circle cx="20" cy="18" r="1.75" />
+      {/* connections from center to corners */}
+      <line x1="9.7"  y1="10.3" x2="5.4"  y2="7.2"  />
+      <line x1="14.3" y1="10.3" x2="18.6" y2="7.2"  />
+      <line x1="9.7"  y1="13.7" x2="5.4"  y2="16.8" />
+      <line x1="14.3" y1="13.7" x2="18.6" y2="16.8" />
+      {/* horizontal connections top + bottom */}
+      <line x1="5.75" y1="6"  x2="18.25" y2="6"  strokeDasharray="2 2" opacity="0.5" />
+      <line x1="5.75" y1="18" x2="18.25" y2="18" strokeDasharray="2 2" opacity="0.5" />
+    </svg>
+  );
+}
 import { useAuth } from '../context/AuthContext';
 import { useLanguage } from '../context/LanguageContext';
 
@@ -24,6 +49,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
     { to: '/village', icon: <LayoutDashboard className="w-4 h-4" />, label: t('navVillageDashboard'), roles: ['official', 'guest'] },
     { to: '/solar', icon: <Sun className="w-4 h-4" />, label: t('navSolar'), roles: ['official', 'citizen', 'guest'] },
     { to: '/waste', icon: <Leaf className="w-4 h-4" />, label: t('navWaste'), roles: ['official', 'citizen', 'guest'] },
+    { to: '/microgrid', icon: <CommunityGridIcon className="w-4 h-4" />, label: t('navCommunityGrid'), roles: ['official', 'citizen', 'guest'] },
     { to: '/recommendations', icon: <Lightbulb className="w-4 h-4" />, label: t('navRecommendations'), roles: ['official', 'citizen', 'guest'] },
   ];
 
