@@ -12,6 +12,7 @@ import SolarPage from './pages/SolarPage';
 import WastePage from './pages/WastePage';
 import RecommendationsPage from './pages/RecommendationsPage';
 import AIAssistantPage from './pages/AIAssistantPage';
+import CommunityMicrogridPage from './pages/CommunityMicrogridPage';
 
 function ScrollToTop() {
   const { pathname } = useLocation();
@@ -61,6 +62,7 @@ function AppRoutes() {
         <Route path="/solar" element={<Layout><SolarPage /></Layout>} />
         <Route path="/waste" element={<Layout><WastePage /></Layout>} />
         <Route path="/recommendations" element={<Layout><RecommendationsPage /></Layout>} />
+        <Route path="/microgrid" element={<Layout><CommunityMicrogridPage /></Layout>} />
         <Route path="/alerts" element={<Navigate to="/overview" replace />} />
         <Route path="/score" element={<Navigate to="/overview" replace />} />
         <Route path="/ai" element={<AIAssistantPage />} />

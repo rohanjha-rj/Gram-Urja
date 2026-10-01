@@ -23,6 +23,7 @@ export const TRANSLATIONS = {
   navVillageDashboard: { en: 'Village Dashboard', hi: 'ग्राम डैशबोर्ड' },
   navSolar: { en: 'Solar', hi: 'सौर ऊर्जा' },
   navWaste: { en: 'Waste & Energy', hi: 'कचरा एवं ऊर्जा' },
+  navCommunityGrid: { en: 'Community Grid', hi: 'सामुदायिक ग्रिड' },
   navRecommendations: { en: 'Recommendations', hi: 'अनुशंसाएं' },
   navAiAssistant: { en: 'Manu AI Assistant', hi: 'मनु AI सहायक' },
   logout: { en: 'Log out', hi: 'लॉग आउट' },
